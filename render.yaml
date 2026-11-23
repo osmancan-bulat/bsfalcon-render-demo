@@ -1,0 +1,20 @@
+# Render Blueprint: BŞ Falcon Group yönetim merkezi demosu (ücretsiz statik site).
+# Next.js statik dışa aktarım (output: "export") → out/ klasörü yayımlanır.
+services:
+  - type: web
+    name: bsfalcon-yonetim-merkezi
+    runtime: static
+    plan: free
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./out
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /*
+        name: X-Robots-Tag
+        value: noindex, nofollow
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
