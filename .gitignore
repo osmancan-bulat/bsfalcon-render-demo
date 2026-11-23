@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+.openai/
+.vercel/
+*.tsbuildinfo
+.env*
+
+.vercel
+.env*

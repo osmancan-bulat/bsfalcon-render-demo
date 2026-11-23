@@ -1,0 +1,130 @@
+/* CEYCON / YAPI360 tasarım sistemi — tek kaynak tasarım değişkenleri.
+   Renkler, tipografi, boşluk, köşe ve gölge değerleri yalnızca burada tanımlanır. */
+:root {
+  /* Kurumsal orman yeşili (menü, birincil eylem) */
+  --forest-950: #0f2620;
+  --forest-900: #142f28;
+  --forest-800: #1b3b32;
+  --forest-700: #24493e;
+  --forest-600: #2f5b4d;
+  --forest-500: #4a7564;
+  --forest-300: #9db5aa;
+  --forest-100: #e6eee9;
+
+  /* Doğal taş / kırık beyaz yüzeyler */
+  --surface: #ffffff;
+  --stone-25: #fcfbf8;
+  --stone-50: #f8f7f3;
+  --stone-100: #f2f0ea;
+  --stone-150: #ebe8e0;
+  --stone-200: #e2ded4;
+  --stone-300: #cfcabd;
+
+  /* Grafit metin */
+  --graphite-900: #1b211f;
+  --graphite-700: #38413d;
+  --graphite-500: #5f6864;
+  --graphite-400: #878e8a;
+
+  /* Kontrollü bronz vurgu */
+  --bronze-700: #7a5a2e;
+  --bronze-500: #a8834f;
+  --bronze-300: #d5bf98;
+  --bronze-100: #f5eee2;
+
+  /* Anlamsal durumlar */
+  --positive: #2f6b4f;
+  --positive-bg: #e8f1ea;
+  --warning: #94640f;
+  --warning-bg: #f8efdb;
+  --danger: #a3412f;
+  --danger-bg: #f8e9e4;
+  --info: #3d5c78;
+  --info-bg: #e9eef3;
+
+  /* Rol değişkenleri */
+  --canvas: var(--stone-100);
+  --text: var(--graphite-900);
+  --text-secondary: var(--graphite-700);
+  --text-muted: var(--graphite-500);
+  --text-faint: var(--graphite-400);
+  --border: var(--stone-200);
+  --border-subtle: var(--stone-150);
+  --border-strong: var(--stone-300);
+  --accent: var(--bronze-500);
+  --focus: var(--bronze-500);
+
+  /* Tipografi */
+  --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-features: "cv11", "ss01", "ss03";
+  --fs-micro: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+  --fs-3xl: 32px;
+
+  /* Ölçü */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgb(27 33 31 / 0.05);
+  --shadow-md: 0 1px 2px rgb(27 33 31 / 0.04), 0 4px 14px rgb(27 33 31 / 0.06);
+  --shadow-lg: 0 24px 60px rgb(15 38 32 / 0.18);
+  --sidebar-w: 248px;
+  --topbar-h: 56px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings: var(--font-features);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+::selection {
+  background: var(--bronze-300);
+  color: var(--graphite-900);
+}
+.num,
+.numeric,
+td.numeric,
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: var(--font-features), "tnum";
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

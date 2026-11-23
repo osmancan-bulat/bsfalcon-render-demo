@@ -1,0 +1,274 @@
+/* Yazdırılabilir belgeler (A4) */
+.doc-loading {
+  padding: 80px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.doc-shell {
+  min-height: 100vh;
+  padding: 0 16px 48px;
+  background: var(--stone-150);
+}
+.doc-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 210mm;
+  margin: 0 auto 20px;
+  padding: 12px 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+.doc-page {
+  max-width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 18mm 18mm 14mm;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: var(--graphite-900);
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: var(--shadow-md);
+}
+.doc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid var(--forest-800);
+}
+.doc-header img {
+  width: 150px;
+  height: 46px;
+  object-fit: cover;
+}
+.doc-header > div {
+  text-align: right;
+}
+.doc-header span {
+  color: var(--bronze-700);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.doc-header h1 {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.doc-page h3 {
+  margin: 18px 0 6px;
+  color: var(--forest-800);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.doc-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 8px;
+  border: 1px solid var(--stone-200);
+}
+.doc-meta > div {
+  padding: 8px 10px;
+}
+.doc-meta > div + div {
+  border-left: 1px solid var(--stone-200);
+}
+.doc-meta dt {
+  color: var(--graphite-500);
+  font-size: 10px;
+}
+.doc-meta dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+.doc-kv,
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.doc-kv th {
+  width: 30%;
+  padding: 7px 10px 7px 0;
+  color: var(--graphite-500);
+  font-weight: 500;
+  text-align: left;
+  vertical-align: top;
+}
+.doc-kv td {
+  padding: 7px 0;
+}
+.doc-kv tr + tr > * {
+  border-top: 1px solid var(--stone-150);
+}
+.doc-table {
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.doc-table th {
+  padding: 6px 8px;
+  border-bottom: 1.5px solid var(--graphite-700);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.doc-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--stone-150);
+}
+.doc-table .r {
+  text-align: right;
+}
+.doc-table tfoot td {
+  border-top: 1.5px solid var(--graphite-700);
+  border-bottom: 0;
+  font-weight: 700;
+}
+.doc-table tr {
+  break-inside: avoid;
+}
+.doc-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 14px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--forest-300);
+  background: var(--forest-100);
+}
+.doc-amount b {
+  font-size: 22px;
+}
+.doc-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 10px;
+  border: 1px solid var(--stone-200);
+  background: var(--stone-200);
+}
+.doc-kpis > div {
+  padding: 8px 10px;
+  background: #fff;
+}
+.doc-kpis span {
+  display: block;
+  color: var(--graphite-500);
+  font-size: 10px;
+}
+.doc-kpis b {
+  font-size: 13px;
+}
+.doc-small {
+  margin-top: 10px;
+  color: var(--graphite-500);
+  font-size: 10.5px;
+}
+.doc-signatures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 40px;
+  margin-top: 48px;
+}
+.doc-signatures.single {
+  grid-template-columns: minmax(0, 220px);
+  justify-content: end;
+}
+.doc-signatures span {
+  color: var(--graphite-500);
+  font-size: 10.5px;
+}
+.doc-signatures i {
+  display: block;
+  height: 48px;
+  border-bottom: 1px solid var(--graphite-700);
+}
+.doc-footer {
+  margin-top: auto;
+  padding-top: 18px;
+  color: var(--bronze-700);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+@media (max-width: 760px) {
+  .doc-page {
+    padding: 20px 16px;
+    min-height: 0;
+  }
+  .doc-meta,
+  .doc-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .doc-meta > div:nth-child(3) {
+    border-left: 0;
+  }
+  .doc-page {
+    overflow-x: auto;
+  }
+}
+@page {
+  size: A4;
+  margin: 12mm;
+}
+@media print {
+  .doc-shell {
+    padding: 0;
+    background: #fff;
+  }
+  .doc-toolbar {
+    display: none;
+  }
+  .doc-page {
+    max-width: none;
+    min-height: auto;
+    padding: 0;
+    box-shadow: none;
+  }
+  .doc-header,
+  .doc-amount,
+  .doc-meta {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+/* Her çıktının üstünde görünür "temsili" damgası (ekranda ve baskıda) */
+.doc-stamp {
+  align-self: flex-end;
+  margin: -6px 0 14px;
+  padding: 4px 10px;
+  border: 1.5px solid var(--bronze-700);
+  border-radius: 4px;
+  color: var(--bronze-700);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.doc-void {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--danger);
+  border-radius: 6px;
+  color: var(--danger);
+  font-weight: 600;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
