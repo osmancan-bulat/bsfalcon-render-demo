@@ -43,17 +43,17 @@ export default function PrintDocument() {
     setP({
       tur: q.get("tur") ?? "",
       id: q.get("id") ?? "",
-      project: q.get("project") ?? "cengilli",
+      project: q.get("project") ?? "alion",
       rapor: q.get("rapor") ?? "yonetici",
       from: q.get("from") ?? undefined,
       to: q.get("to") ?? undefined,
     });
   }, []);
   if (!ready || !p)
-    return <div className="doc-loading">Belge hazırlanıyor…</div>;
+    return <div className="doc-loading">Preparando documento…</div>;
 
   let body: ReactNode = null;
-  let title = "Belge";
+  let title = "Documento";
   if (p.tur === "sozlesme" || p.tur === "plan" || p.tur === "ekstre") {
     const contract = contractList(state).find((c) => c.id === p.id);
     const c = [
@@ -66,59 +66,59 @@ export default function PrintDocument() {
       const parts = depositSchedule(c, contract.signedAt);
       const rows = contract.account ? acc.rows : [];
       if (p.tur === "sozlesme") {
-        title = "Konut satış sözleşmesi özeti";
+        title = "Resumen del contrato de compraventa";
         body = (
           <>
             <DocMeta
               items={[
-                ["Sözleşme no", contract.number],
-                ["Durum", contract.status],
+                ["N.º de contrato", contract.number],
+                ["Estado", contract.status],
                 [
-                  "İmza tarihi",
-                  contract.signedAt ? date(contract.signedAt) : "İmza bekliyor",
+                  "Fecha de firma",
+                  contract.signedAt ? date(contract.signedAt) : "Pendiente de firma",
                 ],
-                ["Proje", pname(c.project)],
+                ["Proyecto", pname(c.project)],
               ]}
             />
             <h3>Taraflar</h3>
             <table className="doc-kv">
               <tbody>
                 <tr>
-                  <th>Satıcı</th>
-                  <td>BŞ Falcon Group (temsili demo kaydı)</td>
+                  <th>Vendedor</th>
+                  <td>EDIFICA Desarrollos Inmobiliarios (registro de demostración)</td>
                 </tr>
                 <tr>
-                  <th>Alıcı</th>
-                  <td>{c.name} (kurgusal müşteri)</td>
+                  <th>Comprador</th>
+                  <td>{c.name} (cliente ficticio)</td>
                 </tr>
               </tbody>
             </table>
-            <h3>Bağımsız bölüm</h3>
+            <h3>Unidades</h3>
             <table className="doc-kv">
               <tbody>
                 <tr>
-                  <th>Daire</th>
+                  <th>Unidad</th>
                   <td>
-                    {pname(c.project)} · {unitPlace(c.id)} (kod {c.unit}) ·{" "}
-                    {contract.type} · {contract.facade} cephe
+                    {pname(c.project)} · {unitPlace(c.id)} (código {c.unit}) ·{" "}
+                    {contract.type} · {contract.facade} orientación
                   </td>
                 </tr>
                 <tr>
                   <th>Alan</th>
-                  <td>Brüt {contract.gross} m²</td>
+                  <td>Bruto {contract.gross} m²</td>
                 </tr>
                 <tr>
-                  <th>Satış bedeli</th>
+                  <th>Precio de venta</th>
                   <td>
                     <b>{money(c.price)}</b>
                     {contract.listPrice
-                      ? ` (liste fiyatı ${money(contract.listPrice)}, indirim ${money(contract.discount)})`
+                      ? `(precio de lista ${money(contract.listPrice)}, descuento ${money(contract.discount)})`
                       : ""}
                   </td>
                 </tr>
               </tbody>
             </table>
-            <h3>Ödeme koşulları</h3>
+            <h3>Condiciones de pago</h3>
             <table className="doc-kv">
               <tbody>
                 <tr>
@@ -126,21 +126,21 @@ export default function PrintDocument() {
                   <td>{contract.planLabel}</td>
                 </tr>
                 <tr>
-                  <th>Peşinat</th>
+                  <th>Anticipo</th>
                   <td>
                     {parts.map((d, n) => (
                       <div key={n}>
-                        {money(d.amount)} · vade {date(d.due)}
-                        {d.remaining === 0 ? " · tahsil edildi" : ""}
+                        {money(d.amount)} · vence {date(d.due)}
+                        {d.remaining === 0 ? "· cobrado" : ""}
                       </div>
                     ))}
                   </td>
                 </tr>
                 {contract.account && (
                   <tr>
-                    <th>Bakiye ({date(SNAPSHOT)})</th>
+                    <th>Saldo ({date(SNAPSHOT)})</th>
                     <td>
-                      Tahsil edilen {money(acc.collected)} · kalan{" "}
+                      Cobrado {money(acc.collected)} · saldo{" "}
                       {money(acc.balance)}
                     </td>
                   </tr>
@@ -148,42 +148,41 @@ export default function PrintDocument() {
               </tbody>
             </table>
             <p className="doc-small">
-              Ayrıntılı ödeme takvimi ekteki ödeme planı belgesinde yer alır. Bu
-              özet hukuki sözleşme metni değildir.
+              El calendario detallado figura en el plan de pagos adjunto. Este resumen no es el texto legal del contrato.
             </p>
             <div className="doc-signatures">
               <div>
-                <span>Satıcı adına</span>
+                <span>Por el vendedor</span>
                 <i />
               </div>
               <div>
-                <span>Alıcı</span>
+                <span>Comprador</span>
                 <i />
               </div>
             </div>
           </>
         );
       } else if (p.tur === "plan") {
-        title = "Ödeme planı";
+        title = "Plan de pagos";
         body = (
           <>
             <DocMeta
               items={[
-                ["Sözleşme no", contract.number],
-                ["Müşteri", c.name],
-                ["Daire", `${pname(c.project)} · ${unitShort(c.id)}`],
-                ["Bedel", money(c.price)],
+                ["N.º de contrato", contract.number],
+                ["Cliente", c.name],
+                ["Unidad", `${pname(c.project)} · ${unitShort(c.id)}`],
+                ["Precio", money(c.price)],
               ]}
             />
             <table className="doc-table">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Ödeme</th>
-                  <th>Vade</th>
-                  <th className="r">Tutar</th>
-                  <th className="r">Kalan</th>
-                  <th>Durum</th>
+                  <th>Pago</th>
+                  <th>Vencimiento</th>
+                  <th className="r">Monto</th>
+                  <th className="r">Saldo</th>
+                  <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
@@ -191,28 +190,28 @@ export default function PrintDocument() {
                   <tr key={`d${n}`}>
                     <td>P{n + 1}</td>
                     <td>
-                      {parts.length > 1 ? `${n + 1}. peşinat` : "Peşinat"}
+                      {parts.length > 1 ? `Anticipo ${n + 1}` : "Anticipo"}
                     </td>
                     <td>{date(d.due)}</td>
                     <td className="r">{money(d.amount)}</td>
                     <td className="r">{money(d.remaining)}</td>
                     <td>
                       {d.remaining === 0
-                        ? "Ödendi"
+                        ? "Pagada"
                         : d.paid > 0
-                          ? "Kısmi"
-                          : "Bekliyor"}
+                          ? "Parcial"
+                          : "Pendiente"}
                     </td>
                   </tr>
                 ))}
                 {Array.from({ length: c.paidMonths }, (_, k) => (
                   <tr key={`h${k}`}>
                     <td>{k + 1}</td>
-                    <td>{k + 1}. taksit</td>
+                    <td>{k + 1}· cuota</td>
                     <td>—</td>
                     <td className="r">{money(c.installment)}</td>
                     <td className="r">{money(0)}</td>
-                    <td>Ödendi</td>
+                    <td>Pagada</td>
                   </tr>
                 ))}
                 {rows.map((i, n) => {
@@ -220,20 +219,20 @@ export default function PrintDocument() {
                   return (
                     <tr key={i.id}>
                       <td>
-                        {i.kind === "Ara ödeme" ? "A" : i.id.split("-").pop()}
+                        {i.kind === "Pago intermedio" ? "A" : i.id.split("-").pop()}
                       </td>
-                      <td>{i.label ?? `${n + c.paidMonths + 1}. taksit`}</td>
+                      <td>{i.label ?? `Cuota ${n + c.paidMonths + 1}`}</td>
                       <td>{date(i.due)}</td>
                       <td className="r">{money(i.amount)}</td>
                       <td className="r">{money(left)}</td>
                       <td>
                         {left === 0
-                          ? "Ödendi"
+                          ? "Pagada"
                           : left < i.amount
-                            ? "Kısmi"
+                            ? "Parcial"
                             : i.due < SNAPSHOT
-                              ? "Gecikmiş"
-                              : "Planlandı"}
+                              ? "Vencida"
+                              : "Planificado"}
                       </td>
                     </tr>
                   );
@@ -241,7 +240,7 @@ export default function PrintDocument() {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={3}>Toplam</td>
+                  <td colSpan={3}>Total</td>
                   <td className="r">{money(c.price)}</td>
                   <td className="r">
                     {contract.account ? money(acc.balance) : money(c.price)}
@@ -253,27 +252,27 @@ export default function PrintDocument() {
           </>
         );
       } else {
-        title = "Müşteri cari hesap ekstresi";
+        title = "Estado de cuenta del cliente";
         const ledger = customerLedger(state, c.id);
         body = (
           <>
             <DocMeta
               items={[
-                ["Sözleşme no", contract.number],
-                ["Müşteri", c.name],
-                ["Daire", `${pname(c.project)} · ${unitShort(c.id)}`],
-                ["Ekstre tarihi", date(SNAPSHOT)],
+                ["N.º de contrato", contract.number],
+                ["Cliente", c.name],
+                ["Unidad", `${pname(c.project)} · ${unitShort(c.id)}`],
+                ["Fecha del estado de cuenta", date(SNAPSHOT)],
               ]}
             />
             <table className="doc-table">
               <thead>
                 <tr>
-                  <th>Tarih</th>
-                  <th>Açıklama</th>
-                  <th>Belge</th>
-                  <th className="r">Borç</th>
-                  <th className="r">Alacak</th>
-                  <th className="r">Bakiye</th>
+                  <th>Fecha</th>
+                  <th>Descripción</th>
+                  <th>Documento</th>
+                  <th className="r">Cargo</th>
+                  <th className="r">Abono</th>
+                  <th className="r">Saldo</th>
                 </tr>
               </thead>
               <tbody>
@@ -290,7 +289,7 @@ export default function PrintDocument() {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={5}>Kalan bakiye</td>
+                  <td colSpan={5}>Saldo pendiente</td>
                   <td className="r">{money(ledger.at(-1)?.balance ?? 0)}</td>
                 </tr>
               </tfoot>
@@ -304,61 +303,61 @@ export default function PrintDocument() {
     const i = r && installmentList(state).find((i) => i.id === r.installmentId);
     const c = i && customerList(state).find((c) => c.id === i.customerId);
     if (r && i && c) {
-      title = r.reversal ? "Tahsilat makbuzu · İPTAL EDİLDİ" : "Tahsilat makbuzu";
+      title = r.reversal ? "Recibo de cobro · ANULADO" : "Recibo de cobro";
       const acc = accountOf(state, c);
       body = (
         <>
           {r.reversal && (
             <p className="doc-void">
-              Bu tahsilat {date(r.reversal.date)} tarihinde iptal edildi · Gerekçe: {r.reversal.reason}. Tutar müşteri bakiyesine geri eklenmiştir.
+              Este cobro fue anulado el {date(r.reversal.date)} · Motivo: {r.reversal.reason}. El monto se volvió a sumar al saldo del cliente.
             </p>
           )}
           <DocMeta
             items={[
-              ["Makbuz no", r.id],
-              ["Tarih", date(r.date)],
-              ["Sözleşme no", contractNumber(c.id)],
-              ["Proje", pname(c.project)],
+              ["N.º de recibo", r.id],
+              ["Fecha", date(r.date)],
+              ["N.º de contrato", contractNumber(c.id)],
+              ["Proyecto", pname(c.project)],
             ]}
           />
           <div className="doc-amount">
-            <span>Tahsil edilen tutar</span>
+            <span>Monto cobrado</span>
             <b>{money(r.amount)}</b>
           </div>
           <table className="doc-kv">
             <tbody>
               <tr>
-                <th>Ödeyen</th>
-                <td>{c.name} (kurgusal müşteri)</td>
+                <th>Pagador</th>
+                <td>{c.name} (cliente ficticio)</td>
               </tr>
               <tr>
-                <th>Daire</th>
+                <th>Unidad</th>
                 <td>
                   {pname(c.project)} · {unitPlace(c.id)}
                 </td>
               </tr>
               <tr>
-                <th>Ödeme</th>
+                <th>Pago</th>
                 <td>
-                  {i.label ?? `${i.id.split("-").pop()}. taksit`} · vade{" "}
-                  {date(i.due)} · tutar {money(i.amount)}
+                  {i.label ?? `Cuota ${i.id.split("-").pop()}`} · vence{" "}
+                  {date(i.due)} · monto {money(i.amount)}
                 </td>
               </tr>
               <tr>
-                <th>Yöntem / dekont</th>
+                <th>Medio / comprobante</th>
                 <td>
                   {r.method} · {r.reference}
                 </td>
               </tr>
               <tr>
-                <th>Güncel bakiye</th>
+                <th>Saldo actual</th>
                 <td>{money(acc.balance)}</td>
               </tr>
             </tbody>
           </table>
           <div className="doc-signatures single">
             <div>
-              <span>Tahsil eden</span>
+              <span>Cobrado por</span>
               <i />
             </div>
           </div>
@@ -368,7 +367,7 @@ export default function PrintDocument() {
   } else if (p.tur === "barter") {
     const b = state.barters.find((b) => b.id === p.id);
     if (b) {
-      title = "Barter (iş karşılığı daire) sözleşmesi özeti";
+      title = "Resumen del canje (unidad por obra)";
       const u = unitById(b.unitId);
       const offsets = (state.offsets ?? []).filter((o) => o.barterId === b.id);
       const used = offsets.reduce((a, o) => a + o.amount, 0);
@@ -376,10 +375,10 @@ export default function PrintDocument() {
         <>
           <DocMeta
             items={[
-              ["Sözleşme no", b.id],
-              ["Proje", pname(b.project)],
-              ["Daire", u?.label ?? b.unitId],
-              ["Belge tarihi", date(SNAPSHOT)],
+              ["N.º de contrato", b.id],
+              ["Proyecto", pname(b.project)],
+              ["Unidad", u?.label ?? b.unitId],
+              ["Fecha del documento", date(SNAPSHOT)],
             ]}
           />
           <h3>Taraflar</h3>
@@ -387,73 +386,73 @@ export default function PrintDocument() {
             <tbody>
               <tr>
                 <th>Daireyi veren</th>
-                <td>BŞ Falcon Group (temsili demo kaydı)</td>
+                <td>EDIFICA Desarrollos Inmobiliarios (registro de demostración)</td>
               </tr>
               <tr>
-                <th>İşi yapan firma</th>
-                <td>{b.company} (kurgusal firma)</td>
+                <th>Empresa ejecutora</th>
+                <td>{b.company} (empresa ficticia)</td>
               </tr>
             </tbody>
           </table>
-          <h3>Karşılıklı edimler</h3>
+          <h3>Prestaciones</h3>
           <table className="doc-kv">
             <tbody>
               <tr>
-                <th>Verilen bağımsız bölüm</th>
+                <th>Unidad entregada</th>
                 <td>
-                  {pname(b.project)} · {unitPlace(b.unitId)} · {u?.type} · brüt{" "}
-                  {u?.gross} m² · {u?.facade} cephe
+                  {pname(b.project)} · {unitPlace(b.unitId)} · {u?.type} ·{" "}
+                  {u?.gross} m² · {u?.facade} orientación
                 </td>
               </tr>
               <tr>
-                <th>Karşılığında yapılacak iş</th>
+                <th>Trabajo a realizar</th>
                 <td>{b.work}</td>
               </tr>
               <tr>
-                <th>Anlaşma bedeli</th>
+                <th>Valor del acuerdo</th>
                 <td>
-                  <b>{money(b.amount)}</b> (dairenin liste fiyatı{" "}
+                  <b>{money(b.amount)}</b> (precio de lista de la unidad{" "}
                   {money(u?.listPrice ?? 0)})
                 </td>
               </tr>
               <tr>
-                <th>İş süresi</th>
+                <th>Plazo</th>
                 <td>
                   {date(b.start)} – {date(b.end)} · tamamlanma %{b.progress}
                 </td>
               </tr>
               <tr>
-                <th>Daire devri</th>
+                <th>Transferencia de la unidad</th>
                 <td>{b.transfer}</td>
               </tr>
             </tbody>
           </table>
-          <h3>Hakediş mahsupları</h3>
+          <h3>Compensaciones</h3>
           <SimpleTable
-            head={["Tarih", "Hakediş", "Mahsup"]}
+            head={["Fecha", "Certificado de obra", "Compensación"]}
             rows={offsets.map((o) => [
               date(o.date),
               o.requestId,
               money(o.amount),
             ])}
-            empty="Henüz hakedişe mahsup yapılmadı."
+            empty="Aún no hay compensaciones."
           />
           <div className="doc-amount">
-            <span>Kalan yükümlülük (nakit dışı)</span>
+            <span>Obligación pendiente (sin efectivo)</span>
             <b>{money(b.amount - used)}</b>
           </div>
           <p className="doc-small">
-            Barter satış geliri, tahsilat veya kasa girişi oluşturmaz; firmanın
-            hakedişlerinden mahsup edilir. Bu özet hukuki sözleşme metni
-            değildir.
+            Un canje no genera ingreso de venta, cobro ni entrada de caja; se compensa
+            con los certificados de la empresa. Este resumen no es un texto
+            legal.
           </p>
           <div className="doc-signatures">
             <div>
-              <span>BŞ Falcon Group adına</span>
+              <span>Por EDIFICA</span>
               <i />
             </div>
             <div>
-              <span>{b.company} adına</span>
+              <span>{b.company} por</span>
               <i />
             </div>
           </div>
@@ -463,45 +462,45 @@ export default function PrintDocument() {
   } else if (p.tur === "is") {
     const wc = workContracts(state).find((w) => w.id === p.id);
     if (wc) {
-      title = "İş (taşeron) sözleşmesi özeti";
+      title = "Resumen del contrato de obra";
       body = (
         <>
           <DocMeta
             items={[
-              ["Sözleşme no", wc.id],
-              ["Proje", pname(wc.project)],
-              ["Firma", wc.company],
-              ["Belge tarihi", date(SNAPSHOT)],
-              ["Sözleşme bedeli", money(wc.value)],
+              ["N.º de contrato", wc.id],
+              ["Proyecto", pname(wc.project)],
+              ["Empresa", wc.company],
+              ["Fecha del documento", date(SNAPSHOT)],
+              ["Precio del contrato", money(wc.value)],
             ]}
           />
           <h3>Taraflar</h3>
           <table className="doc-kv">
             <tbody>
               <tr>
-                <th>İşveren</th>
-                <td>BŞ Falcon Group (temsili demo kaydı)</td>
+                <th>Comitente</th>
+                <td>EDIFICA Desarrollos Inmobiliarios (registro de demostración)</td>
               </tr>
               <tr>
-                <th>Yüklenici</th>
-                <td>{wc.company} (kurgusal firma)</td>
+                <th>Contratista</th>
+                <td>{wc.company} (empresa ficticia)</td>
               </tr>
             </tbody>
           </table>
-          <h3>İş kapsamı</h3>
+          <h3>Alcance</h3>
           <SimpleTable
-            head={["İş paketi", "Bedel", "İlerleme", "Malzeme / durum"]}
+            head={["Paquete de obra", "Precio", "Avance", "Materiales / estado"]}
             rows={wc.packages.map((w) => [
               w.name,
               money(w.value),
               `%${w.progress}`,
               w.material,
             ])}
-            empty="İş paketi yok."
+            empty="Sin paquetes de obra."
           />
-          <h3>Hakedişler</h3>
+          <h3>Certificados</h3>
           <SimpleTable
-            head={["Hakediş", "Vade", "Tutar", "Barter mahsubu", "Durum"]}
+            head={["Certificado de obra", "Vencimiento", "Monto", "Compensación por canje", "Estado"]}
             rows={wc.requests.map((r) => [
               `${r.id} · ${r.name}`,
               date(r.due),
@@ -509,16 +508,16 @@ export default function PrintDocument() {
               money(offsetFor(state, r.id)),
               requestStatus(state, r),
             ])}
-            empty="Bu sözleşmede henüz hakediş yok."
+            empty="Este contrato aún no tiene certificados."
           />
           <div className="doc-kpis">
             {(
               [
-                ["Sözleşme bedeli", money(wc.value)],
-                ["Toplam hakediş", money(wc.hakedisTotal)],
-                ["Nakit ödenen", money(wc.paid)],
-                ["Barter mahsubu", money(wc.offset)],
-                ["Bağlı barter", wc.barterId ?? "—"],
+                ["Precio del contrato", money(wc.value)],
+                ["Total certificado", money(wc.hakedisTotal)],
+                ["Pagado", money(wc.paid)],
+                ["Compensación por canje", money(wc.offset)],
+                ["Canje vinculado", wc.barterId ?? "—"],
               ] as const
             ).map(([k, v]) => (
               <div key={k}>
@@ -528,16 +527,15 @@ export default function PrintDocument() {
             ))}
           </div>
           <p className="doc-small">
-            İş kapsamı ve hakedişler sistemdeki iş paketi ve hakediş
-            kayıtlarından üretilmiştir. Bu özet hukuki sözleşme metni değildir.
+            Alcance y certificados generados desde los registros del sistema. Este resumen no es un texto legal.
           </p>
           <div className="doc-signatures">
             <div>
-              <span>BŞ Falcon Group adına</span>
+              <span>Por EDIFICA</span>
               <i />
             </div>
             <div>
-              <span>{wc.company} adına</span>
+              <span>{wc.company} por</span>
               <i />
             </div>
           </div>
@@ -553,25 +551,25 @@ export default function PrintDocument() {
         <>
           <DocMeta
             items={[
-              ["Kapsam", p.project === "all" ? "BŞ Falcon Group · şirket geneli" : pname(p.project)],
-              ["Dönem", periodLabel(f)],
-              ["Rapor tarihi", date(SNAPSHOT)],
-              ["Kaynak", "Tarayıcıdaki demo kayıtları"],
+              ["Kapsam", p.project === "all" ? "EDIFICA · toda la empresa" : pname(p.project)],
+              ["Período", periodLabel(f)],
+              ["Fecha del informe", date(SNAPSHOT)],
+              ["Kaynak", "Registros de demostración del navegador"],
             ]}
           />
           <div className="doc-report">
             <ReportBody s={state} kind={kind} f={f} />
           </div>
           <p className="doc-small">
-            Durum göstergeleri 15 Kasım 2026 senaryo tarihine göredir. Dönem filtresi: kasaya giren ve çıkan gerçek tahsilat/ödeme tarihine, barter mahsubu mahsup tarihine, satışlar imza tarihine, taksit ve hakediş listeleri vade tarihine göre uygulanır. Vade, ödemenin yapıldığı anlamına gelmez. Barter nakit girişi veya çıkışı sayılmaz.
+            Los indicadores de estado corresponden a la fecha de corte del 15 de noviembre de 2026. El filtro de período se aplica a la fecha real de cobro o pago para la caja, a la fecha de firma para las ventas y al vencimiento para cuotas y certificados. Un vencimiento no implica que el pago se haya realizado.
           </p>
         </>
       );
     }
-  } else if (p.tur === "proje") {
+  } else if (p.tur === "proyecto") {
     const pr = projects.find((x) => x.id === p.project);
     if (pr) {
-      title = `${pr.name} yönetici raporu`;
+      title = `Informe gerencial · ${pr.name}`;
       const s = summary(state, pr.id);
       const contracts = contractList(state).filter((c) => c.project === pr.id);
       const late = contracts.filter((c) => (c.account?.overdue ?? 0) > 0);
@@ -579,30 +577,30 @@ export default function PrintDocument() {
         (c) => (c.account?.depositRemaining ?? 0) > 0,
       );
       const drafts = contracts.filter(
-        (c) => c.status === "Taslak" || c.status === "İmza bekliyor",
+        (c) => c.status === "Borrador" || c.status === "Pendiente de firma",
       );
       const barters = state.barters.filter((b) => b.project === pr.id);
       body = (
         <>
           <DocMeta
             items={[
-              ["Rapor tarihi", date(SNAPSHOT)],
+              ["Fecha del informe", date(SNAPSHOT)],
               ["Konum", pr.location],
-              ["Teslim hedefi", pr.delivery || "Açıklanmadı"],
-              ["İnşaat ilerlemesi", `%${s.progress}`],
+              ["Entrega prevista", pr.delivery || "No publicada"],
+              ["Avance de obra", `%${s.progress}`],
             ]}
           />
           <div className="doc-kpis">
             {(
               [
-                ["Satılan", `${s.sold} / ${s.total}`],
-                ["Sözleşme değeri", money(s.revenue)],
-                ["Tahsil edilen", money(s.collected)],
-                ["Kalan alacak", money(s.balance)],
-                ["Gecikmiş", money(s.overdueTotal)],
-                ["Bekleyen peşinat", money(s.depositPending)],
-                ["Barter", `${s.barterCount} daire · ${money(s.barterValue)}`],
-                ["Proje kasası", money(s.cash)],
+                ["Vendidas", `${s.sold} / ${s.total}`],
+                ["Valor contratado", money(s.revenue)],
+                ["Cobrado", money(s.collected)],
+                ["Saldo por cobrar", money(s.balance)],
+                ["Vencida", money(s.overdueTotal)],
+                ["Anticipo pendiente", money(s.depositPending)],
+                ["Canje", `${s.barterCount} unidades · ${money(s.barterValue)}`],
+                ["Caja del proyecto", money(s.cash)],
               ] as const
             ).map(([k, v]) => (
               <div key={k}>
@@ -611,9 +609,9 @@ export default function PrintDocument() {
               </div>
             ))}
           </div>
-          <h3>Geciken ödemeler</h3>
+          <h3>Pagos vencidos</h3>
           <SimpleTable
-            head={["Sözleşme", "Müşteri", "Daire", "En eski vade", "Gecikmiş"]}
+            head={["Contrato", "Cliente", "Unidad", "Vencimiento más antiguo", "Vencida"]}
             rows={late.map((c) => [
               c.number,
               c.name,
@@ -621,11 +619,11 @@ export default function PrintDocument() {
               date(c.account!.oldestOverdue!),
               money(c.account!.overdue),
             ])}
-            empty="Gecikmiş ödeme yok."
+            empty="Sin pagos vencidos."
           />
-          <h3>Bekleyen peşinatlar</h3>
+          <h3>Anticipos pendientes</h3>
           <SimpleTable
-            head={["Sözleşme", "Müşteri", "Daire", "Anlaşmalı", "Kalan"]}
+            head={["Contrato", "Cliente", "Unidad", "Pactado", "Saldo"]}
             rows={deposits.map((c) => [
               c.number,
               c.name,
@@ -633,11 +631,11 @@ export default function PrintDocument() {
               money(c.account!.depositExpected),
               money(c.account!.depositRemaining),
             ])}
-            empty="Bekleyen peşinat yok."
+            empty="Sin anticipos pendientes."
           />
-          <h3>İmza sürecindeki sözleşmeler</h3>
+          <h3>Contratos en proceso de firma</h3>
           <SimpleTable
-            head={["Sözleşme", "Müşteri", "Daire", "Bedel", "Durum"]}
+            head={["Contrato", "Cliente", "Unidad", "Precio", "Estado"]}
             rows={drafts.map((c) => [
               c.number,
               c.name,
@@ -645,11 +643,11 @@ export default function PrintDocument() {
               money(c.price),
               c.status,
             ])}
-            empty="Taslak sözleşme yok."
+            empty="Sin borradores."
           />
-          <h3>Barter daireleri</h3>
+          <h3>Unidades en canje</h3>
           <SimpleTable
-            head={["Daire", "Firma", "İş", "Bedel", "Devir"]}
+            head={["Unidad", "Empresa", "Trabajo", "Precio", "Cesión"]}
             rows={barters.map((b) => [
               unitShort(b.unitId),
               b.company,
@@ -657,7 +655,7 @@ export default function PrintDocument() {
               money(b.amount),
               b.transfer,
             ])}
-            empty="Barter anlaşması yok."
+            empty="Sin canjes."
           />
         </>
       );
@@ -667,30 +665,29 @@ export default function PrintDocument() {
   return (
     <div className="doc-shell">
       <div className="doc-toolbar">
-        <span>Belge önizleme · tarayıcıdaki demo verisinden üretildi</span>
+        <span>Vista previa · generada con los datos de demostración del navegador</span>
         <button className="btn primary" onClick={() => window.print()}>
-          <Printer size={15} /> Yazdır / PDF kaydet
+          <Printer size={15} /> Imprimir / guardar PDF
         </button>
       </div>
       <article className="doc-page">
-        <div className="doc-stamp" aria-label="Temsili demo belgesi">
-          TEMSİLİ DEMO BELGESİ · HUKUKİ GEÇERLİLİĞİ YOKTUR
+        <div className="doc-stamp" aria-label="Documento de demostración">
+          DOCUMENTO DE DEMOSTRACIÓN · SIN VALIDEZ LEGAL NI FISCAL
         </div>
         <header className="doc-header">
-          <img src="/images/falcon-lockup-black-gold.svg" alt="BŞ Falcon Group" />
+          <div className="doc-brand"><img src="/images/edifica/edifica-isotipo-oro.svg" alt="" /><span><b>EDIFICA</b><i>DESARROLLOS INMOBILIARIOS</i></span></div>
           <div>
-            <span>Yönetim Merkezi</span>
+            <span>Centro de Gestión</span>
             <h1>{title}</h1>
           </div>
         </header>
         {body ?? (
           <p className="doc-small">
-            Belge bulunamadı. Bağlantıyı uygulama içinden yeniden açın.
+            Documento no encontrado. Vuelva a abrir el enlace desde la aplicación.
           </p>
         )}
         <footer className="doc-footer">
-          TEMSİLİ DEMO BELGESİ · Kişi, firma ve tutarlar kurgusaldır · Hukuki
-          veya mali geçerliliği yoktur · {date(SNAPSHOT)}
+          DOCUMENTO DE DEMOSTRACIÓN · Personas, empresas y montos son ficticios · Sin validez legal ni fiscal · No es una factura · {date(SNAPSHOT)}
         </footer>
       </article>
     </div>

@@ -45,15 +45,14 @@ export default function CompanyOverview() {
     <div className="home company">
       <header className="home-head">
         <div>
-          <span className="eyebrow">{date(SNAPSHOT)} · Şirket genel bakışı</span>
-          <h1>BŞ Falcon Group</h1>
+          <span className="eyebrow">{date(SNAPSHOT)} · Resumen de la empresa</span>
+          <h1>EDIFICA</h1>
           <p>
-            {projects.filter((p) => p.status === "Aktif").length} aktif proje · {sales.total.total} bağımsız
-            bölüm · {sales.total.sold} satış · tutarlar temsilidir
+            {projects.filter((p) => p.status === "Activo").length} proyectos activos · {sales.total.total} unidades · {sales.total.sold} ventas · montos de ejemplo
           </p>
         </div>
-        <nav className="quick-actions" aria-label="Hızlı işlemler">
-          <Link className="btn" href="/raporlar">
+        <nav className="quick-actions" aria-label="Acciones rápidas">
+          <Link className="btn" href="/informes">
             <BarChart3 size={15} /> Raporlama
           </Link>
           <Link
@@ -61,57 +60,57 @@ export default function CompanyOverview() {
             href="/belge/?tur=yonetici&project=all"
             target="_blank"
           >
-            <Printer size={15} /> Yönetici raporu
+            <Printer size={15} /> Informe gerencial
           </Link>
         </nav>
       </header>
 
-      <section className="status-tiles four" aria-label="Şirket finansal durumu">
+      <section className="status-tiles four" aria-label="Situación financiera de la empresa">
         <div className="status-tile">
-          <span>Sözleşmeli satış</span>
+          <span>Monto contratado</span>
           <strong className="num">{compact(fin.contracted)}</strong>
-          <small>{sales.total.sold} aktif satış sözleşmesi</small>
+          <small>{sales.total.sold} contratos activos</small>
         </div>
         <div className="status-tile">
-          <span>Tahsil edilen</span>
+          <span>Cobrado</span>
           <strong className="num">{compact(fin.collected)}</strong>
-          <small>Tahsilat oranı %{Math.round(fin.collectionRate * 100)}</small>
+          <small>Cobranza %{Math.round(fin.collectionRate * 100)}</small>
         </div>
         <div className="status-tile">
-          <span>Kalan alacak</span>
+          <span>Saldo por cobrar</span>
           <strong className="num">{compact(fin.balance)}</strong>
-          <small>{inst.upcomingCount} ödeme önümüzdeki 90 günde</small>
+          <small>{inst.upcomingCount} pagos en los próximos 90 días</small>
         </div>
         <Link
-          href="/odemeler?durum=Gecikti"
+          href="/cobros?durum=Vencida"
           className={`status-tile ${fin.overdue > 0 ? "danger" : ""}`}
           onClick={() => setProject("all")}
         >
-          <span>Geciken alacak</span>
+          <span>Saldo vencido</span>
           <strong className="num">{money(fin.overdue)}</strong>
           <small>
-            {inst.perCustomer.length} müşteri <ArrowRight size={13} />
+            {inst.perCustomer.length} clientes <ArrowRight size={13} />
           </small>
         </Link>
       </section>
 
-      <Link href="/raporlar" className="company-month" aria-label="Bu ayın nakit hareketi — finansal rapor">
-        <span>Kasım 2026 nakit hareketi</span>
+      <Link href="/informes" className="company-month" aria-label="Caja del mes — informe financiero">
+        <span>Caja de noviembre 2026</span>
         <span>
-          Kasaya giren <b className="num">{money(month.inflow)}</b>
+          Ingresos <b className="num">{money(month.inflow)}</b>
         </span>
         <span>
-          Gerçekleşen ödeme <b className="num">{money(month.outflow)}</b>
-          <small> (kayıtlı ödeme tarihine göre)</small>
+          Pagos realizados <b className="num">{money(month.outflow)}</b>
+          <small> (según fecha de pago registrada)</small>
         </span>
         <span>
-          Barter mahsubu <b className="num">{money(month.barterOffset)}</b>
-          <small> (nakit dışı)</small>
+          Compensación por canje <b className="num">{money(month.barterOffset)}</b>
+          <small> (sin efectivo)</small>
         </span>
         <ArrowRight size={14} />
       </Link>
 
-      <section className="company-projects" aria-label="Projeler">
+      <section className="company-projects" aria-label="Proyectos">
         {visibleProjects().map((p) => {
           const pf = { project: p.id };
           const f = financialReport(state, pf);
@@ -121,20 +120,20 @@ export default function CompanyOverview() {
             <article key={p.id} className="company-project">
               {p.image && (
                 <div className="project-cover">
-                  <img src={p.image} alt={`${p.name} resmî proje görseli`} loading="lazy" />
-                  <span>Görsel: bsfalcongroup.com</span>
+                  <img src={p.image} alt={`${p.name} · imagen oficial`} loading="lazy" />
+                  <span>Imagen: edifica.com.py</span>
                 </div>
               )}
               <header>
-                <span className={`project-dot ${p.id === "cengilli" ? "bronze" : ""}`} />
+                <span className={`project-dot ${p.id === "alion" ? "bronze" : ""}`} />
                 <div>
                   <h2>{p.name}</h2>
                   <p>
-                    {p.location}{p.delivery ? ` · teslim ${p.delivery}` : ""}
+                    {p.location}{p.delivery ? `· entrega ${p.delivery}` : ""}
                   </p>
                 </div>
                 <Link className="btn primary" href={hubHref(p.id)} onClick={() => setProject(p.id)}>
-                  Projeye geç <ArrowRight size={15} />
+                  Ir al proyecto <ArrowRight size={15} />
                 </Link>
               </header>
               <div className="company-project-stock">
@@ -143,42 +142,42 @@ export default function CompanyOverview() {
                     {sr.sold}
                     <small> / {sr.total}</small>
                   </b>
-                  <span>satılan daire</span>
+                  <span>unidades vendidas</span>
                 </div>
                 <Progress value={(sr.sold / sr.total) * 100} />
                 <p>
-                  {sr.available} müsait · {sr.inSigning} imza sürecinde ·{" "}
-                  {sr.barter} barter · {sr.reserved} rezerve
+                  {sr.available} disponibles · {sr.inSigning} en firma ·{" "}
+                  {sr.barter} canje · {sr.reserved} reservadas
                 </p>
               </div>
               <dl className="company-project-figures">
                 <div>
-                  <dt>Sözleşmeli satış</dt>
+                  <dt>Monto contratado</dt>
                   <dd className="num">{compact(f.contracted)}</dd>
                 </div>
                 <div>
-                  <dt>Tahsil edilen</dt>
+                  <dt>Cobrado</dt>
                   <dd className="num">
                     {compact(f.collected)}
                     <small>%{Math.round(f.collectionRate * 100)}</small>
                   </dd>
                 </div>
                 <div>
-                  <dt>Kalan alacak</dt>
+                  <dt>Saldo por cobrar</dt>
                   <dd className="num">{compact(f.balance)}</dd>
                 </div>
                 <div>
-                  <dt>Geciken</dt>
+                  <dt>Vencido</dt>
                   <dd className={`num ${f.overdue > 0 ? "danger" : ""}`}>
                     {money(f.overdue)}
-                    <small>{ir.perCustomer.length} müşteri</small>
+                    <small>{ir.perCustomer.length} clientes</small>
                   </dd>
                 </div>
                 <div>
-                  <dt>Barter (nakit dışı)</dt>
+                  <dt>Canje (sin efectivo)</dt>
                   <dd className="num">
                     {compact(f.barterValue)}
-                    <small>kalan {compact(f.barterRemaining)}</small>
+                    <small>saldo {compact(f.barterRemaining)}</small>
                   </dd>
                 </div>
               </dl>
@@ -189,7 +188,7 @@ export default function CompanyOverview() {
 
       <section className="panel">
         <div className="panel-heading">
-          <h2>Öncelikli konular</h2>
+          <h2>Prioridades</h2>
           <Badge tone={alerts.some((a) => a.tone === "danger") ? "red" : "amber"}>
             {alerts.length}
           </Badge>
@@ -217,7 +216,7 @@ export default function CompanyOverview() {
                       </span>
                     )}
                     <span className="cc-action-label">
-                      Aç <ChevronRight size={14} />
+                      Abrir <ChevronRight size={14} />
                     </span>
                   </Link>
                 </li>
@@ -226,14 +225,12 @@ export default function CompanyOverview() {
           </ul>
         ) : (
           <div className="cc-allclear">
-            <CircleAlert size={20} /> Öncelikli konu yok.
+            <CircleAlert size={20} /> Sin prioridades.
           </div>
         )}
       </section>
       <p className="company-note">
-        <Building2 size={14} /> Proje seçildiğinde bütün modüller yalnızca o
-        projenin kayıtlarını gösterir. Tutarlar bu tarayıcıdaki demo
-        kayıtlarından anlık hesaplanır.
+        <Building2 size={14} /> Al elegir un proyecto, todos los módulos muestran solo sus registros. Los montos se calculan en vivo con los datos de demostración.
       </p>
     </div>
   );

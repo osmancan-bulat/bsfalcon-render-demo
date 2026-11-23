@@ -244,7 +244,7 @@ td b {
     180deg,
     #142d2999 0%,
     #102e2744 25%,
-    #142e29ef 75%,
+    #141414ef 75%,
     var(--forest-900) 100%
   );
 }
@@ -427,7 +427,7 @@ dialog {
   margin: auto;
 }
 dialog::backdrop {
-  background: #142e2977;
+  background: #14141477;
   backdrop-filter: blur(4px);
 }
 textarea {

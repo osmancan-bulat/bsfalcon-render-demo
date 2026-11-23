@@ -20,28 +20,28 @@ import { money, compact, date } from "@/lib/data";
 import { csvDownload } from "@/lib/export";
 
 const TONE: Record<PaymentStatus, string> = {
-  Gecikti: "red",
-  Yaklaşıyor: "amber",
-  "Kısmen ödendi": "info",
-  "Gelecek dönem": "neutral",
-  Ödendi: "green",
+  "Vencida": "red",
+  "Próxima": "amber",
+  "Pago parcial": "info",
+  "Futura": "neutral",
+  "Pagada": "green",
 };
 const HINT: Record<PaymentStatus, string> = {
-  Gecikti: "Vadesi geçmiş, kalan var",
-  Yaklaşıyor: "30 gün içinde",
-  "Kısmen ödendi": "Vadesi gelmemiş, kısmi",
-  "Gelecek dönem": "30 günden sonra",
-  Ödendi: "Bu planlarda tahsil edilen · kısmi dahil",
+  "Vencida": "Vencido con saldo",
+  "Próxima": "En los próximos 30 días",
+  "Pago parcial": "No vencido, pago parcial",
+  "Futura": "Después de 30 días",
+  "Pagada": "Cobrado en estos planes · incluye parciales",
 };
 const PAGE = 15;
 const relative = (r: PaymentRow) =>
-  r.status === "Ödendi"
-    ? "Kapandı"
+  r.status === "Pagada"
+    ? "Cancelada"
     : r.days < 0
-      ? `${-r.days} gün gecikti`
+      ? `${-r.days} días de atraso`
       : r.days === 0
-        ? "Bugün"
-        : `${r.days} gün kaldı`;
+        ? "Hoy"
+        : `faltan ${r.days} días`;
 
 export default function PaymentsTab({
   initialStatus,
@@ -49,8 +49,8 @@ export default function PaymentsTab({
   initialStatus?: PaymentStatus;
 }) {
   const { state, project } = useApp();
-  const [status, setStatus] = useState<PaymentStatus | "Açık">(
-    initialStatus ?? "Açık",
+  const [status, setStatus] = useState<PaymentStatus | "Pendiente">(
+    initialStatus ?? "Pendiente",
   );
   const [kind, setKind] = useState("all");
   const [q, setQ] = useState("");
@@ -74,26 +74,26 @@ export default function PaymentsTab({
     return {
       s,
       count: rows.length,
-      // "Ödendi": bu planlar üzerinden tahsil edilen tüm tutar (kısmi ödemeler dahil) = collectionBreakdown().inPlan
+      // "Pagada": bu planlar üzerinden tahsil edilen tüm tutar (kısmi ödemeler dahil) = collectionBreakdown().inPlan
       amount:
-        s === "Ödendi"
+        s === "Pagada"
           ? all.reduce((a, r) => a + r.paid, 0)
           : rows.reduce((a, r) => a + r.remaining, 0),
     };
   });
   const rows = all
     .filter((r) =>
-      status === "Açık" ? r.status !== "Ödendi" : r.status === status,
+      status === "Pendiente" ? r.status !== "Pagada" : r.status === status,
     )
     .filter((r) => kind === "all" || r.kind === kind)
     .filter((r) => {
       const c = names.get(r.customerId);
       return `${c?.name} ${c?.unit} ${contractNumber(r.customerId)}`
-        .toLocaleLowerCase("tr")
-        .includes(q.toLocaleLowerCase("tr"));
+        .toLocaleLowerCase("es")
+        .includes(q.toLocaleLowerCase("es"));
     })
     .sort((a, b) =>
-      status === "Ödendi"
+      status === "Pagada"
         ? b.due.localeCompare(a.due)
         : a.due.localeCompare(b.due),
     );
@@ -102,14 +102,14 @@ export default function PaymentsTab({
 
   return (
     <>
-      <div className="pay-status" role="tablist" aria-label="Ödeme durumu">
+      <div className="pay-status" role="tablist" aria-label="Estado de pago">
         {totals.map((t) => (
           <button
             key={t.s}
             role="tab"
             aria-selected={status === t.s}
             className={`pay-chip t-${TONE[t.s]} ${status === t.s ? "active" : ""}`}
-            onClick={() => setStatus(status === t.s ? "Açık" : t.s)}
+            onClick={() => setStatus(status === t.s ? "Pendiente" : t.s)}
           >
             <span>
               <i /> {t.s} <small>{t.count}</small>
@@ -123,24 +123,24 @@ export default function PaymentsTab({
         <SearchBox
           value={q}
           onChange={setQ}
-          placeholder="Müşteri, daire veya sözleşme no…"
+          placeholder="Cliente, unidad o n.º de contrato…"
         />
         <select
-          aria-label="Ödeme türü"
+          aria-label="Tipo de pago"
           value={kind}
           onChange={(e) => setKind(e.target.value)}
         >
-          <option value="all">Tüm ödeme türleri</option>
-          <option>Peşinat</option>
-          <option>Taksit</option>
-          <option>Ara ödeme</option>
+          <option value="all">Todos los tipos</option>
+          <option>Anticipo</option>
+          <option>Cuota</option>
+          <option>Pago intermedio</option>
         </select>
-        {status !== "Açık" && (
+        {status !== "Pendiente" && (
           <button
             className="btn compact ghost"
-            onClick={() => setStatus("Açık")}
+            onClick={() => setStatus("Pendiente")}
           >
-            Tüm açık ödemeler
+            Todos los pagos pendientes
           </button>
         )}
         <button
@@ -150,15 +150,15 @@ export default function PaymentsTab({
             csvDownload(
               [
                 [
-                  "Vade",
-                  "Müşteri",
-                  "Daire",
-                  "Sözleşme",
-                  "Ödeme",
-                  "Tutar",
-                  "Ödenen",
-                  "Kalan",
-                  "Durum",
+                  "Vencimiento",
+                  "Cliente",
+                  "Unidad",
+                  "Contrato",
+                  "Pago",
+                  "Monto",
+                  "Pagado",
+                  "Saldo",
+                  "Estado",
                 ],
                 ...rows.map((r) => {
                   const c = names.get(r.customerId);
@@ -175,7 +175,7 @@ export default function PaymentsTab({
                   ];
                 }),
               ],
-              "bsfalcon-odeme-takibi.csv",
+              "edifica-odeme-takibi.csv",
             )
           }
         >
@@ -187,14 +187,14 @@ export default function PaymentsTab({
           <table className="pay-table">
             <thead>
               <tr>
-                <th>Vade</th>
-                <th>Müşteri / daire</th>
-                <th>Ödeme</th>
-                <th className="numeric">Tutar</th>
-                <th className="numeric">Ödenen</th>
-                <th className="numeric">Kalan</th>
-                <th>Durum</th>
-                <th aria-label="İşlem" />
+                <th>Vencimiento</th>
+                <th>Cliente / unidad</th>
+                <th>Pago</th>
+                <th className="numeric">Monto</th>
+                <th className="numeric">Pagado</th>
+                <th className="numeric">Saldo</th>
+                <th>Estado</th>
+                <th aria-label="Acción" />
               </tr>
             </thead>
             <tbody>
@@ -208,13 +208,13 @@ export default function PaymentsTab({
                     onClick={() =>
                       setOpen({
                         id: r.customerId,
-                        focus: r.status === "Ödendi" ? undefined : focus,
+                        focus: r.status === "Pagada" ? undefined : focus,
                       })
                     }
                   >
                     <td>
                       <b>{date(r.due)}</b>
-                      <small className={r.status === "Gecikti" ? "danger" : ""}>
+                      <small className={r.status === "Vencida" ? "danger" : ""}>
                         {relative(r)}
                       </small>
                     </td>
@@ -238,7 +238,7 @@ export default function PaymentsTab({
                       <Badge tone={TONE[r.status]}>{r.status}</Badge>
                     </td>
                     <td>
-                      {r.status !== "Ödendi" && (
+                      {r.status !== "Pagada" && (
                         <button
                           className="btn compact"
                           onClick={(e) => {
@@ -246,7 +246,7 @@ export default function PaymentsTab({
                             setOpen({ id: r.customerId, focus });
                           }}
                         >
-                          Tahsil et
+                          Cobrar
                         </button>
                       )}
                     </td>
@@ -258,27 +258,27 @@ export default function PaymentsTab({
         </div>
       ) : (
         <Empty
-          title="Bu filtrede ödeme yok"
-          detail="Durum veya arama filtresini değiştirin."
+          title="No hay pagos con este filtro"
+          detail="Cambie el estado o la búsqueda."
         />
       )}
       <div className="e-pagination">
         <span>
           {rows.length
-            ? `${pg * PAGE + 1}–${Math.min(rows.length, (pg + 1) * PAGE)} / ${rows.length} ödeme`
-            : "Kayıt yok"}{" "}
-          · kalan toplam {money(rows.reduce((a, r) => a + r.remaining, 0))}
+            ? `${pg * PAGE + 1}–${Math.min(rows.length, (pg + 1) * PAGE)} de ${rows.length} pagos`
+            : "Sin registros"}{" "}
+          · saldo total {money(rows.reduce((a, r) => a + r.remaining, 0))}
         </span>
         <div>
           <button
-            aria-label="Önceki sayfa"
+            aria-label="Página anterior"
             disabled={pg === 0}
             onClick={() => setPage(pg - 1)}
           >
             ‹
           </button>
           <button
-            aria-label="Sonraki sayfa"
+            aria-label="Página siguiente"
             disabled={pg >= max}
             onClick={() => setPage(pg + 1)}
           >

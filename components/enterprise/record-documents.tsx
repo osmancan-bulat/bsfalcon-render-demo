@@ -12,10 +12,10 @@ import { readArchive, documentValidity, type ArchiveFile } from "@/lib/archive";
 import { date } from "@/lib/data";
 
 const TONE: Record<string, string> = {
-  Geçerli: "green",
-  Süresiz: "neutral",
-  "Süresi yaklaşıyor": "amber",
-  "Süresi doldu": "red",
+  "Vigente": "green",
+  "Sin vencimiento": "neutral",
+  "Por vencer": "amber",
+  "Vencido": "red",
 };
 
 export default function RecordDocuments({
@@ -32,7 +32,7 @@ export default function RecordDocuments({
   useEffect(() => {
     readArchive()
       .then(setFiles)
-      .catch(() => setError("Tarayıcı arşivi okunamadı."));
+      .catch(() => setError("No se pudo leer el archivo del navegador."));
   }, []);
   const system = records.flatMap((r) => systemDocuments(state, r));
   const uploaded = (files ?? []).filter((f) => records.includes(f.record));
@@ -46,7 +46,7 @@ export default function RecordDocuments({
   }
   return (
     <section className="acct-section">
-      <h3 className="subheading">Sözleşme ve sistem belgeleri</h3>
+      <h3 className="subheading">Contratos y documentos del sistema</h3>
       {system.length ? (
         <ul className="doc-list">
           {system.map((d) => (
@@ -61,16 +61,16 @@ export default function RecordDocuments({
                 </small>
               </span>
               <Link className="btn compact" href={d.href} target="_blank">
-                <Printer size={14} /> Görüntüle
+                <Printer size={14} /> Ver
               </Link>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="muted">Bu kayıt için sistem belgesi yok.</p>
+        <p className="muted">Este registro no tiene documentos del sistema.</p>
       )}
 
-      <h3 className="subheading">Yüklenen dosyalar</h3>
+      <h3 className="subheading">Archivos subidos</h3>
       {error && <p className="callout">{error}</p>}
       {uploaded.length > 0 && (
         <ul className="doc-list">
@@ -85,13 +85,13 @@ export default function RecordDocuments({
                   <b>{f.name}</b>
                   <small>
                     {f.kind} · {f.date ? date(f.date) : "—"}
-                    {f.expiry ? ` · geçerlilik ${date(f.expiry)}` : ""}
+                    {f.expiry ? `· vigencia ${date(f.expiry)}` : ""}
                   </small>
                 </span>
                 <Badge tone={TONE[v]}>{v}</Badge>
                 <button
                   className="icon-button"
-                  aria-label={`${f.name} indir`}
+                  aria-label={`Descargar ${f.name}`}
                   onClick={() => download(f)}
                 >
                   <Download size={15} />
@@ -105,12 +105,12 @@ export default function RecordDocuments({
         <Upload size={16} />
         <span>
           {uploaded.length
-            ? "Ek dosya yükleyebilirsiniz."
-            : "Yüklenmiş dosya yok."}{" "}
-          Dosyalar yalnızca bu tarayıcıda saklanır (demo); sunucuya gönderilmez.
+            ? "Puede adjuntar archivos."
+            : "Sin archivos adjuntos."}{" "}
+          Los archivos se guardan solo en este navegador (demo); no se envían a ningún servidor.
         </span>
         <Link className="btn compact" href={uploadHref}>
-          Dosya ekle
+          Adjuntar archivo
         </Link>
       </div>
     </section>

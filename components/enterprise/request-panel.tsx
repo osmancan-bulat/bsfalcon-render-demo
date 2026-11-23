@@ -44,18 +44,18 @@ export default function RequestPanel({
   const status = requestStatus(state, r);
   // Aynı proje ve firmadaki barter anlaşması (hakediş ↔ barter bağlantısı)
   const barter =
-    r.type === "Hakediş"
+    r.type === "Certificado de obra"
       ? state.barters.find(
           (b) =>
             b.project === r.project &&
-            b.company.trim().toLocaleLowerCase("tr") ===
-              r.company.trim().toLocaleLowerCase("tr"),
+            b.company.trim().toLocaleLowerCase("es") ===
+              r.company.trim().toLocaleLowerCase("es"),
         )
       : undefined;
   const barterLeft = barter
     ? barter.amount - barterOffset(state, barter.id)
     : 0;
-  const isPurchase = r.type === "Satın alma";
+  const isPurchase = r.type === "Compra";
   const delivered = state.delivered.includes(r.id);
   return (
     <>
@@ -67,9 +67,9 @@ export default function RequestPanel({
       >
         <div className="request-summary">
           <span>
-            {r.type === "Hakediş"
-              ? "Onaya esas net hakediş"
-              : "Sipariş toplamı"}
+            {r.type === "Certificado de obra"
+              ? "Certificado neto a aprobar"
+              : "Total de la orden"}
           </span>
           <strong>{money(r.amount)}</strong>
           <Status status={status} />
@@ -81,36 +81,34 @@ export default function RequestPanel({
             </span>
             <span className="cc-list-main">
               <b>
-                Barter · {unitShort(barter.unitId)} · {barter.company}
+                Canje · {unitShort(barter.unitId)} · {barter.company}
               </b>
               <small>
-                Bu hakedişe mahsup {money(offsetFor(state, r.id))} · nakit
-                ödenecek {money(netPayable(state, r))} · barter kalan yükümlülük{" "}
+                Compensado en este certificado {money(offsetFor(state, r.id))} · a pagar {money(netPayable(state, r))} · obligación de canje pendiente{" "}
                 {money(barterLeft)}
               </small>
             </span>
             <button className="btn compact" onClick={() => setBarterOpen(true)}>
-              {status === "Onaylandı" &&
+              {status === "Aprobado" &&
               barterLeft > 0 &&
               netPayable(state, r) > 0
-                ? "Barterdan mahsup et"
-                : "Barter dosyası"}
+                ? "Compensar con canje"
+                : "Canje"}
             </button>
           </div>
         ) : (
           offsetFor(state, r.id) > 0 && (
             <p className="callout">
-              Barter mahsubu: {money(offsetFor(state, r.id))} · nakit ödenecek
-              kısım {money(netPayable(state, r))}
+              Compensación por canje: {money(offsetFor(state, r.id))} · parte a pagar {money(netPayable(state, r))}
             </p>
           )
         )}
         <Steps
-          labels={["Talep", "Yönetici onayı", "Ödeme planı", "Ödendi"]}
+          labels={["Solicitud", "Aprobación de gerencia", "Plan de pagos", "Pagada"]}
           current={
-            status === "Ödendi" || status === "Mahsup edildi"
+            status === "Pagada" || status === "Compensado"
               ? 3
-              : status === "Onaylandı"
+              : status === "Aprobado"
                 ? 2
                 : 0
           }
@@ -144,43 +142,43 @@ export default function RequestPanel({
                 type="button"
                 onClick={() => setEditing(false)}
               >
-                Vazgeç
+                Cancelar
               </button>
-              <button className="btn primary">Kaydet ve onaya sun</button>
+              <button className="btn primary">Guardar y enviar a aprobación</button>
             </div>
           </form>
         ) : (
           <>
             <dl className="detail-list">
               <div>
-                <dt>Firma / taşeron</dt>
+                <dt>Proveedor / contratista</dt>
                 <dd>{r.company}</dd>
               </div>
               <div>
-                <dt>Proje</dt>
+                <dt>Proyecto</dt>
                 <dd>{pname(r.project)}</dd>
               </div>
               <div>
-                <dt>Vade (planlanan ödeme)</dt>
+                <dt>Vencimiento (pago previsto)</dt>
                 <dd>
                   {date(r.due)}
-                  {requestStatus(state, r) === "Ödendi" && (
+                  {requestStatus(state, r) === "Pagada" && (
                     <small>
                       {paidDate(state, r.id)
-                        ? `Gerçek ödeme ${date(paidDate(state, r.id)!)}`
-                        : "Ödeme tarihi kaydı yok"}
+                        ? `Pagado el ${date(paidDate(state, r.id)!)}`
+                        : "Sin fecha de pago registrada"}
                     </small>
                   )}
                 </dd>
               </div>
               <div>
-                <dt>İşlem türü</dt>
+                <dt>Tipo de operación</dt>
                 <dd>{r.type}</dd>
               </div>
               <div>
-                <dt>Kontrol sorumlusu</dt>
+                <dt>Responsable de control</dt>
                 <dd>
-                  {isPurchase ? "Satın alma birimi" : "Şantiye teknik ofis"}
+                  {isPurchase ? "Compras" : "Oficina técnica de obra"}
                 </dd>
               </div>
               {isPurchase && (
@@ -188,7 +186,7 @@ export default function RequestPanel({
                   <dt>Malzeme teslimi</dt>
                   <dd>
                     <Badge tone={delivered ? "green" : "amber"}>
-                      {delivered ? "Teslim alındı" : "Teslim bekleniyor"}
+                      {delivered ? "Recibido" : "Recepción pendiente"}
                     </Badge>
                   </dd>
                 </div>
@@ -197,41 +195,41 @@ export default function RequestPanel({
             <div className="callout">
               {r.description ??
                 (isPurchase
-                  ? "Talep edilen malzemenin saha ihtiyaç planına uygunluğu kontrol edildi. Teslim kabulü ayrı kaydedilir."
-                  : "İmalat ölçümü ve saha kontrolü tamamlandı. Gösterilen tutar, demo senaryosunda onaya esas net hakediştir.")}
+                  ? "Se verificó que el material solicitado corresponde al plan de obra. La recepción se registra por separado."
+                  : "Medición y control de obra completados. El monto mostrado es el certificado neto a aprobar en la demo.")}
             </div>
             <div className="request-actions">
-              {status === "Onay bekliyor" && (
+              {status === "Pendiente de aprobación" && (
                 <>
                   <button
                     className="btn primary"
                     onClick={() => setConfirm("approve")}
                   >
-                    <Check size={16} /> Onayla
+                    <Check size={16} /> Aprobar
                   </button>
                   <button className="btn" onClick={() => setConfirm("reject")}>
                     <CornerDownLeft size={16} /> Revizyona iade
                   </button>
                 </>
               )}
-              {["Onay bekliyor", "İade edildi"].includes(status) && (
+              {["Pendiente de aprobación", "Devuelto"].includes(status) && (
                 <button className="btn" onClick={() => setEditing(true)}>
-                  <PenLine size={15} /> Düzenle
+                  <PenLine size={15} /> Editar
                 </button>
               )}
-              {status === "Onaylandı" && (
+              {status === "Aprobado" && (
                 <button
                   className="btn primary"
                   onClick={() => setConfirm("pay-order")}
                 >
-                  <Wallet size={16} /> Ödeme kaydet
+                  <Wallet size={16} /> Registrar pago
                 </button>
               )}
               {isPurchase &&
-                ["Onaylandı", "Ödendi"].includes(status) &&
+                ["Aprobado", "Pagada"].includes(status) &&
                 !delivered && (
                   <button className="btn" onClick={() => setConfirm("deliver")}>
-                    <PackageCheck size={16} /> Teslim al
+                    <PackageCheck size={16} /> Registrar recepción
                   </button>
                 )}
               <button
@@ -239,46 +237,46 @@ export default function RequestPanel({
                 onClick={() =>
                   csvDownload(
                     [
-                      ["İşlem", r.id],
-                      ["Proje", pname(r.project)],
-                      ["Firma", r.company],
-                      ["Açıklama", r.name],
-                      ["Tutar", r.amount],
-                      ["Durum", status],
-                      ["Vade", r.due],
+                      ["Acción", r.id],
+                      ["Proyecto", pname(r.project)],
+                      ["Empresa", r.company],
+                      ["Descripción", r.name],
+                      ["Monto", r.amount],
+                      ["Estado", status],
+                      ["Vencimiento", r.due],
                       [
-                        "Belge türü",
-                        "Temsili işlem özeti; gerçek ödeme dekontu değildir.",
+                        "Tipo de documento",
+                        "Resumen de operación de ejemplo; no es un comprobante real.",
                       ],
                     ],
                     `${r.id}-ozet.csv`,
                   )
                 }
               >
-                <Download size={15} /> İşlem özeti
+                <Download size={15} /> Resumen de la operación
               </button>
             </div>
             {confirm && (
               <div className="confirm-inline">
                 <h3>
                   {confirm === "approve"
-                    ? "Ödeme planına aktarılsın mı?"
+                    ? "¿Agregar a pagos programados?"
                     : confirm === "pay-order"
-                      ? "Ödeme kaydı oluşturulsun mu?"
+                      ? "¿Registrar el pago?"
                       : confirm === "deliver"
-                        ? "Malzeme teslim alındı mı?"
+                        ? "¿Se recibió el material?"
                         : "Revizyona iade edilsin mi?"}
                 </h3>
                 <p>
                   {confirm === "pay-order"
-                    ? `${money(r.amount)} proje kasa bakiyesinden düşer. Kullanılabilir demo bakiye: ${money(summary(state, r.project).cash)}. Gerçek para transferi yapılmaz.`
+                    ? `Se descontará ${money(r.amount)} de la caja del proyecto. Saldo disponible (demo): ${money(summary(state, r.project).cash)}. No se realiza ninguna transferencia real.`
                     : confirm === "approve"
-                      ? "Onaylanan tutar finans ekranında ödeme bekleyenler listesine eklenir."
-                      : "İşlem durumu ve geçmişi güncellenecek."}
+                      ? "El monto aprobado se agrega a los pagos pendientes en Caja y Movimientos."
+                      : "Se actualizarán el estado y el historial."}
                 </p>
                 <div className="form-actions">
                   <button className="btn" onClick={() => setConfirm("")}>
-                    Vazgeç
+                    Cancelar
                   </button>
                   <button
                     className="btn primary"
@@ -293,14 +291,14 @@ export default function RequestPanel({
                         setConfirm("");
                     }}
                   >
-                    İşlemi tamamla
+                    Confirmar
                   </button>
                 </div>
               </div>
             )}
           </>
         )}
-        <h3 className="subheading">İşlem geçmişi</h3>
+        <h3 className="subheading">Historial</h3>
         <AuditTrail items={state.audit.filter((a) => a.entity === r.id)} />
       </Drawer>
       {barter && (
@@ -316,27 +314,27 @@ export function RequestFields({ record }: { record?: RequestRecord }) {
   return (
     <div className="form-grid">
       <label className="full">
-        İşlem açıklaması
+        Descripción
         <input
           name="name"
           defaultValue={record?.name}
-          placeholder="Örn. 5. kat betonarme hakedişi"
+          placeholder="Ej.: certificado de estructura piso 5"
           required
           maxLength={140}
         />
       </label>
       <label className="full">
-        Firma / taşeron
+        Proveedor / contratista
         <input
           name="company"
           defaultValue={record?.company}
-          placeholder="Firma adı"
+          placeholder="Nombre de la empresa"
           required
           maxLength={100}
         />
       </label>
       <label>
-        Tutar (TL)
+        Monto (USD)
         <input
           name="amount"
           type="number"
@@ -347,7 +345,7 @@ export function RequestFields({ record }: { record?: RequestRecord }) {
         />
       </label>
       <label>
-        Planlanan ödeme
+        Pago previsto
         <input
           name="due"
           type="date"
@@ -357,7 +355,7 @@ export function RequestFields({ record }: { record?: RequestRecord }) {
         />
       </label>
       <label className="full">
-        Açıklama / kontrol notu
+        Descripción / nota de control
         <textarea
           name="description"
           defaultValue={record?.description}

@@ -27,8 +27,8 @@ import { unitById } from "@/lib/units";
 import { money, date } from "@/lib/data";
 const fileSize = (b: number) =>
   b < 1024 * 1024
-    ? `${(b / 1024).toLocaleString("tr-TR", { maximumFractionDigits: 1 })} KB`
-    : `${(b / 1024 / 1024).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} MB`;
+    ? `${(b / 1024).toLocaleString("es-PY", { maximumFractionDigits: 1 })} KB`
+    : `${(b / 1024 / 1024).toLocaleString("es-PY", { maximumFractionDigits: 2 })} MB`;
 import {
   readArchive,
   saveArchive,
@@ -37,10 +37,10 @@ import {
   type ArchiveFile,
 } from "@/lib/archive";
 const VALIDITY_TONE: Record<string, string> = {
-  Geçerli: "green",
-  Süresiz: "neutral",
-  "Süresi yaklaşıyor": "amber",
-  "Süresi doldu": "red",
+  "Vigente": "green",
+  "Sin vencimiento": "neutral",
+  "Por vencer": "amber",
+  "Vencido": "red",
 };
 export default function ArchiveView() {
   const { state, project, notify } = useApp();
@@ -51,7 +51,7 @@ export default function ArchiveView() {
     [selected, setSelected] = useState<ArchiveFile | null>(null),
     [url, setUrl] = useState(""),
     [busy, setBusy] = useState(false),
-    [scope, setScope] = useState(project === "all" ? (projects.find((p) => p.status === "Aktif")?.id ?? projects[0]?.id ?? "") : project),
+    [scope, setScope] = useState(project === "all" ? (projects.find((p) => p.status === "Activo")?.id ?? projects[0]?.id ?? "") : project),
     [record, setRecord] = useState(""),
     [onlyRecord, setOnlyRecord] = useState(""),
     [error, setError] = useState(""),
@@ -73,7 +73,7 @@ export default function ArchiveView() {
       setScope(
         fromUrl && fromUrl !== "all" && isScopeValid(fromUrl)
           ? fromUrl
-          : (projects.find((p) => p.status === "Aktif")?.id ?? projects[0]?.id ?? ""),
+          : (projects.find((p) => p.status === "Activo")?.id ?? projects[0]?.id ?? ""),
       );
     }
   }, []);
@@ -94,17 +94,17 @@ export default function ArchiveView() {
       .filter((b) => b.project === scope)
       .map((b) => ({
         id: b.id,
-        label: `Barter · ${b.company} · ${unitById(b.unitId)?.label}`,
+        label: `Canje · ${b.company} · ${unitById(b.unitId)?.label}`,
       })),
   ];
   const recordLabel = (r: string) => {
-    if (!r) return "Proje geneli";
+    if (!r) return "Todo el proyecto";
     if (r.startsWith("unit:"))
-      return `Daire ${unitById(r.slice(5))?.label ?? r.slice(5)}`;
+      return `Unidad ${unitById(r.slice(5))?.label ?? r.slice(5)}`;
     const c = customerList(state).find((c) => c.id === r);
     if (c) return `${c.name} · ${c.unit}`;
     const b = state.barters.find((b) => b.id === r);
-    if (b) return `Barter · ${b.company} · ${unitById(b.unitId)?.label}`;
+    if (b) return `Canje · ${b.company} · ${unitById(b.unitId)?.label}`;
     return r;
   };
   async function createSamples() {
@@ -117,11 +117,11 @@ export default function ArchiveView() {
       const docs: ArchiveFile[] = [
         ...contracts.map((c) => {
           const text = [
-            "TEMSİLİ DEMO BELGESİ — hukuki geçerliliği yoktur",
-            `Satış sözleşmesi özeti · ${c.number}`,
-            `Proje: ${pname(c.project)} · Daire ${c.unitLabel} (${c.type}, brüt ${c.gross} m²)`,
-            `Alıcı: ${c.name} (kurgusal)`,
-            `Bedel: ${money(c.price)} · Plan: ${c.planLabel}`,
+            "DOCUMENTO DE DEMOSTRACIÓN — sin validez legal",
+            `Resumen del contrato de compraventa · ${c.number}`,
+            `Proyecto: ${pname(c.project)} · Unidad ${c.unitLabel} (${c.type}, ${c.gross} m²)`,
+            `Comprador: ${c.name} (ficticio)`,
+            `Precio: ${money(c.price)} · Plan: ${c.planLabel}`,
           ].join("\n");
           const blob = new Blob([text], { type: "text/plain" });
           return {
@@ -130,11 +130,11 @@ export default function ArchiveView() {
             project: c.project,
             record: c.id,
             company: "",
-            kind: "Satış sözleşmesi",
+            kind: "Contrato de compraventa",
             date: c.signedAt ?? SNAPSHOT,
             expiry: "",
             description:
-              "Uygulama verisinden üretilmiş temsili sözleşme özeti.",
+              "Resumen de contrato de ejemplo generado con los datos de la aplicación.",
             size: blob.size,
             mime: "text/plain",
             blob,
@@ -143,11 +143,11 @@ export default function ArchiveView() {
         }),
         ...state.barters.map((b) => {
           const text = [
-            "TEMSİLİ DEMO BELGESİ — hukuki geçerliliği yoktur",
-            `Barter (iş karşılığı daire) anlaşması · ${b.id}`,
-            `Proje: ${pname(b.project)} · Daire ${unitById(b.unitId)?.label}`,
-            `Firma: ${b.company} (kurgusal) · İş: ${b.work}`,
-            `Bedel: ${money(b.amount)} · Süre: ${b.start} – ${b.end}`,
+            "DOCUMENTO DE DEMOSTRACIÓN — sin validez legal",
+            `Canje · ${b.id}`,
+            `Proyecto: ${pname(b.project)} · Unidad ${unitById(b.unitId)?.label}`,
+            `Empresa: ${b.company} (ficticia) · Trabajo: ${b.work}`,
+            `Valor: ${money(b.amount)} · Plazo: ${b.start} – ${b.end}`,
           ].join("\n");
           const blob = new Blob([text], { type: "text/plain" });
           return {
@@ -156,11 +156,11 @@ export default function ArchiveView() {
             project: b.project,
             record: b.id,
             company: b.company,
-            kind: "Barter anlaşması",
+            kind: "Canje",
             date: b.start,
             expiry: b.end,
             description:
-              "Uygulama verisinden üretilmiş temsili barter anlaşması özeti.",
+              "Resumen de canje de ejemplo.",
             size: blob.size,
             mime: "text/plain",
             blob,
@@ -170,26 +170,26 @@ export default function ArchiveView() {
         ...[
           {
             id: "sample-proj-ruhsat",
-            project: "cengilli",
-            name: "cengilli-yapi-ruhsati-ozeti.txt",
-            kind: "Proje belgesi",
+            project: "alion",
+            name: "alion-resumen-permiso-de-obra.txt",
+            kind: "Documento del proyecto",
             date: "2025-12-05",
             expiry: "2026-12-05",
-            title: "Yapı ruhsatı kontrol özeti",
+            title: "Resumen de control del permiso de obra",
           },
           {
             id: "sample-proj-sigorta",
-            project: "cengilli",
+            project: "alion",
             name: "santiye-sigorta-policesi-ozeti.txt",
-            kind: "Proje belgesi",
+            kind: "Documento del proyecto",
             date: "2025-11-01",
             expiry: "2026-11-01",
-            title: "Şantiye sigorta poliçesi özeti (yenileme bekliyor)",
+            title: "Resumen de póliza de seguro de obra (renovación pendiente)",
           },
         ].map((p) => {
           const blob = new Blob(
             [
-              `TEMSİLİ DEMO BELGESİ — hukuki geçerliliği yoktur\n${p.title}\nProje: ${pname(p.project)}\nGeçerlilik: ${p.expiry}`,
+              `DOCUMENTO DE DEMOSTRACIÓN — sin validez legal\n${p.title}\nProyecto: ${pname(p.project)}\nVigencia: ${p.expiry}`,
             ],
             { type: "text/plain" },
           );
@@ -212,9 +212,9 @@ export default function ArchiveView() {
       ];
       for (const d of docs) await saveArchive(d);
       setFiles(await readArchive());
-      notify(`${docs.length} temsili belge bu tarayıcıya kaydedildi.`);
+      notify(`${docs.length} documentos de ejemplo guardados en este navegador.`);
     } catch (e) {
-      notify(e instanceof Error ? e.message : "Örnek belgeler oluşturulamadı.");
+      notify(e instanceof Error ? e.message : "No se pudieron crear los documentos de ejemplo.");
     } finally {
       setBusy(false);
     }
@@ -243,7 +243,7 @@ export default function ArchiveView() {
         party: b.company,
         unit: unitById(b.unitId)?.label ?? "—",
       };
-    return { contract: "—", party: f.company || "Proje geneli", unit: "—" };
+    return { contract: "—", party: f.company || "Todo el proyecto", unit: "—" };
   };
   const scoped = files.filter(
     (f) =>
@@ -251,7 +251,7 @@ export default function ArchiveView() {
       (!onlyRecord || f.record === onlyRecord),
   );
   const parties = [...new Set(scoped.map((f) => docInfo(f).party))].sort(
-    (a, b) => a.localeCompare(b, "tr"),
+    (a, b) => a.localeCompare(b, "es"),
   );
   const unitsInUse = [
     ...new Set(scoped.map((f) => docInfo(f).unit).filter((u) => u !== "—")),
@@ -264,8 +264,8 @@ export default function ArchiveView() {
       (unitF === "all" || i.unit === unitF) &&
       (validity === "all" || documentValidity(f.expiry) === validity) &&
       `${f.name} ${f.company} ${f.description} ${i.contract} ${i.party} ${i.unit}`
-        .toLocaleLowerCase("tr")
-        .includes(q.toLocaleLowerCase("tr"))
+        .toLocaleLowerCase("es")
+        .includes(q.toLocaleLowerCase("es"))
     );
   });
   const contractDocs = [...customerList(state), ...state.drafts]
@@ -283,8 +283,8 @@ export default function ArchiveView() {
       (d) =>
         d &&
         `${d.name} ${d.detail}`
-          .toLocaleLowerCase("tr")
-          .includes(q.toLocaleLowerCase("tr")),
+          .toLocaleLowerCase("es")
+          .includes(q.toLocaleLowerCase("es")),
     )
     .sort((a, b) => b.date.localeCompare(a.date));
   const filtersOn =
@@ -297,20 +297,20 @@ export default function ArchiveView() {
   return (
     <>
       <SectionTitle
-        title="Belge arşivi"
-        description="Sözleşme belgeleri kayıtlardan üretilir; ek dosyalar bu tarayıcıda saklanır."
+        title="Archivo de documentos"
+        description="Los documentos de contratos se generan desde los registros; los adjuntos se guardan en este navegador."
         actions={
           <button className="btn primary" onClick={() => setCreate(true)}>
             <Upload size={16} />
-            Belge yükle
+            Subir documento
           </button>
         }
       />
       <p className="callout">
-        <b>Yerel demo arşivi.</b> Dosyalar bu tarayıcıdaki IndexedDB alanına
-        gerçekten kaydedilir ve sayfa yenilendiğinde korunur. Sunucuya
-        yüklenmez, başka cihazlarla paylaşılmaz; tarayıcı verileri silinirse
-        kaybolur. Yalnızca temsili belge yükleyin.
+        <b>Archivo local de demostración.</b> Los archivos se guardan en el almacenamiento IndexedDB de este navegador
+        y se conservan al recargar la página. No se suben a ningún servidor
+        ni se comparten con otros dispositivos; si se borran los datos del navegador,
+        se pierden. Suba solo documentos de ejemplo.
       </p>
       {error && (
         <p role="alert" className="callout">
@@ -318,19 +318,19 @@ export default function ArchiveView() {
         </p>
       )}
       <Panel
-        title="Sözleşme belgeleri"
-        subtitle="Satış, barter ve iş sözleşmeleri kayıtlardan otomatik üretilir · her zaman görüntülenebilir"
+        title="Documentos de contratos"
+        subtitle="Contratos de compraventa y de obra generados automáticamente desde los registros"
       >
         {contractDocs.length ? (
           <div className="e-table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Belge</th>
+                  <th>Documento</th>
                   <th>Taraf</th>
-                  <th>Tür</th>
-                  <th>Tarih</th>
-                  <th aria-label="Görüntüle" />
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th aria-label="Ver" />
                 </tr>
               </thead>
               <tbody>
@@ -349,7 +349,7 @@ export default function ArchiveView() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        Görüntüle
+                        Ver
                       </a>
                     </td>
                   </tr>
@@ -358,71 +358,71 @@ export default function ArchiveView() {
             </table>
           </div>
         ) : (
-          <Empty title="Bu aramada sözleşme belgesi yok" />
+          <Empty title="No hay documentos de contratos para esta búsqueda" />
         )}
         {contractDocs.length > docLimit && (
           <button
             className="cc-more"
             onClick={() => setDocLimit(contractDocs.length)}
           >
-            Tüm {contractDocs.length} sözleşme belgesini göster
+            Todos {contractDocs.length} documentos de contratos
           </button>
         )}
       </Panel>
       <div className="section-gap" />
       <Panel
-        title="Yüklenen dosyalar"
-        subtitle="Yalnızca bu tarayıcıda saklanır (demo) · sunucuya gönderilmez"
+        title="Archivos subidos"
+        subtitle="Se guardan solo en este navegador (demo) · no se envían a ningún servidor"
       >
         <div className="e-toolbar">
           <SearchBox
             value={q}
             onChange={setQ}
-            placeholder="Belge, firma veya açıklama ara…"
+            placeholder="Buscar documento, empresa o descripción…"
           />
           <select
-            aria-label="Belge türü filtresi"
+            aria-label="Filtro por tipo de documento"
             value={kind}
             onChange={(e) => setKind(e.target.value)}
           >
-            <option value="all">Tüm belge türleri</option>
+            <option value="all">Todos los tipos</option>
             {[
-              "Satış sözleşmesi",
-              "İş / taşeron sözleşmesi",
-              "Barter anlaşması",
-              "Proje belgesi",
-              "Diğer",
+              "Contrato de compraventa",
+              "Contrato de obra",
+              "Canje",
+              "Documento del proyecto",
+              "Otro",
             ].map((k) => (
               <option key={k}>{k}</option>
             ))}
           </select>
           <select
-            aria-label="Müşteri / firma filtresi"
+            aria-label="Filtro por cliente / empresa"
             value={party}
             onChange={(e) => setParty(e.target.value)}
           >
-            <option value="all">Tüm müşteri / firmalar</option>
+            <option value="all">Todos los clientes y empresas</option>
             {parties.map((p) => (
               <option key={p}>{p}</option>
             ))}
           </select>
           <select
-            aria-label="Daire filtresi"
+            aria-label="Filtro por unidad"
             value={unitF}
             onChange={(e) => setUnitF(e.target.value)}
           >
-            <option value="all">Tüm daireler</option>
+            <option value="all">Todas las unidades</option>
             {unitsInUse.map((u) => (
               <option key={u}>{u}</option>
             ))}
           </select>
           <select
-            aria-label="Geçerlilik filtresi"
+            aria-label="Filtro por vigencia"
             value={validity}
             onChange={(e) => setValidity(e.target.value)}
           >
-            <option value="all">Tüm geçerlilikler</option>
-            {["Geçerli", "Süresi yaklaşıyor", "Süresi doldu", "Süresiz"].map(
+            <option value="all">Todas las vigencias</option>
+            {["Vigente", "Por vencer", "Vencido", "Sin vencimiento"].map(
               (v) => (
                 <option key={v}>{v}</option>
               ),
@@ -449,13 +449,13 @@ export default function ArchiveView() {
             <table>
               <thead>
                 <tr>
-                  <th>Belge / tür</th>
-                  <th>Sözleşme no</th>
-                  <th>Müşteri / firma</th>
-                  <th>Daire</th>
-                  <th>Yükleme</th>
-                  <th>Geçerlilik</th>
-                  <th aria-label="İşlem" />
+                  <th>Documento / tipo</th>
+                  <th>N.º de contrato</th>
+                  <th>Cliente / empresa</th>
+                  <th>Unidad</th>
+                  <th>Subido</th>
+                  <th>Vigencia</th>
+                  <th aria-label="Acción" />
                 </tr>
               </thead>
               <tbody>
@@ -490,11 +490,11 @@ export default function ArchiveView() {
                       <td>
                         <Badge tone={VALIDITY_TONE[v]}>{v}</Badge>
                         <small>
-                          {f.expiry ? date(f.expiry) : "Bitiş tarihi yok"}
+                          {f.expiry ? date(f.expiry) : "Sin fecha de vencimiento"}
                         </small>
                       </td>
                       <td>
-                        <span className="btn compact">Aç</span>
+                        <span className="btn compact">Abrir</span>
                       </td>
                     </tr>
                   );
@@ -504,21 +504,21 @@ export default function ArchiveView() {
           </div>
         ) : files.length ? (
           <Empty
-            title="Bu filtrelerde belge yok"
-            detail="Filtreleri temizleyin veya aramayı değiştirin."
+            title="No hay documentos con estos filtros"
+            detail="Limpie los filtros o cambie la búsqueda."
           />
         ) : (
           <div className="archive-empty">
             <Empty
-              title="Bu tarayıcıda henüz belge yok"
-              detail="Temsili bir dosya yükleyin veya sözleşme ve barter kayıtlarından otomatik temsili özet belgeleri oluşturun. Belgeler yalnızca bu tarayıcıda saklanır."
+              title="Aún no hay documentos en este navegador"
+              detail="Suba un archivo de ejemplo o genere resúmenes automáticos desde los contratos. Los documentos se guardan solo en este navegador."
             />
             <div className="form-actions">
               <button className="btn" disabled={busy} onClick={createSamples}>
-                <FilePlus2 size={15} /> Temsili örnek belgeleri oluştur
+                <FilePlus2 size={15} /> Generar documentos de ejemplo
               </button>
               <button className="btn primary" onClick={() => setCreate(true)}>
-                <Upload size={15} /> Belge yükle
+                <Upload size={15} /> Subir documento
               </button>
             </div>
           </div>
@@ -526,7 +526,7 @@ export default function ArchiveView() {
       </Panel>
       <Drawer
         open={create}
-        title="Belge yükle"
+        title="Subir documento"
         onClose={() => {
           if (!busy) setCreate(false);
         }}
@@ -563,14 +563,14 @@ export default function ArchiveView() {
                 uploadedAt: new Date().toISOString(),
               };
               if (v.expiry && v.expiry < v.date)
-                throw Error("Bitiş tarihi belge tarihinden önce olamaz.");
+                throw Error("La fecha de vencimiento no puede ser anterior a la del documento.");
               await saveArchive(v);
               setFiles(await readArchive());
               setCreate(false);
               setSelected(v);
-              notify("Dosya bu tarayıcıya kaydedildi.");
+              notify("Archivo guardado en este navegador.");
             } catch (e) {
-              notify(e instanceof Error ? e.message : "Dosya kaydedilemedi.");
+              notify(e instanceof Error ? e.message : "No se pudo guardar el archivo.");
             } finally {
               setBusy(false);
             }
@@ -578,7 +578,7 @@ export default function ArchiveView() {
         >
           <div className="form-grid">
             <label className="full">
-              Temsili dosya
+              Archivo de ejemplo
               <input
                 name="file"
                 type="file"
@@ -587,7 +587,7 @@ export default function ArchiveView() {
               />
             </label>
             <label>
-              Proje
+              Proyecto
               <select
                 value={scope}
                 onChange={(e) => {
@@ -603,27 +603,27 @@ export default function ArchiveView() {
               </select>
             </label>
             <label>
-              Belge türü
+              Tipo de documento
               <select name="kind">
                 {[
-                  "Satış sözleşmesi",
-                  "İş / taşeron sözleşmesi",
-                  "Barter anlaşması",
-                  "Proje belgesi",
-                  "Diğer",
+                  "Contrato de compraventa",
+                  "Contrato de obra",
+                  "Canje",
+                  "Documento del proyecto",
+                  "Otro",
                 ].map((k) => (
                   <option key={k}>{k}</option>
                 ))}
               </select>
             </label>
             <label className="full">
-              İlgili müşteri / barter / daire
+              Cliente / unidad relacionada
               <select
                 name="record"
                 value={record}
                 onChange={(e) => setRecord(e.target.value)}
               >
-                <option value="">Proje geneli</option>
+                <option value="">Todo el proyecto</option>
                 {related.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.label}
@@ -634,19 +634,18 @@ export default function ArchiveView() {
                   .flatMap((p) =>
                     Array.from({ length: p.total }, (_, i) => (
                       <option key={`unit-${i}`} value={`unit:${p.id}-${i + 1}`}>
-                        Daire {unitById(`${p.id}-${i + 1}`)?.label} · bağımsız
-                        bölüm belgesi
+                        Unidad {unitById(`${p.id}-${i + 1}`)?.label} · documento de unidad
                       </option>
                     )),
                   )}
               </select>
             </label>
             <label className="full">
-              Firma
-              <input name="company" placeholder="Örnek firma" maxLength={100} />
+              Empresa
+              <input name="company" placeholder="Empresa de ejemplo" maxLength={100} />
             </label>
             <label>
-              Belge tarihi
+              Fecha del documento
               <input
                 name="date"
                 type="date"
@@ -655,29 +654,28 @@ export default function ArchiveView() {
               />
             </label>
             <label>
-              Sözleşme bitiş tarihi
+              Fecha de vencimiento
               <input name="expiry" type="date" />
             </label>
             <label className="full">
-              Açıklama
+              Descripción
               <textarea name="description" maxLength={1000} />
             </label>
             <label className="full">
               <span>
-                <input type="checkbox" required /> Yalnızca temsili, hassas
-                bilgi içermeyen dosya kullanıyorum.
+                <input type="checkbox" required /> Uso solo archivos de ejemplo, sin información sensible.
               </span>
             </label>
           </div>
           <button className="btn primary" disabled={busy}>
-            {busy ? "Kaydediliyor…" : "Belgeyi kaydet"}
+            {busy ? "Kaydediliyor…" : "Guardar documento"}
           </button>
         </form>
       </Drawer>
       <Drawer
         open={!!selected}
-        title={selected?.name ?? "Belge"}
-        eyebrow="BELGE AYRINTISI · DEMO ARŞİVİ"
+        title={selected?.name ?? "Documento"}
+        eyebrow="DETALLE DEL DOCUMENTO · ARCHIVO DE DEMOSTRACIÓN"
         onClose={() => setSelected(null)}
         wide
       >
@@ -708,37 +706,37 @@ function DocumentDetail({
     <>
       <dl className="cc-unit-facts doc-facts">
         <div>
-          <dt>Belge adı</dt>
+          <dt>Nombre del documento</dt>
           <dd>{f.name}</dd>
         </div>
         <div>
-          <dt>Belge türü</dt>
+          <dt>Tipo de documento</dt>
           <dd>{f.kind}</dd>
         </div>
         <div>
-          <dt>Sözleşme no</dt>
+          <dt>N.º de contrato</dt>
           <dd>{info.contract}</dd>
         </div>
         <div>
-          <dt>Müşteri / firma</dt>
+          <dt>Cliente / empresa</dt>
           <dd>{info.party}</dd>
         </div>
         <div>
-          <dt>Proje · daire</dt>
+          <dt>Proyecto · unidad</dt>
           <dd>
             {pname(f.project)} · {info.unit}
           </dd>
         </div>
         <div>
-          <dt>Belge tarihi</dt>
+          <dt>Fecha del documento</dt>
           <dd>{f.date ? date(f.date) : "—"}</dd>
         </div>
         <div>
-          <dt>Yükleme</dt>
+          <dt>Subido</dt>
           <dd>{f.uploadedAt ? date(f.uploadedAt.slice(0, 10)) : "—"}</dd>
         </div>
         <div>
-          <dt>Geçerlilik</dt>
+          <dt>Vigencia</dt>
           <dd>
             <Badge tone={VALIDITY_TONE[v]}>{v}</Badge>{" "}
             {f.expiry ? date(f.expiry) : ""}
@@ -747,19 +745,19 @@ function DocumentDetail({
       </dl>
       {f.description && <p className="drawer-intro">{f.description}</p>}
       <p className="callout">
-        Demo arşivi: bu dosya yalnızca bu tarayıcıda (IndexedDB) saklanır;
-        sunucuya yüklenmez, yedeklenmez ve kurumsal belge arşivi yerine geçmez.
+        Archivo de demostración: este archivo se guarda solo en este navegador (IndexedDB);
+        no se sube a un servidor, no se respalda y no reemplaza un archivo documental corporativo.
       </p>
       <div className="form-actions">
         <a className="btn primary" href={url} download={f.name}>
-          Dosyayı indir · {fileSize(f.size)}
+          Descargar archivo · {fileSize(f.size)}
         </a>
       </div>
       {text ? (
         <pre className="doc-text">{text}</pre>
       ) : url && f.mime === "application/pdf" ? (
         <iframe
-          title="Temsili PDF önizlemesi"
+          title="Vista previa del PDF de ejemplo"
           src={url}
           sandbox=""
           className="archive-preview"
@@ -767,12 +765,12 @@ function DocumentDetail({
       ) : url && f.mime.startsWith("image/") ? (
         <img
           src={url}
-          alt="Temsili belge önizlemesi"
+          alt="Vista previa del documento de ejemplo"
           className="archive-image"
         />
       ) : (
         <p className="muted">
-          Bu biçim tarayıcıda önizlenemiyor; dosyayı indirerek açabilirsiniz.
+          Este formato no tiene vista previa; descárguelo para abrirlo.
         </p>
       )}
     </>

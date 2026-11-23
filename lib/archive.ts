@@ -28,17 +28,17 @@ export function validateArchiveFile(file: { name: string; size: number }) {
   if (
     !archiveExtensions.includes(file.name.split(".").pop()?.toLowerCase() ?? "")
   )
-    throw Error("PDF, PNG, JPG, WEBP, TXT, DOCX veya XLSX seçin.");
+    throw Error("Seleccione PDF, PNG, JPG, WEBP, TXT, DOCX o XLSX.");
   if (file.size <= 0 || file.size > 10 * 1024 * 1024)
-    throw Error("Dosya boyutu 0–10 MB arasında olmalı.");
+    throw Error("El archivo debe pesar entre 0 y 10 MB.");
 }
 function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const r = indexedDB.open("bsfalcon-demo-archive", 1);
+    const r = indexedDB.open("edifica-demo-archive", 1);
     r.onupgradeneeded = () =>
       r.result.createObjectStore("files", { keyPath: "id" });
     r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(Error("Tarayıcı arşivi açılamadı."));
+    r.onerror = () => reject(Error("No se pudo abrir el archivo del navegador."));
   });
 }
 export async function readArchive(): Promise<ArchiveFile[]> {
@@ -47,7 +47,7 @@ export async function readArchive(): Promise<ArchiveFile[]> {
     const t = db.transaction("files", "readonly"),
       r = t.objectStore("files").getAll();
     r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(Error("Arşiv okunamadı."));
+    r.onerror = () => reject(Error("No se pudo leer el archivo."));
     t.oncomplete = () => db.close();
   });
 }
@@ -64,20 +64,20 @@ export async function saveArchive(file: ArchiveFile) {
     t.onerror = () => {
       db.close();
       reject(
-        Error("Dosya kaydedilemedi; tarayıcı depolama alanını kontrol edin."),
+        Error("No se pudo guardar el archivo; verifique el espacio del navegador."),
       );
     };
-    t.onabort = () => reject(Error("Dosya kaydı tamamlanamadı."));
+    t.onabort = () => reject(Error("No se completó el guardado del archivo."));
   });
 }
 
 /** Belge geçerlilik durumu (senaryo tarihi 15 Kasım 2026). */
 export function documentValidity(expiry: string, today = "2026-11-15") {
-  if (!expiry) return "Süresiz" as const;
-  if (expiry < today) return "Süresi doldu" as const;
+  if (!expiry) return "Sin vencimiento" as const;
+  if (expiry < today) return "Vencido" as const;
   const days = Math.round(
     (Date.parse(expiry + "T12:00:00Z") - Date.parse(today + "T12:00:00Z")) /
       86400000,
   );
-  return days <= 30 ? ("Süresi yaklaşıyor" as const) : ("Geçerli" as const);
+  return days <= 30 ? ("Por vencer" as const) : ("Vigente" as const);
 }

@@ -34,7 +34,7 @@ test("Portfolio totals reconcile across project scopes", () => {
   ])
     assert.equal(
       all[key],
-      summary(seed(), "cengilli")[key] + summary(seed(), "nergis")[key] + summary(seed(), "agva")[key],
+      ["lofty", "alion", "vtower", "business"].reduce((a, p) => a + summary(seed(), p)[key], 0),
     );
   assert.equal(all.revenue, all.collected + all.balance);
 });
@@ -48,15 +48,15 @@ test("Partial receipt updates customer balance, overdue, cash, and totals", () =
   s = applyAction(s, {
     type: "receipt",
     installmentId: i.id,
-    amount: 10000,
+    amount: 100,
     method: "Havale",
     reference: "TEST-001",
   });
-  assert.equal(outstanding(s, i), o0 - 10000);
+  assert.equal(outstanding(s, i), o0 - 100);
   const after = summary(s);
-  assert.equal(after.collected, before.collected + 10000);
-  assert.equal(after.cash, before.cash + 10000);
-  assert.equal(after.overdue, before.overdue - 10000);
+  assert.equal(after.collected, before.collected + 100);
+  assert.equal(after.cash, before.cash + 100);
+  assert.equal(after.overdue, before.overdue - 100);
   assert.equal(after.revenue, after.balance + after.collected);
   assert.throws(() =>
     applyAction(s, {
@@ -110,7 +110,7 @@ test("Purchase revision, reapproval and delivery lifecycle", () => {
       s,
       requestList(s).find((r) => r.id === "SAT-018"),
     ),
-    "İade edildi",
+    "Devuelto",
   );
   s = applyAction(s, {
     type: "edit-request",
@@ -122,7 +122,7 @@ test("Purchase revision, reapproval and delivery lifecycle", () => {
       s,
       requestList(s).find((r) => r.id === "SAT-018"),
     ),
-    "Onay bekliyor",
+    "Pendiente de aprobación",
   );
   assert.throws(() => applyAction(s, { type: "deliver", id: "SAT-018" }));
   s = applyAction(s, { type: "approve", id: "SAT-018" });
@@ -132,14 +132,14 @@ test("Purchase revision, reapproval and delivery lifecycle", () => {
 });
 test("Reservations and new sale reconcile inventory, cash and 36 installments", () => {
   let s = seed();
-  const before = summary(s, "nergis");
-  s = applyAction(s, { type: "reserve", id: "nergis-35" });
-  assert.equal(summary(s, "nergis").reserved, before.reserved + 1);
-  s = applyAction(s, { type: "release", id: "nergis-35" });
-  assert.equal(summary(s, "nergis").reserved, before.reserved);
+  const before = summary(s, "alion");
+  s = applyAction(s, { type: "reserve", id: "alion-35" });
+  assert.equal(summary(s, "alion").reserved, before.reserved + 1);
+  s = applyAction(s, { type: "release", id: "alion-35" });
+  assert.equal(summary(s, "alion").reserved, before.reserved);
   const c = {
-    id: "nergis-35",
-    project: "nergis",
+    id: "alion-35",
+    project: "alion",
     name: "Test Müşteri",
     unit: "B-72",
     price: 3550000,
@@ -148,7 +148,7 @@ test("Reservations and new sale reconcile inventory, cash and 36 installments", 
     paidMonths: 0,
   };
   s = applyAction(s, { type: "contract", record: c });
-  const after = summary(s, "nergis");
+  const after = summary(s, "alion");
   assert.equal(after.sold, before.sold + 1);
   assert.equal(after.cash, before.cash + 850000);
   assert.equal(after.revenue, before.revenue + 3550000);
@@ -165,7 +165,7 @@ test("Reservations and new sale reconcile inventory, cash and 36 installments", 
   assert.throws(() =>
     applyAction(seed(), { type: "contract", record: { ...c, price: NaN } }),
   );
-  assert.throws(() => applyAction(s, { type: "reserve", id: "nergis-35" }));
+  assert.throws(() => applyAction(s, { type: "reserve", id: "alion-35" }));
 });
 test("Rescheduling preserves receivable and changes due bucket", () => {
   let s = seed();
@@ -181,25 +181,25 @@ test("Rescheduling preserves receivable and changes due bucket", () => {
 });
 test("Weighted progress updates all summaries", () => {
   let s = seed();
-  const before = projectProgress(s, "nergis");
+  const before = projectProgress(s, "alion");
   s = applyAction(s, {
     type: "work",
-    id: "w10",
-    patch: { progress: 100, note: "Tamamlandı", material: "Hazır" },
+    id: "w6",
+    patch: { progress: 100, note: "Finalizado", material: "Listo" },
   });
-  assert(projectProgress(s, "nergis") > before);
-  assert.equal(summary(s, "nergis").progress, projectProgress(s, "nergis"));
+  assert(projectProgress(s, "alion") > before);
+  assert.equal(summary(s, "alion").progress, projectProgress(s, "alion"));
   assert.throws(() =>
     applyAction(s, {
       type: "work",
-      id: "w10",
+      id: "w6",
       patch: { progress: 101, note: "", material: "" },
     }),
   );
 });
 test("Reset restores isolated seed and clears audit", () => {
   const s = applyAction(
-    applyAction(seed(), { type: "note", text: "Deneme", project: "nergis" }),
+    applyAction(seed(), { type: "note", text: "Deneme", project: "alion" }),
     { type: "reset" },
   );
   assert.deepEqual(s, seedState);
@@ -211,22 +211,22 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     count = installmentList(base).length;
   const record = {
     id: "BARTER-TEST",
-    project: "nergis",
-    unitId: "nergis-34",
+    project: "alion",
+    unitId: "alion-34",
     company: "Örnek Firma",
     work: "Temsili cephe işi",
     amount: 3500000,
     start: "2026-11-15",
     end: "2026-12-15",
     progress: 0,
-    transfer: "Bekliyor",
+    transfer: "Pendiente",
   };
   const s = applyAction(base, { type: "barter", record });
   for (const key of ["cash", "collected", "balance", "revenue", "sold"])
     assert.equal(summary(s)[key], before[key]);
   assert.equal(summary(s).barterCount, before.barterCount + 1);
   assert.equal(installmentList(s).length, count);
-  assert.throws(() => applyAction(s, { type: "reserve", id: "nergis-34" }));
+  assert.throws(() => applyAction(s, { type: "reserve", id: "alion-34" }));
   assert.throws(() =>
     applyAction(s, { type: "barter", record: { ...record, id: "duplicate" } }),
   );
@@ -234,8 +234,8 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     applyAction(s, {
       type: "contract",
       record: {
-        id: "nergis-34",
-        project: "nergis",
+        id: "alion-34",
+        project: "alion",
         name: "Demo",
         unit: "A-71",
         price: 3550000,
@@ -260,8 +260,8 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   let s = applyAction(base, {
     type: "contract",
     record: {
-      id: "nergis-15",
-      project: "nergis",
+      id: "alion-28",
+      project: "alion",
       name: "Demo Peşinat",
       unit: "B-70",
       price: 3550000,
@@ -276,7 +276,7 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   assert.equal(summary(s).balance, before.balance + 3550000);
   s = applyAction(s, {
     type: "deposit-receipt",
-    id: "nergis-15",
+    id: "alion-28",
     amount: 250000,
   });
   assert.equal(summary(s).cash, before.cash + 250000);
@@ -284,18 +284,18 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   assert.throws(() =>
     applyAction(s, {
       type: "deposit-receipt",
-      id: "nergis-15",
+      id: "alion-28",
       amount: 600001,
     }),
   );
   s = applyAction(s, {
     type: "deposit-receipt",
-    id: "nergis-15",
+    id: "alion-28",
     amount: 600000,
   });
   assert.equal(summary(s).balance, before.balance + 2700000);
   assert.throws(() =>
-    applyAction(s, { type: "deposit-receipt", id: "nergis-15", amount: 1 }),
+    applyAction(s, { type: "deposit-receipt", id: "alion-28", amount: 1 }),
   );
 });
 test("Custom reminders toggle without financial effect", () => {
@@ -303,7 +303,7 @@ test("Custom reminders toggle without financial effect", () => {
     type: "reminder",
     record: {
       id: "R1",
-      project: "nergis",
+      project: "alion",
       title: "Demo takip",
       due: "2026-11-20",
       done: false,

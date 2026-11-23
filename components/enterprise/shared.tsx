@@ -13,8 +13,12 @@ import { Badge, Panel, Progress } from "../ui";
 export { Badge, Panel, Progress };
 export function Logo() {
   return (
-    <div className="official-logo">
-      <img src="/images/falcon-lockup-black-gold.svg" alt="BŞ Falcon Group resmî logosu" />
+    <div className="ed-logo" aria-label="EDIFICA Desarrollos Inmobiliarios">
+      <img src="/images/edifica/edifica-isotipo-oro.svg" alt="" />
+      <span>
+        <b>EDIFICA</b>
+        <i>DESARROLLOS INMOBILIARIOS</i>
+      </span>
     </div>
   );
 }
@@ -50,12 +54,12 @@ export function Drawer({
     >
       <div className="drawer-head">
         <div>
-          <span className="eyebrow">{eyebrow ?? "BŞ FALCON GROUP · YÖNETİM MERKEZİ"}</span>
+          <span className="eyebrow">{eyebrow ?? "EDIFICA · CENTRO DE GESTIÓN"}</span>
           <h2>{title}</h2>
         </div>
         <button
           className="icon-button"
-          aria-label="Paneli kapat"
+          aria-label="Cerrar panel"
           onClick={onClose}
         >
           <X size={20} />
@@ -111,7 +115,7 @@ export function Empty({ title, detail }: { title: string; detail?: string }) {
 export function SearchBox({
   value,
   onChange,
-  placeholder = "Kayıtlarda ara…",
+  placeholder = "Buscar en registros…",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -129,7 +133,7 @@ export function SearchBox({
       {value && (
         <button
           className="icon-button"
-          aria-label="Aramayı temizle"
+          aria-label="Limpiar búsqueda"
           onClick={() => onChange("")}
         >
           <X size={13} />
@@ -142,7 +146,7 @@ export function SectionTitle({
   title,
   description,
   actions,
-  kicker = "BŞ Falcon · OPERASYON MERKEZİ",
+  kicker = "EDIFICA · CENTRO DE GESTIÓN",
 }: {
   title: string;
   description: string;
@@ -164,11 +168,11 @@ export function Status({ status }: { status: string }) {
   return (
     <Badge
       tone={
-        /Gecik|İade|Kontrol bekliyor/.test(status)
+        /Vencid|Devuelto|Pendiente de revisión|Anulad|Revisar|Rechazad/.test(status)
           ? "red"
-          : /bekliyor|İncelemede|Kısmi/.test(status)
+          : /Pendiente|En revisión|Parcial|Por emitir|Próxima/.test(status)
             ? "amber"
-            : /Ödendi|Onaylandı|Tamam|Tahsil|Hazır|Mahsup|Aktif/.test(status)
+            : /Pagad|Aprobad|Finalizad|Cobrad|Listo|Activo|Emitida|Vigente/.test(status)
               ? "green"
               : "neutral"
       }
@@ -208,12 +212,12 @@ export function AuditTrail({
             <i />
             <span>
               <b>{a.message}</b>
-              <small>BŞ Falcon Yönetici · {a.time}</small>
+              <small>EDIFICA · Gerencia · {a.time}</small>
             </span>
           </div>
         ))
       ) : (
-        <p className="muted">Bu kayıtta henüz işlem yapılmadı.</p>
+        <p className="muted">Este registro aún no tiene operaciones.</p>
       )}
     </div>
   );

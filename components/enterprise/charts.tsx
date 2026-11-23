@@ -53,17 +53,17 @@ export function CashChart({
       <div className="chart-key">
         <span>
           <i />
-          Vadesi gelen
+          Vencimientos
         </span>
         <span>
           <i />
-          Tahsil edilen
+          Cobrado
         </span>
       </div>
       <svg
         viewBox="0 0 650 215"
         role="img"
-        aria-label="Kasım ayı haftalık planlanan ve gerçekleşen tahsilat karşılaştırması"
+        aria-label="Cobranza semanal de noviembre: programada vs. realizada"
       >
         {[0, 0.25, 0.5, 0.75, 1].map((v) => (
           <g key={v}>
@@ -100,7 +100,7 @@ export function CashChart({
               rx="4"
               fill="#315c49"
             >
-              <title>{money(v.actual)} tahsil edilen</title>
+              <title>{money(v.actual)} cobrado</title>
             </rect>
             <text
               x={135 + i * 140}
@@ -109,7 +109,7 @@ export function CashChart({
               fill="#748379"
               fontSize="11"
             >
-              {bins[i][0]}–{bins[i][1]} Kas
+              {bins[i][0]}–{bins[i][1]} nov
             </text>
           </g>
         ))}

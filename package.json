@@ -1,5 +1,5 @@
 {
-  "name": "bsfalcon-yonetim-merkezi",
+  "name": "edifica-centro-de-gestion",
   "version": "2.0.0",
   "description": "",
   "scripts": {
@@ -7,7 +7,7 @@
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write app components lib scripts",
-    "test": "node --experimental-strip-types scripts/verify-data.mjs && node --experimental-strip-types scripts/verify-enterprise.mjs && node --experimental-strip-types scripts/verify-contracts.mjs && node --experimental-strip-types scripts/verify-dataset.mjs && node --experimental-strip-types scripts/verify-migration.mjs && node --experimental-strip-types scripts/verify-reports.mjs && node --experimental-strip-types scripts/verify-platform.mjs && node --experimental-strip-types scripts/verify-quality.mjs && node --experimental-strip-types scripts/verify-scope.mjs && node --experimental-strip-types scripts/verify-falcon.mjs"
+    "test": "node --experimental-strip-types scripts/verify-data.mjs && node --experimental-strip-types scripts/verify-enterprise.mjs && node --experimental-strip-types scripts/verify-contracts.mjs && node --experimental-strip-types scripts/verify-dataset.mjs && node --experimental-strip-types scripts/verify-migration.mjs && node --experimental-strip-types scripts/verify-reports.mjs && node --experimental-strip-types scripts/verify-platform.mjs && node --experimental-strip-types scripts/verify-quality.mjs && node --experimental-strip-types scripts/verify-scope.mjs && node --experimental-strip-types scripts/verify-edifica.mjs"
   },
   "keywords": [],
   "author": "",

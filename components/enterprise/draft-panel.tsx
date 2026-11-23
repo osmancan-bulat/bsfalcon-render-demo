@@ -40,33 +40,33 @@ export default function DraftPanel({
     <Drawer
       open
       title={`${contractNumber(d.id)} · ${d.name}`}
-      eyebrow="İMZA SÜRECİNDEKİ SÖZLEŞME"
+      eyebrow="CONTRATO EN PROCESO DE FIRMA"
       onClose={onClose}
       wide
     >
       <dl className="file-summary">
         <div>
-          <dt>Proje</dt>
+          <dt>Proyecto</dt>
           <dd>{pname(d.project)}</dd>
         </div>
         <div>
-          <dt>Blok · kat · daire</dt>
+          <dt>Torre · piso · unidad</dt>
           <dd>
-            {u ? unitPlace(d.id) : d.unit} <small>kod {d.unit}</small>
+            {u ? unitPlace(d.id) : d.unit} <small>código {d.unit}</small>
           </dd>
         </div>
         <div>
-          <dt>Tip · alan</dt>
+          <dt>Tipología · superficie</dt>
           <dd>
             {u?.type} · {u?.gross}/{u?.net} m²
           </dd>
         </div>
         <div>
-          <dt>Cephe</dt>
+          <dt>Orientación</dt>
           <dd>{u?.facade}</dd>
         </div>
         <div>
-          <dt>Durum</dt>
+          <dt>Estado</dt>
           <dd>{meta.status}</dd>
         </div>
       </dl>
@@ -74,71 +74,71 @@ export default function DraftPanel({
       <div className="acct-head">
         <div className="acct-figures">
           <div>
-            <span>Sözleşme bedeli</span>
+            <span>Precio del contrato</span>
             <b className="num">{money(d.price)}</b>
             <small>
               {d.listPrice && d.listPrice > d.price
-                ? `Liste ${money(d.listPrice)} · indirim ${money(d.listPrice - d.price)}`
-                : "Liste fiyatı"}
+                ? `Lista ${money(d.listPrice)} · descuento ${money(d.listPrice - d.price)}`
+                : "Precio de lista"}
             </small>
           </div>
           <div>
-            <span>Anlaşmalı peşinat</span>
+            <span>Anticipo pactado</span>
             <b className="num">{money(d.depositExpected ?? 0)}</b>
-            <small>{d.plan?.deposits.length ?? 1} parça</small>
+            <small>{d.plan?.deposits.length ?? 1} partes</small>
           </div>
           <div>
-            <span>Taksit</span>
+            <span>Cuota</span>
             <b className="num">
               {sch ? `${d.plan!.count} × ${money(sch.installment)}` : "—"}
             </b>
-            <small>İlk vade {d.plan ? date(d.plan.firstDue) : "—"}</small>
+            <small>Primer vencimiento {d.plan ? date(d.plan.firstDue) : "—"}</small>
           </div>
           <div>
             <span>Finansal etki</span>
-            <b className="num">Yok</b>
-            <small>Alacak ve kasa imza ile oluşur</small>
+            <b className="num">No</b>
+            <small>Cuenta por cobrar y caja se generan con la firma</small>
           </div>
         </div>
         <div className="acct-actions">
-          <Badge tone={meta.status === "Taslak" ? "neutral" : "amber"}>
+          <Badge tone={meta.status === "Borrador" ? "neutral" : "amber"}>
             {meta.status}
           </Badge>
           <span className="acct-plan">
-            Konut bu sözleşme için bloke edildi; başka satış veya barter
-            yapılamaz.
+            La unidad está bloqueada para este contrato; no admite otra venta
+            ni reserva.
           </span>
           <Link
             className="btn compact"
             href={`/belge/?tur=sozlesme&id=${d.id}`}
             target="_blank"
           >
-            <Printer size={14} /> Sözleşme özeti
+            <Printer size={14} /> Resumen del contrato
           </Link>
         </div>
       </div>
 
       {mode === "" && (
         <div className="draft-cta">
-          {meta.status === "Taslak" && (
+          {meta.status === "Borrador" && (
             <button
               className="btn"
               onClick={() =>
                 act({
                   type: "contract-status",
                   id: d.id,
-                  status: "İmza bekliyor",
+                  status: "Pendiente de firma",
                 })
               }
             >
-              <Send size={15} /> İmzaya gönder
+              <Send size={15} /> Enviar a firma
             </button>
           )}
           <button className="btn danger" onClick={() => setMode("cancel")}>
-            <X size={15} /> Taslağı iptal et
+            <X size={15} /> Anular borrador
           </button>
           <button className="btn primary" onClick={() => setMode("sign")}>
-            <PenLine size={15} /> İmzayı kaydet
+            <PenLine size={15} /> Registrar firma
           </button>
         </div>
       )}
@@ -156,10 +156,10 @@ export default function DraftPanel({
           }}
         >
           <h3>
-            <ShieldCheck size={16} /> İmzayı onayla
+            <ShieldCheck size={16} /> Confirmar firma
           </h3>
           <label className="form-label">
-            İmzada tahsil edilen peşinat (TL)
+            Anticipo cobrado en la firma (USD)
             <input
               type="number"
               min="0"
@@ -173,36 +173,35 @@ export default function DraftPanel({
           </label>
           <ul className="confirm-list">
             <li>
-              Sözleşme <b>Aktif</b> olur;{" "}
+              Contrato <b>Activo</b> olur;{" "}
               {sch
-                ? `${d.plan!.count} taksit${d.plan!.interim.length ? ` ve ${d.plan!.interim.length} ara ödeme` : ""}`
-                : "ödeme planı"}{" "}
-              alacak olarak oluşur.
+                ? `${d.plan!.count} cuotas${d.plan!.interim.length ? ` y ${d.plan!.interim.length} pagos intermedios` : ""}`
+                : "plan de pagos"}{" "}
+              se genera como cuenta por cobrar.
             </li>
             <li>
-              Proje kasasına <b>{validPaid ? money(paidN) : "—"}</b> peşinat
-              girer
+              Ingresan a caja <b>{validPaid ? money(paidN) : "—"}</b> de anticipo
               {validPaid && paidN < (d.depositExpected ?? 0)
-                ? `; kalan ${money((d.depositExpected ?? 0) - paidN)} peşinat vadesinde izlenir`
+                ? `; el anticipo restante de ${money((d.depositExpected ?? 0) - paidN)} se sigue a su vencimiento`
                 : ""}
               .
             </li>
             <li>
-              Bu işlem geri alınamaz; aktif sözleşme yalnızca fesih süreciyle
-              kapatılabilir.
+              Esta acción no se puede deshacer; un contrato activo solo se cierra mediante
+              un proceso de rescisión.
             </li>
           </ul>
           {!validPaid && (
             <p className="form-error">
-              Peşinat 0 ile {money(d.depositExpected ?? 0)} arasında olmalı.
+              El anticipo debe estar entre 0 y {money(d.depositExpected ?? 0)} .
             </p>
           )}
           <div className="form-actions">
             <button type="button" className="btn" onClick={() => setMode("")}>
-              Vazgeç
+              Cancelar
             </button>
             <button className="btn primary" type="submit" disabled={!validPaid}>
-              <PenLine size={15} /> İmzalandı olarak kaydet
+              <PenLine size={15} /> Registrar como firmado
             </button>
           </div>
         </form>
@@ -216,47 +215,46 @@ export default function DraftPanel({
             if (act({ type: "contract-cancel", id: d.id, reason })) onClose();
           }}
         >
-          <h3>Taslağı iptal et</h3>
+          <h3>Anular borrador</h3>
           <label className="form-label">
-            İptal gerekçesi
+            Motivo de la anulación
             <input
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               required
               maxLength={120}
-              placeholder="Örn. müşteri vazgeçti"
+              placeholder="Ej.: el cliente desistió"
               autoFocus
             />
           </label>
           <p className="muted">
-            Konut yeniden satışa açılır. Taslağın finansal etkisi olmadığı için
-            kasa ve alacak değişmez.
+            La unidad vuelve a estar disponible. El borrador no tenía efecto financiero, por lo que caja y cuentas por cobrar no cambian.
           </p>
           <div className="form-actions">
             <button type="button" className="btn" onClick={() => setMode("")}>
-              Vazgeç
+              Cancelar
             </button>
             <button
               className="btn danger"
               type="submit"
               disabled={!reason.trim()}
             >
-              Taslağı iptal et
+              Anular borrador
             </button>
           </div>
         </form>
       )}
 
       <section className="acct-section">
-        <h3>Planlanan ödeme takvimi</h3>
+        <h3>Calendario de pagos</h3>
         {sch ? (
           <div className="e-table-wrap drawer-table">
             <table>
               <thead>
                 <tr>
-                  <th>Ödeme</th>
-                  <th>Vade</th>
-                  <th className="numeric">Tutar</th>
+                  <th>Pago</th>
+                  <th>Vencimiento</th>
+                  <th className="numeric">Monto</th>
                 </tr>
               </thead>
               <tbody>
@@ -264,8 +262,8 @@ export default function DraftPanel({
                   <tr key={`d${n}`} className="acct-interim">
                     <td>
                       {d.plan!.deposits.length > 1
-                        ? `${n + 1}. peşinat`
-                        : "Peşinat"}
+                        ? `Anticipo ${n + 1}`
+                        : "Anticipo"}
                     </td>
                     <td>{date(p.due)}</td>
                     <td className="numeric">{money(p.amount)}</td>
@@ -274,7 +272,7 @@ export default function DraftPanel({
                 {sch.rows.slice(0, 6).map((r) => (
                   <tr
                     key={r.seq}
-                    className={r.kind === "Ara ödeme" ? "acct-interim" : ""}
+                    className={r.kind === "Pago intermedio" ? "acct-interim" : ""}
                   >
                     <td>{r.label}</td>
                     <td>{date(r.due)}</td>
@@ -284,8 +282,8 @@ export default function DraftPanel({
                 {sch.rows.length > 6 && (
                   <tr>
                     <td colSpan={3} className="muted">
-                      … ve {sch.rows.length - 6} ödeme daha · plan toplamı{" "}
-                      {money(sch.total)} (bedelle kuruşu kuruşuna eşit)
+                      … y {sch.rows.length - 6} pagos más · total del plan{" "}
+                      {money(sch.total)} (igual al precio, al centavo)
                     </td>
                   </tr>
                 )}
@@ -293,12 +291,12 @@ export default function DraftPanel({
             </table>
           </div>
         ) : (
-          <p className="muted">Bu taslakta ödeme planı tanımlı değil.</p>
+          <p className="muted">Este borrador no tiene plan de pagos.</p>
         )}
       </section>
 
       <section className="acct-section">
-        <h3>Sözleşme geçmişi</h3>
+        <h3>Historial del contrato</h3>
         <ol className="acct-history">
           {meta.history.map((h, n) => (
             <li key={n}>

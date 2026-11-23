@@ -19,7 +19,7 @@ const create = (s, name = "Silinecek Proje", code = "SP") => {
 
 test("Deleting the selected empty project makes its id an invalid scope that resolves to all projects", () => {
   let [s, id] = create(seed());
-  s = applyAction(s, { type: "block-create", project: id, block: "A", floors: 2, perFloor: 2, startFloor: 0, unitType: "2+1", gross: 100, listPrice: 2000000, facade: "Güney" });
+  s = applyAction(s, { type: "block-create", project: id, block: "A", floors: 2, perFloor: 2, startFloor: 0, unitType: "2+1", gross: 100, listPrice: 2000000, facade: "Frente" });
   syncCatalog(s);
   assert(isScopeValid(id));
   assert.equal(resolveScope(id), id);
@@ -38,24 +38,24 @@ test("Deleting the selected empty project makes its id an invalid scope that res
 
 test("Archiving the selected project invalidates it as scope; reactivation makes it selectable again", () => {
   let [s, id] = create(seed(), "Arşiv Proje", "AP");
-  s = applyAction(s, { type: "project-status", id, status: "Arşiv" });
+  s = applyAction(s, { type: "project-status", id, status: "Archivado" });
   syncCatalog(s);
   assert.equal(isScopeValid(id), false);
   assert.equal(scopeProblem(id), "archived");
   assert.equal(resolveScope(id), "all");
-  s = applyAction(s, { type: "project-status", id, status: "Aktif" });
+  s = applyAction(s, { type: "project-status", id, status: "Activo" });
   syncCatalog(s);
   assert(isScopeValid(id));
   assert.equal(resolveScope(id), id);
   assert(visibleProjects().some((p) => p.id === id));
   // Tamamlanan proje kapsam olarak seçilebilir (salt görüntüleme)
-  s = applyAction(s, { type: "project-status", id: "nergis", status: "Tamamlandı" });
+  s = applyAction(s, { type: "project-status", id: "alion", status: "Finalizado" });
   syncCatalog(s);
-  assert(isScopeValid("nergis"));
+  assert(isScopeValid("alion"));
   // Yerleşik proje arşivlenirse eski adresi de geçersiz olur
-  s = applyAction(s, { type: "project-status", id: "cengilli", status: "Arşiv" });
+  s = applyAction(s, { type: "project-status", id: "vtower", status: "Archivado" });
   syncCatalog(s);
-  assert.equal(scopeProblem("cengilli"), "archived");
+  assert.equal(scopeProblem("vtower"), "archived");
 });
 
 test("Renaming a project updates the catalog used by the scope picker immediately", () => {
@@ -71,13 +71,13 @@ test("Renaming a project updates the catalog used by the scope picker immediatel
 
 test("Stored or linked scopes that do not exist resolve safely (reload and old links)", () => {
   syncCatalog(seed());
-  for (const bad of [null, undefined, "", "p99", "cengilli-villa-sitesi", "ALL", "silinmis"]) {
+  for (const bad of [null, undefined, "", "p99", "lofty-city-hub", "ALL", "silinmis"]) {
     assert.equal(resolveScope(bad), "all", String(bad));
   }
   assert.equal(scopeProblem("p99"), "missing");
   assert.equal(scopeProblem(""), "missing");
-  for (const ok of ["all", "cengilli", "nergis", "agva"]) assert.equal(resolveScope(ok), ok);
-  assert.equal(scopeProblem("cengilli"), null);
+  for (const ok of ["all", "vtower", "alion", "business"]) assert.equal(resolveScope(ok), ok);
+  assert.equal(scopeProblem("vtower"), null);
 });
 
 test("Deleting a project changes no other project's customers, contracts, finances or reports", () => {
@@ -85,7 +85,7 @@ test("Deleting a project changes no other project's customers, contracts, financ
   let [s, id] = create(base);
   s = applyAction(s, { type: "block-create", project: id, block: "A", floors: 1, perFloor: 4, startFloor: 0, unitType: "1+1", gross: 70, listPrice: 1500000, facade: "Doğu" });
   const before = {};
-  for (const p of ["all", "cengilli", "nergis", "agva"]) {
+  for (const p of ["all", "vtower", "alion", "business"]) {
     const f = { project: p };
     before[p] = JSON.stringify([
       summary(s, p),
@@ -103,7 +103,7 @@ test("Deleting a project changes no other project's customers, contracts, financ
   const records = (x) => JSON.stringify([x.contracts, x.drafts, x.receipts, x.depositPayments, x.barters, x.offsets, x.requests, x.reminders, x.paidOrders, x.approved]);
   const recordsBefore = records(s);
   s = applyAction(s, { type: "project-delete", id });
-  for (const p of ["all", "cengilli", "nergis", "agva"]) {
+  for (const p of ["all", "vtower", "alion", "business"]) {
     const f = { project: p };
     const after = JSON.stringify([
       summary(s, p),

@@ -45,19 +45,15 @@ import { money, compact, date } from "@/lib/data";
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
 const CONTRACT_TONE: Record<string, string> = {
-  Aktif: "green",
-  Tamamlandı: "info",
-  Taslak: "neutral",
-  "İmza bekliyor": "amber",
-  İptal: "red",
+  "Activo": "green",
+  "Finalizado": "info",
+  "Borrador": "neutral",
+  "Pendiente de firma": "amber",
+  "Anulado": "red",
 };
 const AGENDA_ICON: Record<AgendaItem["kind"], ReactNode> = {
-  Peşinat: <Wallet size={13} />,
-  Taksit: <CalendarClock size={13} />,
-  Sözleşme: <FileSignature size={13} />,
-  Hakediş: <ReceiptText size={13} />,
-  Barter: <Handshake size={13} />,
-  Hatırlatma: <BellRing size={13} />,
+  "Anticipo": <Wallet size={13} />, Cuota: <CalendarClock size={13} />, Contrato: <FileSignature size={13} />, "Certificado de obra": <ReceiptText size={13} />,
+  "Canje": <Handshake size={13} />, Recordatorio: <BellRing size={13} />,
 };
 
 type Open =
@@ -80,7 +76,7 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
     );
     const names = new Map(customerList(state).map((c) => [c.id, c]));
     const pays = paymentRows(state).filter((r) => r.project === projectId);
-    const lateRows = pays.filter((r) => r.status === "Gecikti");
+    const lateRows = pays.filter((r) => r.status === "Vencida");
     const lateBy = new Map<
       string,
       {
@@ -99,7 +95,7 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
           count: 1,
           oldest: r.due,
           focus: r.installmentId ?? "deposit",
-          deposit: r.kind === "Peşinat",
+          deposit: r.kind === "Anticipo",
         });
       else {
         cur.total += r.remaining;
@@ -114,16 +110,16 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
     );
     const requests = requestList(state).filter((r) => r.project === projectId);
     const awaiting = requests.filter(
-      (r) => requestStatus(state, r) === "Onay bekliyor",
+      (r) => requestStatus(state, r) === "Pendiente de aprobación",
     );
     const approved = requests.filter(
-      (r) => requestStatus(state, r) === "Onaylandı",
+      (r) => requestStatus(state, r) === "Aprobado",
     );
     const barters = state.barters.filter((b) => b.project === projectId);
     const sameFirm = (a: string, b: string) =>
-      a.trim().toLocaleLowerCase("tr") === b.trim().toLocaleLowerCase("tr");
+      a.trim().toLocaleLowerCase("es") === b.trim().toLocaleLowerCase("es");
     const offsetChance = approved
-      .filter((r) => r.type === "Hakediş")
+      .filter((r) => r.type === "Certificado de obra")
       .map((r) => ({
         r,
         b: barters.find(
@@ -134,25 +130,25 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
       }))
       .filter((x) => x.b);
     const drafts = contracts.filter(
-      (c) => c.status === "Taslak" || c.status === "İmza bekliyor",
+      (c) => c.status === "Borrador" || c.status === "Pendiente de firma",
     );
     // Yaklaşan ödemeler: önümüzdeki 14 gün, aynı gün vadeli taksitler tek satırda
     const soon = agenda(state, projectId, 30).filter(
-      (a) => a.kind === "Peşinat" || a.kind === "Taksit",
+      (a) => a.kind === "Anticipo" || a.kind === "Cuota",
     );
     const grouped: (AgendaItem & { group?: number })[] = [];
     for (const a of soon) {
-      if (a.kind !== "Taksit") {
+      if (a.kind !== "Cuota") {
         grouped.push(a);
         continue;
       }
-      const same = soon.filter((x) => x.kind === "Taksit" && x.date === a.date);
+      const same = soon.filter((x) => x.kind === "Cuota" && x.date === a.date);
       if (same.length === 1) grouped.push(a);
       else if (same[0] === a)
         grouped.push({
           ...a,
           id: `grp-${a.date}`,
-          title: `${same.length} taksit`,
+          title: `${same.length} cuotas`,
           detail:
             same
               .slice(0, 2)
@@ -207,14 +203,14 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
     action: string;
     run: () => void;
   };
-  const MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+  const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   const rowName = (r: (typeof lateRows)[number]) =>
-    r.kind === "Peşinat"
-      ? r.label === "Peşinat"
-        ? "peşinat"
-        : `peşinat (${r.label.replace(". peşinat", ". parça")})`
-      : r.kind === "Ara ödeme"
-        ? "ara ödeme"
+    r.kind === "Anticipo"
+      ? r.label === "Anticipo"
+        ? "anticipo"
+        : `anticipo (${r.label})`
+      : r.kind === "Pago intermedio"
+        ? "pago intermedio"
         : `${MONTHS[Number(r.due.slice(5, 7)) - 1]} taksiti`;
   const tasks: Task[] = [
     ...late.map(([id, v]) => {
@@ -229,11 +225,11 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
         where: unitShort(id),
         what:
           rows.length === 1
-            ? `Geciken ${rowName(rows[0])}`
-            : `${rows.length} geciken ödeme · en eskisi ${rowName(rows[0])}`,
-        when: `${lateDays} gün gecikti`,
+            ? `Vencido: ${rowName(rows[0])}`
+            : `${rows.length} pagos vencidos · el más antiguo: ${rowName(rows[0])}`,
+        when: `${lateDays} días de atraso`,
         amount: v.total,
-        action: "Tahsilatı görüntüle",
+        action: "Ver cobro",
         run: () => setOpen({ type: "customer", id, focus: v.focus }),
       };
     }),
@@ -247,12 +243,12 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
         who: c.name,
         where: unitShort(c.id),
         what:
-          c.status === "İmza bekliyor"
-            ? `${c.number} imza bekliyor · imzada ilk peşinat`
-            : `${c.number} taslak · imzaya gönderilmedi`,
-        when: first ? `peşinat vadesi ${date(first.due)}` : "",
+          c.status === "Pendiente de firma"
+            ? `${c.number} pendiente de firma · primer anticipo en la firma`
+            : `${c.number} borrador · no enviado a firma`,
+        when: first ? `anticipo con vencimiento ${date(first.due)}` : "",
         amount: first?.amount ?? d?.depositExpected,
-        action: c.status === "İmza bekliyor" ? "Sözleşmeyi aç" : "Taslağı incele",
+        action: c.status === "Pendiente de firma" ? "Abrir contrato" : "Revisar borrador",
         run: () => setOpen({ type: "draft", id: c.id }),
       };
     }),
@@ -261,11 +257,11 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
       tone: "info",
       icon: <ReceiptText size={16} />,
       who: r.company,
-      where: `Hakediş ${r.id}`,
-      what: `${r.name} · onay bekliyor`,
-      when: `vade ${date(r.due)}`,
+      where: `Certificado ${r.id}`,
+      what: `${r.name} · pendiente de aprobación`,
+      when: `vence ${date(r.due)}`,
       amount: r.amount,
-      action: "İncele ve onayla",
+      action: "Revisar y aprobar",
       run: () => setOpen({ type: "request", id: r.id }),
     })),
     ...offsetChance.map(({ r, b }) => ({
@@ -273,11 +269,11 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
       tone: "bronze",
       icon: <Handshake size={16} />,
       who: r.company,
-      where: `Barter ${b!.id} · ${unitShort(b!.unitId)}`,
-      what: `${r.id} hakedişi barter bakiyesinden mahsup edilebilir`,
-      when: `vade ${date(r.due)}`,
+      where: `Canje ${b!.id} · ${unitShort(b!.unitId)}`,
+      what: `El certificado ${r.id} puede compensarse con canje`,
+      when: `vence ${date(r.due)}`,
       amount: netPayable(state, r),
-      action: "Mahsubu görüntüle",
+      action: "Ver compensación",
       run: () => setOpen({ type: "barter", id: b!.id }),
     })),
   ];
@@ -291,59 +287,59 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
           <span className="eyebrow">{date(SNAPSHOT)}</span>
           <h1>{p.name}</h1>
           <p>
-            {p.location} · {p.total} bağımsız bölüm{p.delivery ? ` · teslim ${p.delivery}` : ""}
+            {p.location} · {p.total} unidades{p.delivery ? `· entrega ${p.delivery}` : ""}
           </p>
         </div>
-        <nav className="quick-actions" aria-label="Hızlı işlemler">
-          <Link className="btn primary" href="/odemeler?durum=Gecikti">
-            <Wallet size={15} /> Tahsilat kaydet
+        <nav className="quick-actions" aria-label="Acciones rápidas">
+          <Link className="btn primary" href="/cobros?durum=Vencida">
+            <Wallet size={15} /> Registrar cobro
           </Link>
-          <Link className="btn" href="/daireler">
-            <Plus size={15} /> Yeni satış
+          <Link className="btn" href="/unidades">
+            <Plus size={15} /> Nueva venta
           </Link>
           <Link className="btn" href="/barter">
-            <Handshake size={15} /> Barter
+            <Handshake size={15} /> Canje
           </Link>
           <Link
             className="btn ghost"
-            href={`/belge/?tur=proje&project=${projectId}`}
+            href={`/belge/?tur=proyecto&project=${projectId}`}
             target="_blank"
-            aria-label="Yönetici raporu"
+            aria-label="Informe gerencial"
           >
             <Printer size={15} />
           </Link>
         </nav>
       </header>
 
-      <section className="status-tiles" aria-label="Öncelikli durum">
+      <section className="status-tiles" aria-label="Prioridades">
         <Link
-          href="/odemeler?durum=Gecikti"
+          href="/cobros?durum=Vencida"
           className={`status-tile ${lateTotal > 0 ? "danger" : ""}`}
         >
-          <span>Geciken ödemeler</span>
+          <span>Pagos vencidos</span>
           <strong className="num">{money(lateTotal)}</strong>
           <small>
-            {late.length} müşteri · {lateRows.length} ödeme{" "}
+            {late.length} clientes · {lateRows.length} pagos{" "}
             <ArrowRight size={13} />
           </small>
         </Link>
-        <Link href="/odemeler?durum=Yaklaşıyor" className="status-tile">
-          <span>Önümüzdeki 30 gün</span>
+        <Link href="/cobros?durum=Próxima" className="status-tile">
+          <span>Próximos 30 días</span>
           <strong className="num">{compact(upcomingTotal)}</strong>
           <small>
-            {upcoming.length} ödeme bekleniyor <ArrowRight size={13} />
+            {upcoming.length} pagos esperados <ArrowRight size={13} />
           </small>
         </Link>
         <Link
-          href="/sozlesmeler"
+          href="/contratos"
           className={`status-tile ${drafts.length ? "warning" : ""}`}
         >
-          <span>Bekleyen sözleşmeler</span>
+          <span>Contratos pendientes</span>
           <strong className="num">{drafts.length}</strong>
           <small>
             {drafts.length
-              ? `${compact(draftValue)} · imza süreci`
-              : "İmza bekleyen yok"}{" "}
+              ? `${compact(draftValue)} · en proceso de firma`
+              : "Sin contratos pendientes de firma"}{" "}
             <ArrowRight size={13} />
           </small>
         </Link>
@@ -352,9 +348,9 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
       <div className="home-grid">
         <section className="panel">
           <div className="panel-heading">
-            <h2>Bugün yapılacaklar</h2>
+            <h2>Pendientes de hoy</h2>
             <Badge tone={tasks.length ? "amber" : "green"}>
-              {tasks.length || "Tamam"}
+              {tasks.length || "Listo"}
             </Badge>
           </div>
           {tasks.length ? (
@@ -393,21 +389,21 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
             </ul>
           ) : (
             <div className="cc-allclear">
-              <CircleCheck size={20} /> Bugün için bekleyen işlem yok.
+              <CircleCheck size={20} /> No hay pendientes para hoy.
             </div>
           )}
           {tasks.length > 6 && (
             <button className="cc-more" onClick={() => setAllTasks(!allTasks)}>
-              {allTasks ? "Daha az göster" : `${tasks.length - 6} işlem daha`}
+              {allTasks ? "Mostrar menos" : `${tasks.length - 6} pendientes más`}
             </button>
           )}
         </section>
 
         <section className="panel">
           <div className="panel-heading">
-            <h2>Yaklaşan ödemeler · 30 gün</h2>
-            <Link className="e-text-link" href="/odemeler?durum=Yaklaşıyor">
-              Tümü <ChevronRight size={13} />
+            <h2>Próximos vencimientos · 30 días</h2>
+            <Link className="e-text-link" href="/cobros?durum=Próxima">
+              Todos <ChevronRight size={13} />
             </Link>
           </div>
           <ul className="cc-agenda">
@@ -416,7 +412,7 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
                 <button
                   onClick={() =>
                     "group" in a && a.group
-                      ? (location.href = "/odemeler?durum=Yaklaşıyor")
+                      ? (location.href = "/cobros?durum=Próxima")
                       : a.ref.type === "customer" &&
                         setOpen({
                           type: "customer",
@@ -429,7 +425,7 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
                     <b>{new Date(a.date + "T12:00:00").getDate()}</b>
                     <small>
                       {new Date(a.date + "T12:00:00").toLocaleDateString(
-                        "tr-TR",
+                        "es-PY",
                         { month: "short" },
                       )}
                     </small>
@@ -447,42 +443,42 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
                 </button>
               </li>
             ))}
-            {!grouped.length && <Empty title="30 gün içinde ödeme yok" />}
+            {!grouped.length && <Empty title="Sin vencimientos en 30 días" />}
           </ul>
         </section>
       </div>
 
-      <section className="home-finance" aria-label="Finansal durum">
-        <h2>Finansal durum</h2>
+      <section className="home-finance" aria-label="Situación financiera">
+        <h2>Situación financiera</h2>
         <dl>
           <div>
-            <dt>Tahsil edilen</dt>
+            <dt>Cobrado</dt>
             <dd className="num">{compact(s.collected)}</dd>
             <Progress value={pct(s.collected, s.revenue)} />
-            <small>Sisteme geçiş öncesi {compact(cb.prior)} dahil</small>
+            <small>Antes de la implementación {compact(cb.prior)} dahil</small>
           </div>
           <div>
-            <dt>Kalan alacak</dt>
+            <dt>Saldo por cobrar</dt>
             <dd className="num">{compact(s.balance)}</dd>
-            <small>{compact(s.revenue)} sözleşme değeri</small>
+            <small>{compact(s.revenue)} valor contratado</small>
           </div>
           <div>
-            <dt>Proje kasası</dt>
+            <dt>Caja del proyecto</dt>
             <dd className="num">{compact(s.cash)}</dd>
-            <small>{money(s.payable)} onaylı ödeme bekliyor</small>
+            <small>{money(s.payable)} pagos aprobados pendientes</small>
           </div>
           <div>
-            <dt>Satış</dt>
+            <dt>Ventas</dt>
             <dd className="num">
               {s.sold} / {s.total}
             </dd>
             <small>
-              {s.barterCount} barter · {s.reserved} rezerve
+              {s.barterCount} canje · {s.reserved} reservadas
             </small>
           </div>
         </dl>
-        <Link className="e-text-link" href="/finans">
-          Finans ayrıntısı <ChevronRight size={13} />
+        <Link className="e-text-link" href="/caja">
+          Detalle financiero <ChevronRight size={13} />
         </Link>
       </section>
 
@@ -524,20 +520,20 @@ export function ContractTable({
   rows: ContractView[];
   onOpen: (id: string) => void;
 }) {
-  if (!rows.length) return <Empty title="Bu filtrede sözleşme yok" />;
+  if (!rows.length) return <Empty title="No hay contratos con este filtro" />;
   return (
     <div className="e-table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Sözleşme / müşteri</th>
-            <th>Daire</th>
+            <th>Contrato / cliente</th>
+            <th>Unidad</th>
             <th>Plan</th>
-            <th className="numeric">Bedel</th>
-            <th>Tahsilat</th>
-            <th className="numeric">Bakiye</th>
-            <th>Durum</th>
-            <th aria-label="İşlemler" />
+            <th className="numeric">Precio</th>
+            <th>Cobro</th>
+            <th className="numeric">Saldo</th>
+            <th>Estado</th>
+            <th aria-label="Acciones" />
           </tr>
         </thead>
         <tbody>
@@ -547,8 +543,8 @@ export function ContractTable({
             return (
               <tr
                 key={c.id}
-                className={c.status === "İptal" ? "" : "clickable"}
-                onClick={() => c.status !== "İptal" && onOpen(c.id)}
+                className={c.status === "Anulado" ? "" : "clickable"}
+                onClick={() => c.status !== "Anulado" && onOpen(c.id)}
               >
                 <td>
                   <b>{c.name}</b>
@@ -568,7 +564,7 @@ export function ContractTable({
                 </td>
                 <td className="numeric">
                   <b>{money(c.price)}</b>
-                  {c.discount > 0 && <small>Liste {money(c.listPrice!)}</small>}
+                  {c.discount > 0 && <small>Lista {money(c.listPrice!)}</small>}
                 </td>
                 <td className="cc-ratio">
                   {a ? (
@@ -577,18 +573,18 @@ export function ContractTable({
                       <Progress value={ratio} />
                     </>
                   ) : (
-                    <small>İmza sonrası</small>
+                    <small>Después de la firma</small>
                   )}
                 </td>
                 <td className="numeric">
                   <b>{a ? money(a.balance) : "—"}</b>
                   {a && a.overdue > 0 && (
                     <small className="danger">
-                      {money(a.overdue)} gecikmiş
+                      {money(a.overdue)} vencidas
                     </small>
                   )}
                   {a && a.overdue === 0 && a.next && (
-                    <small>Sıradaki {date(a.next.due)}</small>
+                    <small>Próxima {date(a.next.due)}</small>
                   )}
                 </td>
                 <td>
@@ -606,8 +602,8 @@ export function ContractTable({
                     className="icon-button"
                     href={`/belge/?tur=sozlesme&id=${c.id}`}
                     target="_blank"
-                    aria-label={`${c.number} sözleşme özetini yazdır`}
-                    title="Sözleşme özeti"
+                    aria-label={`Imprimir resumen del contrato ${c.number}`}
+                    title="Resumen del contrato"
                   >
                     <Printer size={15} />
                   </Link>

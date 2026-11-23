@@ -33,7 +33,7 @@ export default function NewSaleForm({
   const [count, setCount] = useState("36");
   const [firstDue, setFirstDue] = useState("2026-12-15");
   const [interim, setInterim] = useState<Interim[]>([]);
-  const [mode, setMode] = useState<"Aktif" | "Taslak">("Aktif");
+  const [mode, setMode] = useState<"Activo" | "Borrador">("Activo");
   const [paidNow, setPaidNow] = useState(suggested);
   const [showAll, setShowAll] = useState(false);
 
@@ -53,7 +53,7 @@ export default function NewSaleForm({
     } catch (e) {
       return {
         ok: false as const,
-        error: e instanceof Error ? e.message : "Plan hesaplanamadı.",
+        error: e instanceof Error ? e.message : "No se pudo calcular el plan.",
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,10 +63,10 @@ export default function NewSaleForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!preview.ok) return;
-    const paid = mode === "Aktif" ? num(paidNow || "0") : 0;
+    const paid = mode === "Activo" ? num(paidNow || "0") : 0;
     const ok = act({
       type: "contract",
-      status: mode === "Taslak" ? "Taslak" : undefined,
+      status: mode === "Borrador" ? "Borrador" : undefined,
       record: {
         id: u.id,
         project: u.project,
@@ -83,7 +83,7 @@ export default function NewSaleForm({
         listPrice: u.listPrice,
       },
     });
-    if (ok) onDone(name.trim(), mode === "Taslak");
+    if (ok) onDone(name.trim(), mode === "Borrador");
   }
 
   const rows = preview.ok ? preview.rows : [];
@@ -93,25 +93,25 @@ export default function NewSaleForm({
         <div>
           <span className="eyebrow">{p.name}</span>
           <b>
-            Daire {u.label} · {u.type}
+            Unidad {u.label} · {u.type}
           </b>
           <small>
-            Brüt {u.gross} m² · net {u.net} m² · {u.floorLabel} · {u.facade}
-            {u.corner ? " · köşe" : ""}
+            Bruto {u.gross} m² · {u.net} m² · {u.floorLabel} · {u.facade}
+            {u.corner ? "· esquina" : ""}
           </small>
         </div>
         <div className="sale-unit-price">
-          <small>Liste fiyatı (temsili)</small>
+          <small>Precio de lista (ejemplo)</small>
           <b className="num">{money(u.listPrice)}</b>
           <small>{money(Math.round(u.listPrice / u.gross))} / m²</small>
         </div>
       </div>
 
       <fieldset>
-        <legend>Sözleşme</legend>
+        <legend>Contrato</legend>
         <div className="form-grid">
           <label className="full">
-            Müşteri adı (kurgusal)
+            Nombre del cliente (ficticio)
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -121,7 +121,7 @@ export default function NewSaleForm({
             />
           </label>
           <label>
-            Sözleşme bedeli (TL)
+            Precio del contrato (USD)
             <input
               type="number"
               min="1"
@@ -132,36 +132,36 @@ export default function NewSaleForm({
             />
             <small className={discount > 0 ? "warning" : "muted"}>
               {discount > 0
-                ? `Liste fiyatından ${money(discount)} indirim`
+                ? `Descuento de ${money(discount)} sobre el precio de lista`
                 : discount < 0
-                  ? `Liste fiyatının ${money(-discount)} üzerinde`
-                  : "Liste fiyatı"}
+                  ? `${money(-discount)} por encima del precio de lista`
+                  : "Precio de lista"}
             </small>
           </label>
           <label>
-            Sözleşme durumu
+            Estado del contrato
             <select
               value={mode}
-              onChange={(e) => setMode(e.target.value as "Aktif" | "Taslak")}
+              onChange={(e) => setMode(e.target.value as "Activo" | "Borrador")}
             >
-              <option value="Aktif">İmzalandı · hemen aktif</option>
-              <option value="Taslak">Taslak · imza bekleyecek</option>
+              <option value="Activo">Firmado · activo de inmediato</option>
+              <option value="Borrador">Borrador · pendiente de firma</option>
             </select>
             <small className="muted">
-              {mode === "Taslak"
-                ? "Konut bloke edilir; alacak ve kasa etkisi imzada oluşur."
-                : "Alacaklar ve ödeme planı hemen oluşur."}
+              {mode === "Borrador"
+                ? "La unidad queda bloqueada; la cuenta por cobrar y la caja se generan en la firma."
+                : "Las cuentas por cobrar y el plan de pagos se generan de inmediato."}
             </small>
           </label>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend>Peşinat</legend>
+        <legend>Anticipo</legend>
         {deposits.map((d, n) => (
           <div className="sale-row" key={n}>
             <label>
-              {deposits.length > 1 ? `${n + 1}. peşinat (TL)` : "Peşinat (TL)"}
+              {deposits.length > 1 ? `Anticipo ${n + 1} (USD)` : "Anticipo (USD)"}
               <input
                 type="number"
                 min="0"
@@ -178,7 +178,7 @@ export default function NewSaleForm({
               />
             </label>
             <label>
-              Vade
+              Vencimiento
               <input
                 type="date"
                 value={d.due}
@@ -196,7 +196,7 @@ export default function NewSaleForm({
               <button
                 type="button"
                 className="icon-button"
-                aria-label={`${n + 1}. peşinatı kaldır`}
+                aria-label={`Quitar anticipo ${n + 1}`}
                 onClick={() => setDeposits(deposits.filter((_, i) => i !== n))}
               >
                 <Trash2 size={15} />
@@ -217,11 +217,11 @@ export default function NewSaleForm({
             ])
           }
         >
-          <Plus size={14} /> Peşinat parçası ekle
+          <Plus size={14} /> Agregar parte de anticipo
         </button>
-        {mode === "Aktif" && (
+        {mode === "Activo" && (
           <label className="form-label">
-            İmzada tahsil edilen peşinat (TL)
+            Anticipo cobrado en la firma (USD)
             <input
               type="number"
               min="0"
@@ -230,18 +230,17 @@ export default function NewSaleForm({
               onChange={(e) => setPaidNow(e.target.value)}
             />
             <small className="muted">
-              Kalan peşinat parçaları vadesinde Hatırlatma Merkezi ve müşteri
-              hesabından tahsil edilir.
+              Las partes restantes del anticipo se cobran a su vencimiento desde la Agenda o la ficha del cliente.
             </small>
           </label>
         )}
       </fieldset>
 
       <fieldset>
-        <legend>Taksit planı</legend>
+        <legend>Plan de cuotas</legend>
         <div className="form-grid">
           <label>
-            Taksit sayısı
+            Cantidad de cuotas
             <input
               type="number"
               min="1"
@@ -253,7 +252,7 @@ export default function NewSaleForm({
             />
           </label>
           <label>
-            İlk taksit tarihi
+            Fecha de la primera cuota
             <input
               type="date"
               value={firstDue}
@@ -261,14 +260,14 @@ export default function NewSaleForm({
               required
             />
             <small className="muted">
-              Ödeme günü 1–28 arası; sonraki taksitler aynı gün.
+              Día de pago entre 1 y 28; las cuotas siguientes vencen el mismo día.
             </small>
           </label>
         </div>
         {interim.map((d, n) => (
           <div className="sale-row three" key={n}>
             <label>
-              Ara ödeme açıklaması
+              Descripción del pago intermedio
               <input
                 value={d.label}
                 onChange={(e) =>
@@ -283,7 +282,7 @@ export default function NewSaleForm({
               />
             </label>
             <label>
-              Tutar (TL)
+              Monto (USD)
               <input
                 type="number"
                 min="1"
@@ -300,7 +299,7 @@ export default function NewSaleForm({
               />
             </label>
             <label>
-              Vade
+              Vencimiento
               <input
                 type="date"
                 value={d.due}
@@ -317,7 +316,7 @@ export default function NewSaleForm({
             <button
               type="button"
               className="icon-button"
-              aria-label="Ara ödemeyi kaldır"
+              aria-label="Quitar pago intermedio"
               onClick={() => setInterim(interim.filter((_, i) => i !== n))}
             >
               <Trash2 size={15} />
@@ -331,14 +330,14 @@ export default function NewSaleForm({
             setInterim([
               ...interim,
               {
-                label: `Ara ödeme ${interim.length + 1}`,
+                label: `Pago intermedio ${interim.length + 1}`,
                 amount: "",
                 due: addMonths(firstDue, 6 * (interim.length + 1) - 1),
               },
             ])
           }
         >
-          <Plus size={14} /> Ara / balon ödeme ekle
+          <Plus size={14} /> Agregar pago intermedio / refuerzo
         </button>
       </fieldset>
 
@@ -347,29 +346,29 @@ export default function NewSaleForm({
           <>
             <dl className="sale-totals">
               <div>
-                <dt>Peşinat</dt>
+                <dt>Anticipo</dt>
                 <dd className="num">{money(preview.depositTotal)}</dd>
               </div>
               <div>
-                <dt>Ara ödemeler</dt>
+                <dt>Pagos intermedios</dt>
                 <dd className="num">{money(preview.interimTotal)}</dd>
               </div>
               <div>
-                <dt>Taksit</dt>
+                <dt>Cuota</dt>
                 <dd className="num">
                   {Number(count) > 1
                     ? `${Number(count) - 1} × ${money(preview.installment)}`
                     : money(preview.lastInstallment)}
                 </dd>
                 {Number(count) > 1 && (
-                  <small>Son taksit {money(preview.lastInstallment)}</small>
+                  <small>Última cuota {money(preview.lastInstallment)}</small>
                 )}
               </div>
               <div className="ok">
-                <dt>Plan toplamı</dt>
+                <dt>Total del plan</dt>
                 <dd className="num">{money(preview.total)}</dd>
                 <small>
-                  <Check size={12} /> Bedelle kuruşu kuruşuna eşit
+                  <Check size={12} /> Igual al precio, al centavo
                 </small>
               </div>
             </dl>
@@ -377,9 +376,9 @@ export default function NewSaleForm({
               <table>
                 <thead>
                   <tr>
-                    <th>Ödeme</th>
-                    <th>Vade</th>
-                    <th className="numeric">Tutar</th>
+                    <th>Pago</th>
+                    <th>Vencimiento</th>
+                    <th className="numeric">Monto</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -387,8 +386,8 @@ export default function NewSaleForm({
                     <tr key={`d${n}`} className="acct-interim">
                       <td>
                         {spec.deposits.length > 1
-                          ? `${n + 1}. peşinat`
-                          : "Peşinat"}
+                          ? `Anticipo ${n + 1}`
+                          : "Anticipo"}
                       </td>
                       <td>{date(d.due)}</td>
                       <td className="numeric">{money(d.amount)}</td>
@@ -397,7 +396,7 @@ export default function NewSaleForm({
                   {(showAll ? rows : rows.slice(0, 6)).map((r) => (
                     <tr
                       key={r.seq}
-                      className={r.kind === "Ara ödeme" ? "acct-interim" : ""}
+                      className={r.kind === "Pago intermedio" ? "acct-interim" : ""}
                     >
                       <td>{r.label}</td>
                       <td>{date(r.due)}</td>
@@ -414,8 +413,8 @@ export default function NewSaleForm({
                 onClick={() => setShowAll(!showAll)}
               >
                 {showAll
-                  ? "Planı daralt"
-                  : `Tüm ${rows.length} ödeme satırını göster`}
+                  ? "Contraer plan"
+                  : `Ver los ${rows.length} vencimientos`}
               </button>
             )}
           </>
@@ -431,9 +430,9 @@ export default function NewSaleForm({
           disabled={!preview.ok || !name.trim()}
         >
           <FileSignature size={15} />{" "}
-          {mode === "Taslak"
-            ? "Sözleşme taslağını kaydet"
-            : "Sözleşmeyi ve ödeme planını kaydet"}
+          {mode === "Borrador"
+            ? "Guardar borrador de contrato"
+            : "Guardar contrato y plan de pagos"}
         </button>
       </div>
     </form>

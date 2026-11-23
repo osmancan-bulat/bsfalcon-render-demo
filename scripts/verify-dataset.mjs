@@ -28,7 +28,7 @@ const seed = () => structuredClone(seedState);
 
 test("Seed contains no generic placeholder names or test wording", () => {
   const text = JSON.stringify(seedState) + JSON.stringify(workItems);
-  for (const bad of ["Demo Müşteri", "Örnek Yapı", "Örnek Teknik", "Örnek Cephe", "Örnek Demir", "Örnek Alüminyum", "Demo danışman", "DEMO-"])
+  for (const bad of ["Cliente demo", "Constructora demo", "Instalaciones demo", "Fachadas demo", "Aceros demo", "Aberturas demo", "Asesor demo", "DEMO-"])
     assert(!text.includes(bad), `seed still contains "${bad}"`);
   // İletişim veya kimlik bilgisi yok
   assert(!/\b0?5\d{2}[ -]?\d{3}[ -]?\d{2}[ -]?\d{2}\b/.test(text), "phone-like value");
@@ -45,17 +45,17 @@ test("Every person is unique and keeps one identity across files, contracts, pay
   for (const c of contractList(s)) assert.equal(c.name, byId.get(c.id));
   for (const r of paymentRows(s)) assert(byId.has(r.customerId), r.id);
   // Sistem belgeleri (sözleşme, plan, ekstre, makbuz) aynı kayda bağlanır
-  for (const id of ["agva-1", "nergis-12", "cengilli-3"]) {
+  for (const id of ["business-5", "alion-25", "vtower-9"]) {
     const docs = systemDocuments(s, id);
     assert(docs.length >= 3);
     for (const d of docs) assert(d.href.includes(`id=${id}`) || d.href.includes("THS-"), d.href);
   }
   // Ad, aynı kayıt numarasından her yerde aynı üretilir
-  assert.equal(s.contracts.find((c) => c.id === "agva-1").name, personName(81));
-  assert.equal(customers.find((c) => c.id === "nergis-1").name, personName(1));
+  assert.equal(s.contracts.find((c) => c.id === "alion-25").name, personName(81));
+  assert.equal(customers.find((c) => c.id === "alion-1").name, personName(21));
   // Hatırlatma, ilgili taslağın müşteri adını taşır
   const noter = s.reminders.find((r) => r.id === "HTR-D01");
-  assert(noter.title.includes(s.drafts.find((d) => d.id === "cengilli-4").name));
+  assert(noter.title.includes(s.drafts.find((d) => d.id === "business-6").name));
 });
 
 test("Firms are consistent across work packages, barters, progress payments and work contracts", () => {
@@ -63,11 +63,11 @@ test("Firms are consistent across work packages, barters, progress payments and 
   const firms = new Set(Object.values(FIRM));
   for (const w of workItems) assert(firms.has(w.company), w.company);
   for (const b of s.barters) assert(firms.has(b.company), b.company);
-  for (const r of requestList(s)) if (r.type !== "Şantiye gideri") assert(firms.has(r.company), r.company);
-  const corner = workContracts(s, "cengilli");
+  for (const r of requestList(s)) if (r.type !== "Gasto de obra") assert(firms.has(r.company), r.company);
+  const corner = workContracts(s, "vtower");
   assert.deepEqual(
     corner.map((w) => w.id),
-    corner.map((_, i) => `IS-CV-${String(i + 1).padStart(2, "0")}`),
+    corner.map((_, i) => `IS-VTL-${String(i + 1).padStart(2, "0")}`),
   );
   // Her barter firması aynı projede bir iş sözleşmesine bağlıdır
   for (const b of s.barters)
@@ -84,8 +84,8 @@ test("Base sale prices follow the unit catalogue and keep deposit + 36 installme
     assert(disc > 0.01 && disc < 0.05, `${c.id} discount ${disc}`);
   }
   // Büyük ve üst kat daire, küçük alt kat daireden pahalıdır
-  const big = customers.find((c) => c.id === "nergis-1"); // 3+1 köşe
-  const small = customers.find((c) => c.id === "nergis-2"); // 2+1
+  const big = customers.find((c) => c.id === "alion-6"); // 606A · 2 dormitorios 72,20 m²
+  const small = customers.find((c) => c.id === "alion-4"); // 304G · monoambiente 24,92 m²
   assert(big.price > small.price);
 });
 
@@ -98,67 +98,66 @@ test("Sold, barter and draft units never overlap; a taken unit cannot be sold ag
   ];
   assert.equal(new Set(taken).size, taken.length);
   for (const id of taken) assert(units.some((u) => u.id === id), id);
-  const b = s.barters[0];
-  assert.throws(() =>
-    applyAction(s, {
-      type: "contract",
-      record: { ...customers[0], id: b.unitId, unit: unitById(b.unitId).label, name: "Deneme" },
-    }),
-  );
+  for (const id of [customerList(s)[0].id, s.drafts[0].id])
+    assert.throws(() =>
+      applyAction(s, {
+        type: "contract",
+        record: { ...customers[0], id, project: id.split("-")[0], unit: unitById(id).label, name: "Prueba" },
+      }),
+    );
 });
 
 test("Readable unit place keeps technical code mapping", () => {
-  assert.equal(unitPlace("agva-1"), "Villa V-01 · triplex");
-  assert.equal(unitShort("nergis-12"), "A Blok · Daire 12");
-  assert.equal(unitPlace("nergis-1"), "A Blok · 1. Kat · Daire 1");
-  assert.equal(unitPlace("nergis-36"), "Zemin Kat · Dükkân D-1");
-  assert.equal(unitShort("cengilli-3"), "Villa V-03");
-  assert.equal(unitById("agva-1").label, "V-01");
+  assert.equal(unitPlace("business-5"), "Torre 01 · Piso 2 · Oficina T1-201");
+  assert.equal(unitShort("alion-25"), "Unidad 601D");
+  assert.equal(unitPlace("alion-1"), "ALION · Piso 3 · Unidad 301D");
+  assert.equal(unitPlace("business-25"), "Torre 01 · Piso 7 · Oficina T1-701");
+  assert.equal(unitShort("vtower-9"), "Unidad I-501");
+  assert.equal(unitById("business-5").label, "T1-201");
 });
 
 test("Scenario dates are fixed to 15 Nov 2026 and statuses follow them", () => {
   assert.equal(SNAPSHOT, "2026-11-15");
   const rows = paymentRows(seed());
   for (const r of rows) {
-    if (r.remaining === 0) assert.equal(r.status, "Ödendi");
-    else if (r.due < SNAPSHOT) assert.equal(r.status, "Gecikti", r.id);
-    else assert.notEqual(r.status, "Gecikti", r.id);
-    if (r.remaining > 0 && r.paid > 0 && r.due >= SNAPSHOT) assert.equal(r.status, "Kısmen ödendi");
+    if (r.remaining === 0) assert.equal(r.status, "Pagada");
+    else if (r.due < SNAPSHOT) assert.equal(r.status, "Vencida", r.id);
+    else assert.notEqual(r.status, "Vencida", r.id);
+    if (r.remaining > 0 && r.paid > 0 && r.due >= SNAPSHOT) assert.equal(r.status, "Pago parcial");
   }
   // Ajanda geçmiş tarihli ödeme satırı göstermez; gecikenler ayrı izlenir
   for (const a of agenda(seed(), "all", 30))
-    if (a.kind === "Taksit" || a.kind === "Peşinat") assert(a.date >= SNAPSHOT, a.id);
+    if (a.kind === "Cuota" || a.kind === "Anticipo") assert(a.date >= SNAPSHOT, a.id);
 });
 
 test("Legacy browser data migrates names safely without losing user actions", () => {
   // Önceki sürüm: jenerik adlar, dataset alanı yok, v3.1 bedelleri, kullanıcı bir tahsilat girmiş
   let s = seed();
   s.basePricing = "v3.1";
-  const inst = paymentRows(s).find((r) => r.status === "Gecikti" && r.installmentId);
-  s = applyAction(s, { type: "receipt", installmentId: inst.installmentId, amount: 1000, method: "Banka havalesi", reference: "HVL-1" });
+  const inst = paymentRows(s).find((r) => r.status === "Vencida" && r.installmentId);
+  s = applyAction(s, { type: "receipt", installmentId: inst.installmentId, amount: 100, method: "Transferencia bancaria", reference: "TRF-1" });
   const legacyText = JSON.stringify({ ...s, dataset: undefined, basePricing: undefined })
-    .split(personName(81)).join("Demo Müşteri 081")
-    .split(FIRM.yapi).join("Örnek Yapı")
-    .split(FIRM.cephe).join("Örnek Cephe");
-  assert(legacyText.includes("Demo Müşteri 081") && legacyText.includes("Örnek Yapı"));
+    .split(personName(81)).join("Cliente demo 081")
+    .split(FIRM.yapi).join("Constructora demo")
+    .split(FIRM.cephe).join("Fachadas demo");
+  assert(legacyText.includes("Cliente demo 081") && legacyText.includes("Constructora demo"));
   const out = migrateSaved(legacyText);
   assert(out && out.migrated);
   assert.equal(out.state.dataset, DATASET);
   assert.deepEqual(out.state.receipts, s.receipts);
   assert.deepEqual(out.state.contracts.map((c) => c.id), s.contracts.map((c) => c.id));
-  assert.equal(out.state.contracts.find((c) => c.id === "agva-1").name, personName(81));
+  assert.equal(out.state.contracts.find((c) => c.id === "alion-25").name, personName(81));
   assert.deepEqual(summary(out.state), summary(s));
-  assert(!JSON.stringify(out.state).includes("Örnek Yapı"));
-  // Taşınan firma adıyla barter mahsubu hâlâ eşleşir
-  const b = out.state.barters.find((x) => x.company === FIRM.yapi);
-  assert(b);
+  assert(!JSON.stringify(out.state).includes("Constructora demo"));
+  // Las solicitudes conservan el proveedor migrado
+  assert(out.state.requests.some((x) => x.company === FIRM.yapi));
   // İkinci yükleme veriyi tekrar değiştirmez
   const again = migrateSaved(JSON.stringify(out.state));
   assert.equal(again.migrated, false);
   assert.deepEqual(again.state, out.state);
   // Bozuk veya başka sürüm veri reddedilir (örnek veriyle başlanır)
   assert.equal(migrateSaved(JSON.stringify({ version: 1 })), null);
-  assert.equal(renameLegacy("Demo Müşteri 005"), personName(5));
+  assert.equal(renameLegacy("Cliente demo 005"), personName(5));
 });
 
 test("Work contracts carry an agreement value and progress consistent with their progress payments", () => {

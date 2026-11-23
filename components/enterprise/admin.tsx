@@ -1,6 +1,6 @@
 "use client";
-// Yönetim & Ayarlar: şirket–proje yapısı, bu tarayıcıdaki veri durumu ve demo kapsamı.
-// Kullanıcı/rol yönetimi bu sürümde yoktur; varmış gibi gösterilmez.
+// Configuración: empresa y proyectos, tipo de cambio de referencia, datos de este navegador y alcance de la demo.
+// La gestión de usuarios y roles no existe en esta versión y no se simula.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Download, RotateCcw, ShieldAlert } from "lucide-react";
@@ -10,19 +10,23 @@ import { hubHref, visibleProjects } from "@/lib/catalog";
 import { Panel } from "./shared";
 import { projects, customerList, SNAPSHOT } from "@/lib/enterprise";
 import { salesReport } from "@/lib/reports";
-import { date } from "@/lib/data";
+import { date, usd, gs } from "@/lib/data";
+import { fxOf } from "@/lib/billing";
 
 
 
 export default function AdminView({ onReset }: { onReset: () => void }) {
-  const { state, setProject } = useApp();
+  const { state, setProject, act, currency, setCurrency } = useApp();
+  const fx = fxOf(state);
+  const [rate, setRate] = useState(String(fx.rate));
+  const [fxDate, setFxDate] = useState(fx.date);
   const router = useRouter();
   const [storage, setStorage] = useState<{ size: number; backup: boolean } | null>(null);
   useEffect(() => {
     try {
       setStorage({
-        size: (localStorage.getItem("bsfalcon-enterprise-v1") ?? "").length,
-        backup: !!localStorage.getItem("bsfalcon-enterprise-v1-yedek-v1"),
+        size: (localStorage.getItem("edifica-enterprise-v1") ?? "").length,
+        backup: !!localStorage.getItem("edifica-enterprise-v1-yedek-v1"),
       });
     } catch {
       setStorage(null);
@@ -33,40 +37,69 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `bsfalcon-demo-kayitlari-${SNAPSHOT}.json`;
+    a.download = `edifica-demo-registros-${SNAPSHOT}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   const counts: [string, number][] = [
-    ["Satış sözleşmesi", customerList(state).length],
-    ["İmza sürecindeki sözleşme", state.drafts.length],
-    ["Tahsilat makbuzu", state.receipts.length],
-    ["Sonradan alınan peşinat", state.depositPayments.length],
-    ["Barter anlaşması", state.barters.length],
-    ["Hakediş mahsubu", state.offsets.length],
-    ["Hatırlatma", state.reminders.length],
-    ["İşlem geçmişi kaydı", state.audit.length],
+    ["Contrato de compraventa", customerList(state).length],
+    ["Contrato en proceso de firma", state.drafts.length],
+    ["Recibo de cobro", state.receipts.length],
+    ["Anticipo cobrado después de la firma", state.depositPayments.length],
+    ["Facturas registradas", Object.values(state.billing ?? {}).filter((b) => b.status === "Emitida").length],
+    ["Recordatorio", state.reminders.length],
+    ["Registro del historial", state.audit.length],
   ];
   return (
     <div className="admin">
       <header className="page-head">
         <div>
-          <h1>Yönetim & Ayarlar</h1>
-          <p>Şirket ve proje yapısı, bu tarayıcıdaki kayıtlar ve demo kapsamı.</p>
+          <h1>Configuración</h1>
+          <p>Empresa y proyectos, tipo de cambio, registros de este navegador y alcance de la demo.</p>
         </div>
       </header>
 
-      <Panel title="Şirket ve projeler" subtitle="BŞ Falcon Group ana şirkettir; projeler şirkete bağlıdır. Proje adı ve konumu resmîdir; satış ve finans verileri temsilidir.">
+      <Panel
+        title="Moneda y tipo de cambio"
+        subtitle="Los montos se registran en USD. La vista en guaraníes usa únicamente este tipo de cambio de referencia, definido por el usuario; no hay conversión automática ni cotización en línea."
+      >
+        <form
+          className="ed-inline-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            act({ type: "fx-set", rate: Number(rate.replace(/[.\s]/g, "").replace(",", ".")), date: fxDate });
+          }}
+        >
+          <label>
+            ₲ por 1 USD
+            <input inputMode="numeric" value={rate} onChange={(e) => setRate(e.target.value)} required aria-label="Guaraníes por dólar" />
+          </label>
+          <label>
+            Vigente desde
+            <input type="date" value={fxDate} onChange={(e) => setFxDate(e.target.value)} required />
+          </label>
+          <button className="btn primary" type="submit">Guardar tipo de cambio</button>
+          <p>
+            Actual: {usd(1)} = {gs(1)} · {date(fx.date)}. Las facturas registradas conservan el tipo de cambio del día en que se emitieron.
+          </p>
+        </form>
+        <div className="ed-filter" role="group" aria-label="Moneda de visualización" style={{ marginTop: 14 }}>
+          <button className={currency === "USD" ? "on" : ""} onClick={() => setCurrency("USD")}>Ver en US$</button>
+          <button className={currency === "PYG" ? "on" : ""} onClick={() => setCurrency("PYG")}>Ver en guaraníes (₲)</button>
+        </div>
+      </Panel>
+
+      <Panel title="Empresa y proyectos" subtitle="EDIFICA es la empresa; los proyectos dependen de ella. Nombres, ubicaciones y datos publicados son reales; ventas y finanzas son datos de demostración.">
         <div className="e-table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Proje</th>
+                <th>Proyecto</th>
                 <th>Konum</th>
-                <th className="numeric">Bağımsız bölüm</th>
-                <th className="numeric">Satılan</th>
-                <th>Teslim</th>
-                <th aria-label="İşlem" />
+                <th className="numeric">Unidades</th>
+                <th className="numeric">Vendidas</th>
+                <th>Entrega</th>
+                <th aria-label="Acción" />
               </tr>
             </thead>
             <tbody>
@@ -81,7 +114,7 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
                     <td>{p.location}</td>
                     <td className="numeric num">{s.total}</td>
                     <td className="numeric num">{s.sold}</td>
-                    <td>{p.delivery || "Açıklanmadı"}</td>
+                    <td>{p.delivery || "No publicada"}</td>
                     <td className="row-actions">
                       <button
                         className="btn compact"
@@ -90,7 +123,7 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
                           router.push(hubHref(p.id));
                         }}
                       >
-                        Projeye geç <ArrowRight size={14} />
+                        Ir al proyecto <ArrowRight size={14} />
                       </button>
                     </td>
                   </tr>
@@ -103,7 +136,7 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
 
       <Backups />
       <div className="admin-grid">
-        <Panel title="Veri ve depolama" subtitle="Kayıtlar yalnızca bu tarayıcıda saklanır.">
+        <Panel title="Datos y almacenamiento" subtitle="Los registros se guardan solo en este navegador.">
           <dl className="admin-list">
             {counts.map(([k, v]) => (
               <div key={k}>
@@ -112,50 +145,47 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
               </div>
             ))}
             <div>
-              <dt>Örnek satış fiyat şeması</dt>
-              <dd>{state.basePricing === "v3.1" ? "Önceki sürümden korunan bedeller" : "Temiz başlangıç (katalog)"}</dd>
+              <dt>Esquema de precios de las ventas de ejemplo</dt>
+              <dd>{state.basePricing === "v3.1" ? "Precios conservados de la versión anterior" : "Inicio limpio (catálogo)"}</dd>
             </div>
             <div>
-              <dt>Önceki sürüm yedeği</dt>
-              <dd>{storage ? (storage.backup ? "Var (bu tarayıcıda)" : "Yok") : "—"}</dd>
+              <dt>Respaldo de versión anterior</dt>
+              <dd>{storage ? (storage.backup ? "Sí (en este navegador)" : "No") : "—"}</dd>
             </div>
             <div>
-              <dt>Kayıt boyutu</dt>
+              <dt>Tamaño de los registros</dt>
               <dd className="num">{storage ? `${Math.max(1, Math.round(storage.size / 1024))} KB` : "—"}</dd>
             </div>
             <div>
-              <dt>Senaryo tarihi</dt>
+              <dt>Fecha de corte</dt>
               <dd>{date(SNAPSHOT)} (sabit)</dd>
             </div>
           </dl>
           <div className="form-actions">
             <button className="btn" onClick={exportJson}>
-              <Download size={15} /> Kayıtları JSON olarak indir
+              <Download size={15} /> Descargar registros en JSON
             </button>
             <button className="btn" onClick={onReset}>
-              <RotateCcw size={15} /> Demoyu sıfırla
+              <RotateCcw size={15} /> Restablecer demo
             </button>
           </div>
         </Panel>
 
-        <Panel title="Kullanıcılar ve yetkiler">
+        <Panel title="Usuarios y permisos">
           <div className="admin-honest">
             <ShieldAlert size={20} />
             <div>
-              <b>Bu demo sürümünde kullanıcı hesabı, rol ve yetkilendirme yoktur.</b>
+              <b>Esta versión de demostración no tiene cuentas de usuario, roles ni permisos.</b>
               <p>
-                Giriş ekranı şifresizdir ve herkes aynı demo kayıtlarını görür.
-                Gerçek kullanım için kurumsal kimlik doğrulama, rol bazlı yetki
-                (yönetici, satış, finans, şantiye), merkezî veritabanı ve denetim
-                izi ayrı bir aşamada kurulacaktır.
+                La entrada no requiere contraseña y cada navegador ve sus propios registros de demostración. Para uso real se implementarían autenticación corporativa, permisos por rol (gerencia, cobranza, administración), base de datos central y auditoría en una etapa aparte.
               </p>
             </div>
           </div>
           <ul className="confirm-list">
-            <li>Kişi ve firma adları kurgusaldır; gerçek müşteri, çalışan veya yüklenici değildir.</li>
-            <li>Daire tipi, m², kat, cephe ve liste fiyatları temsili varsayımdır.</li>
-            <li>SMS, e-posta, banka veya muhasebe entegrasyonu yoktur.</li>
-            <li>Belgeler kayıtlardan anlık üretilir ve hukuki geçerliliği yoktur.</li>
+            <li>Los nombres de personas y empresas son ficticios; no son clientes, empleados ni proveedores reales.</li>
+            <li>Los precios de lista y la muestra de unidades de Lofty y V Tower son de ejemplo; la estructura de ALION y Business One proviene de fuentes públicas.</li>
+            <li>No hay integración con SMS, correo, bancos, contabilidad, CRM ni facturación electrónica (SIFEN).</li>
+            <li>Los documentos se generan desde los registros y no tienen validez legal ni fiscal.</li>
           </ul>
         </Panel>
       </div>

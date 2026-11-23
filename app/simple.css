@@ -24,7 +24,7 @@
   min-height: 38px;
   padding: 8px 10px;
   border-radius: var(--radius-md);
-  color: #c9d6cf;
+  color: #d6d6d1;
   font-size: var(--fs-sm);
   text-align: left;
 }
@@ -641,7 +641,7 @@ button.e-demo-label:hover {
   background:
     radial-gradient(
       120% 90% at 100% 0%,
-      rgb(168 131 79 / 0.28),
+      rgb(198 164 69 / 0.28),
       transparent 55%
     ),
     linear-gradient(160deg, var(--forest-800), var(--forest-950));
@@ -650,7 +650,7 @@ button.e-demo-label:hover {
   background:
     radial-gradient(
       120% 90% at 100% 0%,
-      rgb(157 181 170 / 0.25),
+      rgb(198 164 69 / 0.25),
       transparent 55%
     ),
     linear-gradient(160deg, var(--forest-700), var(--forest-950));
@@ -709,16 +709,16 @@ button.e-demo-label:hover {
   gap: 40px;
   padding: 40px 56px;
   overflow: hidden;
-  color: #e8eee9;
+  color: #ededeb;
   background:
     radial-gradient(
       90% 70% at 100% 0%,
-      rgb(168 131 79 / 0.22),
+      rgb(198 164 69 / 0.22),
       transparent 60%
     ),
     radial-gradient(
       70% 60% at 0% 100%,
-      rgb(74 117 100 / 0.35),
+      rgb(77 77 77 / 0.35),
       transparent 60%
     ),
     linear-gradient(160deg, var(--forest-800), var(--forest-950));
@@ -774,7 +774,7 @@ button.e-demo-label:hover {
 }
 .lv-story p {
   margin: 0;
-  color: #c9d6cf;
+  color: #d6d6d1;
   font-size: 17px;
   line-height: 1.55;
 }

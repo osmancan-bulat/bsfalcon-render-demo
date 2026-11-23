@@ -16,6 +16,7 @@ import {
   projects,
 } from "@/lib/enterprise";
 import { syncCatalog, resolveScope, scopeProblem } from "@/lib/catalog";
+import { setDisplayCurrency, type DisplayCurrency } from "@/lib/data";
 type AppContext = {
   state: EnterpriseState;
   ready: boolean;
@@ -24,34 +25,50 @@ type AppContext = {
   act: (a: Action) => boolean;
   toast: string;
   notify: (s: string) => void;
+  currency: DisplayCurrency;
+  setCurrency: (c: DisplayCurrency) => void;
 };
 const Context = createContext<AppContext | null>(null);
 export function Provider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<EnterpriseState>(seedState),
     [ready, setReady] = useState(false),
     [project, setP] = useState("all"),
-    [toast, notify] = useState("");
+    [toast, notify] = useState(""),
+    [currency, setCur] = useState<DisplayCurrency>("USD");
   const current = useRef(state);
   // Katalog (projeler ve daireler) her çizimde bu durumla eşitlenir; alt bileşenler güncel listeyi görür.
   syncCatalog(state);
+  // Moneda de visualización: los montos se registran en USD; ₲ usa el tipo de cambio definido en Configuración.
+  setDisplayCurrency(currency, state.fx?.rate ?? 7300);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("bsfalcon-enterprise-v1");
+      if (localStorage.getItem("edifica-moneda") === "PYG") setCur("PYG");
+    } catch {}
+  }, []);
+  const setCurrency = (c: DisplayCurrency) => {
+    setCur(c);
+    try {
+      localStorage.setItem("edifica-moneda", c);
+    } catch {}
+  };
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("edifica-enterprise-v1");
       const loaded = raw ? migrateSaved(raw) : null;
       if (raw && !loaded) {
         // Okunamayan kayıt silinmez: yedeklenir, uygulama örnek veriyle açılır.
         try {
-          localStorage.setItem("bsfalcon-enterprise-v1-yedek-okunamayan", raw);
+          localStorage.setItem("edifica-enterprise-v1-yedek-okunamayan", raw);
         } catch {}
         notify(
-          "Tarayıcıdaki kayıtlar okunamadı; yedeklendi ve örnek veriyle başlatıldı.",
+          "No se pudieron leer los registros del navegador; se respaldaron y se inició con los datos de ejemplo.",
         );
       }
       if (loaded && loaded.repaired > 0) {
         try {
-          localStorage.setItem("bsfalcon-enterprise-v1-yedek-onarim", raw!);
+          localStorage.setItem("edifica-enterprise-v1-yedek-onarim", raw!);
           localStorage.setItem(
-            "bsfalcon-onarim-raporu",
+            "edifica-onarim-raporu",
             JSON.stringify({
               at: new Date().toISOString(),
               repaired: loaded.repaired,
@@ -59,21 +76,21 @@ export function Provider({ children }: { children: ReactNode }) {
             }),
           );
           localStorage.setItem(
-            "bsfalcon-enterprise-v1",
+            "edifica-enterprise-v1",
             JSON.stringify(loaded.state),
           );
         } catch {}
         notify(
-          `${loaded.repaired} bozuk kayıt atlandı (${loaded.fields.join(", ")}); önceki veri yedeklendi — Yönetim & Ayarlar › Yedekler.`,
+          `Se omitieron ${loaded.repaired} registros dañados (${loaded.fields.join(", ")}); los datos anteriores se respaldaron — Configuración › Respaldos.`,
         );
       }
       if (loaded) {
         if (loaded.migrated) {
           // Önceki kayıt silinmez: yedeği saklanır, ardından kurgusal adlarla yeniden yazılır.
           try {
-            localStorage.setItem("bsfalcon-enterprise-v1-yedek-v1", raw!);
+            localStorage.setItem("edifica-enterprise-v1-yedek-v1", raw!);
             localStorage.setItem(
-              "bsfalcon-enterprise-v1",
+              "edifica-enterprise-v1",
               JSON.stringify(loaded.state),
             );
           } catch {}
@@ -81,15 +98,15 @@ export function Provider({ children }: { children: ReactNode }) {
         current.current = loaded.state;
         setState(loaded.state);
       }
-      const saved = localStorage.getItem("bsfalcon-project");
+      const saved = localStorage.getItem("edifica-project");
       syncCatalog(current.current);
       // Yenilemede mevcut olmayan veya arşivdeki proje seçimi korunmaz; kayıt da düzeltilir.
       const valid = resolveScope(saved);
       setP(valid);
       if (saved !== null && saved !== valid)
-        localStorage.setItem("bsfalcon-project", valid);
+        localStorage.setItem("edifica-project", valid);
     } catch {
-      notify("Kayıtlar okunamadı; örnek veriyle başlatıldı.");
+      notify("No se pudieron leer los registros; se inició con los datos de ejemplo.");
     }
     setReady(true);
   }, []);
@@ -113,21 +130,21 @@ export function Provider({ children }: { children: ReactNode }) {
       current.current = next;
       setState(next);
       try {
-        localStorage.setItem("bsfalcon-enterprise-v1", JSON.stringify(next));
+        localStorage.setItem("edifica-enterprise-v1", JSON.stringify(next));
       } catch {
         notify(
-          "İşlem bu oturumda kaydedildi; tarayıcı depolaması kullanılamıyor.",
+          "La operación se guardó en esta sesión; el almacenamiento del navegador no está disponible.",
         );
         return true;
       }
       notify(
         a.type === "reset"
-          ? "Demo başlangıç durumuna döndürüldü."
-          : (next.audit[0]?.message ?? "İşlem tamamlandı."),
+          ? "La demo volvió a su estado inicial."
+          : (next.audit[0]?.message ?? "Operación completada."),
       );
       return true;
     } catch (e) {
-      notify(e instanceof Error ? e.message : "İşlem tamamlanamadı.");
+      notify(e instanceof Error ? e.message : "No se pudo completar la operación.");
       return false;
     }
   }
@@ -135,23 +152,23 @@ export function Provider({ children }: { children: ReactNode }) {
     const v = resolveScope(id);
     setP(v);
     try {
-      localStorage.setItem("bsfalcon-project", v);
+      localStorage.setItem("edifica-project", v);
     } catch {}
   };
   // Kapsam her çizimde katalogla doğrulanır: seçili proje silinir veya arşivlenirse alt bileşenler
-  // hiçbir zaman geçersiz kimliği görmez; durum ve kalıcı kayıt "Tüm projeler"e düzeltilir.
+  // hiçbir zaman geçersiz kimliği görmez; durum ve kalıcı kayıt "Todos los proyectos"e düzeltilir.
   const effective = resolveScope(project);
   useEffect(() => {
     if (!ready || effective === project) return;
     const why = scopeProblem(project);
     setP(effective);
     try {
-      localStorage.setItem("bsfalcon-project", effective);
+      localStorage.setItem("edifica-project", effective);
     } catch {}
     notify(
       why === "archived"
-        ? "Seçili proje arşive alındı; çalışma kapsamı “Tüm projeler” oldu."
-        : "Seçili proje artık mevcut değil; çalışma kapsamı “Tüm projeler” oldu.",
+        ? "El proyecto seleccionado fue archivado; el alcance pasó a “Todos los proyectos”."
+        : "El proyecto seleccionado ya no existe; el alcance pasó a “Todos los proyectos”.",
     );
   }, [ready, effective, project]);
   return (
@@ -164,6 +181,8 @@ export function Provider({ children }: { children: ReactNode }) {
         act,
         toast,
         notify,
+        currency,
+        setCurrency,
       }}
     >
       {children}

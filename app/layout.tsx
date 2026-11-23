@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import "@fontsource-variable/manrope";
-import "@fontsource-variable/inter";
 import "./theme.css";
 import "./globals.css";
 import "./enterprise.css";
@@ -10,16 +8,17 @@ import "./print.css";
 import "./simple.css";
 import "./platform.css";
 import "./polish.css";
-import "./falcon.css";
+import "./layer.css";
+import "./edifica.css";
 export const metadata: Metadata = {
-  title: "BŞ Falcon Group | Yönetim Merkezi",
+  title: "EDIFICA | Centro de Gestión",
   description:
-    "BŞ Falcon Group için hazırlanmış interaktif proje, satış ve operasyon yönetimi demosu.",
+    "Demostración del Centro de Gestión de EDIFICA: contratos, cuotas, cobranza y facturación.",
   robots: { index: false, follow: false },
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr">
+    <html lang="es-PY">
       <body>{children}</body>
     </html>
   );

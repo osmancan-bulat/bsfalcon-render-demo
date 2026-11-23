@@ -44,7 +44,7 @@ export const projectById = (id: string) => projects.find((p) => p.id === id);
  * Silinmiş, arşivlenmiş veya hiç olmamış proje kimliği kapsam olarak kullanılamaz.
  */
 export const isScopeValid = (id: string | null | undefined): id is string =>
-  id === "all" || projects.some((p) => p.id === id && p.status !== "Arşiv");
+  id === "all" || projects.some((p) => p.id === id && p.status !== "Archivado");
 /** Geçersiz kapsamı güvenle "all"a (tüm projeler) çevirir. */
 export const resolveScope = (id: string | null | undefined) =>
   isScopeValid(id) ? id : "all";
@@ -53,23 +53,25 @@ export const scopeProblem = (id: string | null | undefined) =>
   isScopeValid(id) ? null : projectById(id ?? "") ? "archived" : "missing";
 export const projectCode = (id: string) => projectById(id)?.code ?? "XX";
 /** Seçicide ve genel bakışta gösterilen projeler (arşivdekiler hariç). */
-export const visibleProjects = () => projects.filter((p) => p.status !== "Arşiv");
-export const PROJECT_STATUSES: ProjectStatus[] = ["Aktif", "Tamamlandı", "Arşiv"];
+export const visibleProjects = () => projects.filter((p) => p.status !== "Archivado");
+export const PROJECT_STATUSES: ProjectStatus[] = ["Activo", "Finalizado", "Archivado"];
 
 /** Proje merkezi adresi: yerleşik projelerin eski adresleri korunur, yeniler genel adresi kullanır. */
 export const hubHref = (id: string) =>
-  id === "cengilli"
-    ? "/cengilli-villa-sitesi"
-    : id === "nergis"
-      ? "/nergis-park-evleri"
-      : id === "agva"
-        ? "/agva-triplex-villa"
-        : id === "all"
-        ? "/genel-bakis"
-        : `/proje/?id=${encodeURIComponent(id)}`;
+  id === "lofty"
+    ? "/lofty-city-hub"
+    : id === "alion"
+      ? "/alion-residence"
+      : id === "vtower"
+        ? "/v-tower-del-lago"
+        : id === "business"
+          ? "/business-one"
+          : id === "all"
+            ? "/resumen"
+            : `/proyecto/?id=${encodeURIComponent(id)}`;
 
 const floorLabel = (f: number) =>
-  f === 0 ? "Zemin kat" : f < 0 ? `${-f}. bodrum kat` : `${f}. kat`;
+  f === 0 ? "Planta baja" : f < 0 ? `Subsuelo ${-f}` : `Piso ${f}`;
 /** Bir projeye yeni blok için daireler üretir; numaralar projede kaldığı yerden devam eder. */
 export function makeBlockUnits(
   project: string,

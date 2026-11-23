@@ -1,8 +1,8 @@
-# Render Blueprint: BŞ Falcon Group yönetim merkezi demosu (ücretsiz statik site).
-# Next.js statik dışa aktarım (output: "export") → out/ klasörü yayımlanır.
+# Render Blueprint: Centro de Gestión EDIFICA (demo, sitio estático gratuito).
+# Next.js con exportación estática (output: "export") → se publica la carpeta out/
 services:
   - type: web
-    name: bsfalcon-yonetim-merkezi
+    name: edifica-centro-de-gestion
     runtime: static
     plan: free
     buildCommand: npm ci && npm run build

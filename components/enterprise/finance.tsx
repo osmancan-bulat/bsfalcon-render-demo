@@ -34,14 +34,14 @@ import { money, compact, date } from "@/lib/data";
 import { csvDownload } from "@/lib/export";
 export default function Finance() {
   const { state, project } = useApp();
-  const [tab, setTab] = useState("Ödeme planı"),
+  const [tab, setTab] = useState("Plan de pagos"),
     [q, setQ] = useState(""),
     [selected, setSelected] = useState<string | null>(null);
   const s = summary(state, project);
   const requests = requestList(state).filter(
     (r) =>
       (project === "all" || r.project === project) &&
-      ["Onaylandı", "Ödendi", "Mahsup edildi"].includes(
+      ["Aprobado", "Pagada", "Compensado"].includes(
         requestStatus(state, r),
       ),
   );
@@ -64,7 +64,7 @@ export default function Finance() {
           project: i.project,
           date: r.date,
           amount: r.amount,
-          type: "Tahsilat",
+          type: "Cobro",
           reference: r.reference,
         };
       }),
@@ -74,17 +74,17 @@ export default function Finance() {
       .map((r) => {
         const i = ins.find((i) => i.id === r.installmentId)!;
         return {
-          id: `${r.id}-İPT`,
+          id: `${r.id}-ANU`,
           description: cs.find((c) => c.id === i.customerId)?.name ?? "",
           project: i.project,
           date: r.reversal!.date,
           amount: -r.amount,
-          type: "Tahsilat iptali",
+          type: "Anulación de cobro",
           reference: r.reversal!.reason,
         };
       }),
     ...requests
-      .filter((r) => requestStatus(state, r) === "Ödendi")
+      .filter((r) => requestStatus(state, r) === "Pagada")
       .map((r) => ({
         id: r.id,
         description: r.company,
@@ -92,8 +92,8 @@ export default function Finance() {
         // Gerçek ödeme tarihi; kaydı yoksa boş (vade tarihi ödeme tarihi gibi gösterilmez)
         date: paidDate(state, r.id) ?? "",
         amount: -netPayable(state, r),
-        type: "Ödeme",
-        reference: `${r.name} · vade ${date(r.due)}`,
+        type: "Pago",
+        reference: `${r.name} · vence ${date(r.due)}`,
       })),
     ...state.depositPayments
       .filter((p) =>
@@ -109,18 +109,18 @@ export default function Finance() {
         project: cs.find((c) => c.id === p.customerId)!.project,
         date: p.date,
         amount: p.amount,
-        type: "Peşinat",
-        reference: "Peşinat tahsilatı",
+        type: "Anticipo",
+        reference: "Cobro de anticipo",
       })),
     ...state.depositPayments
       .filter((p) => p.reversal && cs.some((c) => c.id === p.customerId && (project === "all" || c.project === project)))
       .map((p) => ({
-        id: `${p.id}-İPT`,
+        id: `${p.id}-ANU`,
         description: cs.find((c) => c.id === p.customerId)!.name,
         project: cs.find((c) => c.id === p.customerId)!.project,
         date: p.reversal!.date,
         amount: -p.amount,
-        type: "Peşinat iptali",
+        type: "Anulación de anticipo",
         reference: p.reversal!.reason,
       })),
     ...state.contracts
@@ -135,8 +135,8 @@ export default function Finance() {
           state.depositPayments
             .filter((p) => p.customerId === c.id && !p.reversal)
             .reduce((a, p) => a + p.amount, 0),
-        type: "Peşinat",
-        reference: "Yeni satış peşinatı",
+        type: "Anticipo",
+        reference: "Anticipo de venta nueva",
       })),
   ]
     .filter((r) => r.amount !== 0)
@@ -144,15 +144,15 @@ export default function Finance() {
   const rows = requests
     .filter((r) =>
       (r.company + r.name + r.id)
-        .toLocaleLowerCase("tr")
-        .includes(q.toLocaleLowerCase("tr")),
+        .toLocaleLowerCase("es")
+        .includes(q.toLocaleLowerCase("es")),
     )
     .sort((a, b) => a.due.localeCompare(b.due));
   return (
     <>
       <SectionTitle
-        title="Finans & kasa"
-        description="Tahsilat, onaylı yükümlülükler ve kasa hareketleri arasında tam bağlantı."
+        title="Caja y movimientos"
+        description="Cobros, pagos aprobados y movimientos de caja vinculados."
         actions={
           <button
             className="btn"
@@ -160,12 +160,12 @@ export default function Finance() {
               csvDownload(
                 [
                   [
-                    "Kod",
-                    "Açıklama",
-                    "Proje",
-                    "Tür",
-                    "Tutar",
-                    "Tarih",
+                    "Código",
+                    "Descripción",
+                    "Proyecto",
+                    "Tipo",
+                    "Monto",
+                    "Fecha",
                     "Referans",
                   ],
                   ...ledger.map((l) => [
@@ -178,85 +178,85 @@ export default function Finance() {
                     l.reference,
                   ]),
                 ],
-                "bsfalcon-finans-hareketleri.csv",
+                "edifica-movimientos-de-caja.csv",
               )
             }
           >
-            <Download size={16} /> Hareketleri indir
+            <Download size={16} /> Descargar movimientos
           </button>
         }
       />
       <div className="e-kpis">
         <Kpi
-          label="Kullanılabilir demo kasa"
+          label="Caja disponible (demo)"
           value={compact(s.cash)}
-          sub={`${compact(s.opening)} ay başı bakiyesi (temsili açılış)`}
+          sub={`${compact(s.opening)} saldo de apertura del mes (ejemplo)`}
           icon={<Wallet size={19} />}
           tag="TRY"
         />
         <Kpi
-          label="Kasım tahsilatı"
+          label="Cobros de noviembre"
           value={compact(s.received)}
-          sub="Bu ay kaydedilen taksit tahsilatı"
+          sub="Cobros de cuotas registrados este mes"
           icon={<ArrowDownLeft size={19} />}
           progress={(s.received / s.planned) * 100}
         />
         <Kpi
-          label="Ödeme bekleyen"
+          label="Pendiente de pago"
           value={compact(s.payable)}
-          sub="Yönetici onaylı yükümlülükler"
+          sub="Pagos aprobados por gerencia"
           icon={<Clock size={19} />}
           tone="amber"
         />
         <Kpi
-          label="Gerçekleşen ödeme"
+          label="Pagos realizados"
           value={compact(s.paid)}
-          sub="Kasa bakiyesinden düşülen tutar"
+          sub="Monto descontado de la caja"
           icon={<ArrowUpRight size={19} />}
         />
       </div>
       <div className="e-grid finance-grid">
         <Panel
-          title="Tahsilat planı / gerçekleşen"
-          subtitle="Kasım 2026 · haftalık dağılım"
+          title="Cobranza programada / realizada"
+          subtitle="Noviembre 2026 · distribución semanal"
         >
           <CashChart state={state} project={project} />
         </Panel>
         <Panel
-          title="Bütçe kontrolü (temsili)"
-          subtitle="Bütçe ve maliyet tutarları demo varsayımıdır; kayıtlardan hesaplanmaz"
+          title="Control presupuestario (ejemplo)"
+          subtitle="Presupuesto y costos son supuestos de la demo; no se calculan desde los registros"
         >
           <div className="budget-overview">
             <div>
-              <span>Toplam proje bütçesi</span>
+              <span>Presupuesto total de proyectos</span>
               <b>{compact(s.budget)}</b>
             </div>
             <div>
-              <span>Maliyet varsayımı</span>
+              <span>Costo supuesto</span>
               <b>{compact(s.cost)}</b>
             </div>
             <div className="budget-meter">
               <i style={{ width: `${(s.cost / s.budget) * 100}%` }} />
             </div>
             <div>
-              <small>Bütçe kullanımı</small>
+              <small>Uso del presupuesto</small>
               <strong>%{Math.round((s.cost / s.budget) * 100)}</strong>
             </div>
             <div className="budget-remaining">
-              <span>Kalan bütçe</span>
+              <span>Presupuesto restante</span>
               <b>{compact(s.budget - s.cost)}</b>
             </div>
             <p>
-              Bu panel temsili bütçe varsayımını gösterir. Kayıtlı hakediş,
-              ödeme ve tahsilatlar için Raporlama merkezini kullanın; ödeme
-              yalnızca nakit hareketi yaratır, maliyeti ikinci kez artırmaz.
+              Este panel muestra un presupuesto de ejemplo. Para certificados,
+              pagos y cobros registrados use Informes Financieros; un pago
+              solo genera un movimiento de caja y no vuelve a sumar costo.
             </p>
           </div>
         </Panel>
       </div>
       <Panel>
         <div className="e-tabs">
-          {["Ödeme planı", "Kasa hareketleri"].map((t) => (
+          {["Plan de pagos", "Movimientos de caja"].map((t) => (
             <button
               key={t}
               className={tab === t ? "active" : ""}
@@ -270,12 +270,12 @@ export default function Finance() {
           <SearchBox
             value={q}
             onChange={setQ}
-            placeholder="Firma, müşteri veya işlem ara…"
+            placeholder="Buscar empresa, cliente u operación…"
           />
           <Badge tone="neutral">
-            {tab === "Ödeme planı"
-              ? "Yalnızca onaylı işlemler"
-              : "Tüm kayıtlı hareketler · yeniden eskiye"}
+            {tab === "Plan de pagos"
+              ? "Solo operaciones aprobadas"
+              : "Todos los movimientos · del más reciente al más antiguo"}
           </Badge>
         </div>
         <div className="e-table-wrap">
@@ -283,17 +283,17 @@ export default function Finance() {
             <thead>
               <tr>
                 <th>
-                  {tab === "Ödeme planı" ? "Firma / işlem" : "İşlem / kişi"}
+                  {tab === "Plan de pagos" ? "Empresa / operación" : "Operación / persona"}
                 </th>
-                <th>Proje</th>
-                <th>Tarih</th>
-                <th className="numeric">Tutar</th>
-                <th>Durum</th>
+                <th>Proyecto</th>
+                <th>Fecha</th>
+                <th className="numeric">Monto</th>
+                <th>Estado</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {tab === "Ödeme planı"
+              {tab === "Plan de pagos"
                 ? rows.map((r) => (
                     <tr key={r.id}>
                       <td>
@@ -307,7 +307,7 @@ export default function Finance() {
                       <td className="numeric">
                         {money(netPayable(state, r))}
                         {netPayable(state, r) !== r.amount && (
-                          <small>Brüt {money(r.amount)} · barter mahsubu</small>
+                          <small>Bruto {money(r.amount)} · compensación por canje</small>
                         )}
                       </td>
                       <td>
@@ -318,9 +318,9 @@ export default function Finance() {
                           className="btn compact"
                           onClick={() => setSelected(r.id)}
                         >
-                          {requestStatus(state, r) === "Ödendi"
-                            ? "Kaydı incele"
-                            : "Ödeme işlemi"}{" "}
+                          {requestStatus(state, r) === "Pagada"
+                            ? "Ver registro"
+                            : "Pago"}{" "}
                           <ArrowUpRight size={14} />
                         </button>
                       </td>
@@ -329,8 +329,8 @@ export default function Finance() {
                 : ledger
                     .filter((l) =>
                       (l.description + l.reference + l.id)
-                        .toLocaleLowerCase("tr")
-                        .includes(q.toLocaleLowerCase("tr")),
+                        .toLocaleLowerCase("es")
+                        .includes(q.toLocaleLowerCase("es")),
                     )
                     .map((l) => (
                       <tr key={l.id}>
@@ -341,7 +341,7 @@ export default function Finance() {
                           </small>
                         </td>
                         <td>{pname(l.project)}</td>
-                        <td>{l.date ? date(l.date) : "Tarih kaydı yok"}</td>
+                        <td>{l.date ? date(l.date) : "Sin fecha registrada"}</td>
                         <td
                           className={l.amount > 0 ? "green-text" : "red-text"}
                         >
@@ -358,16 +358,16 @@ export default function Finance() {
                     ))}
             </tbody>
           </table>
-          {tab === "Ödeme planı" && !rows.length && (
+          {tab === "Plan de pagos" && !rows.length && (
             <Empty
-              title="Onaylanmış ödeme bulunmuyor"
-              detail="Hakediş veya satın alma onaylandığında burada görünür."
+              title="No hay pagos aprobados"
+              detail="Los certificados y compras aprobados aparecen aquí."
             />
           )}
         </div>
         <div className="e-table-note">
-          Nakit bakiyesi = ay başı bakiyesi + bu ayki tahsilat ve yeni
-          peşinatlar − kaydedilen ödemeler.
+          Saldo de caja = saldo de apertura del mes + cobros del mes y anticipos
+          nuevos − pagos registrados.
         </div>
       </Panel>
       {selected && (

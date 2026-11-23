@@ -2,7 +2,7 @@
 export function toCsv(rows: (string | number)[][]): string {
   return (
     "﻿" +
-    [["TEMSİLİ DEMO VERİSİ — Gerçek şirket kaydı değildir."], ...rows]
+    [["DATOS DE DEMOSTRACIÓN — No son registros reales de la empresa."], ...rows]
       .map((r) =>
         r
           .map(

@@ -43,9 +43,9 @@ function fingerprint(s) {
     deposits: s.depositPayments,
     offsets: s.offsets,
     all: summary(s),
-    cengilli: summary(s, "cengilli"),
-    bulvar: summary(s, "agva"),
-    nergis: summary(s, "nergis"),
+    vtower: summary(s, "vtower"),
+    bulvar: summary(s, "business"),
+    alion: summary(s, "alion"),
     breakdown: collectionBreakdown(s),
   };
 }
@@ -65,30 +65,30 @@ function legacyBrowserData() {
       : r,
   );
   const baseIds = new Set(baseCustomers("v3.1").map((c) => c.id));
-  const lateBase = paymentRows(s).find((r) => r.status === "Gecikti" && baseIds.has(r.customerId) && r.paid === 0);
-  const nextBase = paymentRows(s).find((r) => r.customerId === "nergis-2" && r.remaining > 0);
+  const lateBase = paymentRows(s).find((r) => r.status === "Vencida" && baseIds.has(r.customerId) && r.paid === 0);
+  const nextBase = paymentRows(s).find((r) => r.customerId === "alion-2" && r.remaining > 0);
   // Kısmi tahsilat (geciken örnek taksit), tam tahsilat (gelecek taksit), peşinat parçası, vade değişikliği, imza
   LATE_ID = lateBase.customerId;
-  s = applyAction(s, { type: "receipt", installmentId: lateBase.installmentId, amount: 30000, method: "Banka havalesi", reference: "DEMO-USER-1" });
-  s = applyAction(s, { type: "receipt", installmentId: nextBase.installmentId, amount: nextBase.remaining, method: "Kredi kartı", reference: "DEMO-USER-2" });
-  s = applyAction(s, { type: "deposit-receipt", id: "agva-1", amount: 150000 });
-  const later = paymentRows(s).find((r) => r.customerId === "nergis-5" && r.remaining > 0 && r.due > SNAPSHOT);
+  s = applyAction(s, { type: "receipt", installmentId: lateBase.installmentId, amount: 300, method: "Transferencia bancaria", reference: "DEMO-USER-1" });
+  s = applyAction(s, { type: "receipt", installmentId: nextBase.installmentId, amount: nextBase.remaining, method: "Tarjeta de crédito", reference: "DEMO-USER-2" });
+  s = applyAction(s, { type: "deposit-receipt", id: "alion-26", amount: 1000 });
+  const later = paymentRows(s).find((r) => r.customerId === "alion-5" && r.remaining > 0 && r.due > SNAPSHOT);
   s = applyAction(s, { type: "reschedule", id: later.installmentId, date: "2027-02-26" });
-  s = applyAction(s, { type: "contract-sign", id: "cengilli-4", depositPaid: 900000 });
+  s = applyAction(s, { type: "contract-sign", id: "business-6", depositPaid: 58500 });
   // Önceki sürümün adları
   const text = JSON.stringify({ ...s, dataset: undefined, basePricing: undefined })
     .replace(/"(Demo Müşteri \d{3})"/g, '"$1"');
   let legacy = text;
-  for (let n = 1; n <= 120; n++) legacy = legacy.split(`"${personName(n)}"`).join(`"Demo Müşteri ${String(n).padStart(3, "0")}"`);
-  for (const [k, v] of [["yapi", "Örnek Yapı"], ["teknik", "Örnek Teknik"], ["cephe", "Örnek Cephe"], ["demir", "Örnek Demir"], ["aluminyum", "Örnek Alüminyum"]])
+  for (let n = 1; n <= 120; n++) legacy = legacy.split(`"${personName(n)}"`).join(`"Cliente demo ${String(n).padStart(3, "0")}"`);
+  for (const [k, v] of [["yapi", "Constructora demo"], ["teknik", "Instalaciones demo"], ["cephe", "Fachadas demo"], ["demir", "Aceros demo"], ["aluminyum", "Aberturas demo"]])
     legacy = legacy.split(FIRM[k]).join(v);
   return { engineState: s, raw: legacy };
 }
 
 test("Clean demo start may use catalogue prices; previous-version prices stay available unchanged", () => {
   const legacy = baseCustomers("v3.1");
-  assert(legacy.every((c) => c.price === (c.project === "cengilli" ? 14200000 : 5300000)));
-  assert(legacy.every((c) => c.deposit === (c.project === "cengilli" ? 3400000 : 1340000) && c.installment === (c.project === "cengilli" ? 300000 : 110000)));
+  assert(legacy.every((c) => c.price === (c.project === "alion" ? 64800 : 86400)));
+  assert(legacy.every((c) => c.deposit === (c.project === "alion" ? 13320 : 17280) && c.installment === (c.project === "alion" ? 1430 : 1920)));
   assert.equal(seedState.basePricing, "katalog");
   // Kimlik, daire ve vadeler iki şemada aynıdır; yalnızca bedel farklıdır
   const cat = baseCustomers("katalog");
@@ -98,7 +98,7 @@ test("Clean demo start may use catalogue prices; previous-version prices stay av
 
 test("Migrating previous-version browser data never re-prices contracts or alters any financial figure", () => {
   const { engineState, raw } = legacyBrowserData();
-  assert(raw.includes("Demo Müşteri 0") && raw.includes("Örnek Yapı") && !raw.includes("basePricing"));
+  assert(raw.includes("Cliente demo 0") && raw.includes("Constructora demo") && !raw.includes("basePricing"));
   const out = migrateSaved(raw);
   assert(out.migrated);
   assert.equal(out.state.basePricing, "v3.1");
@@ -111,13 +111,13 @@ test("Migrating previous-version browser data never re-prices contracts or alter
   assert.deepEqual(after.deposits, before.deposits);
   assert.deepEqual(after.offsets, before.offsets);
   assert.deepEqual(after.all, before.all);
-  assert.deepEqual(after.cengilli, before.cengilli);
-  assert.deepEqual(after.nergis, before.nergis);
+  assert.deepEqual(after.vtower, before.vtower);
+  assert.deepEqual(after.alion, before.alion);
   assert.deepEqual(after.bulvar, before.bulvar);
   assert.deepEqual(after.breakdown, before.breakdown);
   // Önceki sürümün tahsilat dekontları aynen korunur (yalnızca kişi/firma adı taşınır)
-  assert(after.receipts.some((r) => r.reference === "DEMO-USER-1" && r.amount === 30000));
-  assert.equal(customerList(out.state).find((c) => c.id === "cengilli-1").price, 14200000);
+  assert(after.receipts.some((r) => r.reference === "DEMO-USER-1" && r.amount === 300));
+  assert.equal(customerList(out.state).find((c) => c.id === "vtower-1").price, 86400);
 });
 
 test("A migrated record keeps working: new receipts reduce the preserved balance exactly once", () => {
@@ -125,11 +125,11 @@ test("A migrated record keeps working: new receipts reduce the preserved balance
   const c = customerList(out).find((x) => x.id === LATE_ID);
   const before = accountOf(out, c);
   const row = paymentRows(out).find((r) => r.customerId === LATE_ID && r.remaining > 0);
-  const next = applyAction(out, { type: "receipt", installmentId: row.installmentId, amount: row.remaining, method: "Banka havalesi", reference: "HVL-TEST" });
+  const next = applyAction(out, { type: "receipt", installmentId: row.installmentId, amount: row.remaining, method: "Transferencia bancaria", reference: "HVL-TEST" });
   const after = accountOf(next, customerList(next).find((x) => x.id === LATE_ID));
   assert.equal(after.collected, before.collected + row.remaining);
   assert.equal(after.balance, before.balance - row.remaining);
-  assert.equal(c.price, c.project === "cengilli" ? 14200000 : 5300000);
+  assert.equal(c.price, c.project === "alion" ? 64800 : 86400);
   assert.equal(summary(next).cash, summary(out).cash + row.remaining);
 });
 
@@ -156,7 +156,7 @@ test("Deposit + installments + interim payments equal the contract price to the 
       let total;
       if (c.plan) {
         // Esnek plan: peşinat parçaları + taksitler + ara ödemeler (satırlar) = bedel
-        const deposits = paymentRows(s).filter((r) => r.customerId === c.id && r.kind === "Peşinat");
+        const deposits = paymentRows(s).filter((r) => r.customerId === c.id && r.kind === "Anticipo");
         total = own.reduce((a, r) => a + toKurus(r.amount), 0) + deposits.reduce((a, r) => a + toKurus(r.amount), 0);
       } else {
         // Klasik plan: peşinat + ödenmiş aylar + kalan taksit satırları = bedel
@@ -173,17 +173,17 @@ test("Statuses follow due dates for deposits and installments across dates (both
     const seen = new Set();
     for (const r of rows) {
       seen.add(r.status);
-      if (r.remaining === 0) assert.equal(r.status, "Ödendi", r.id);
-      else if (r.due < SNAPSHOT) assert.equal(r.status, "Gecikti", r.id);
-      else if (r.paid > 0) assert.equal(r.status, "Kısmen ödendi", r.id);
-      else assert(["Yaklaşıyor", "Gelecek dönem"].includes(r.status), r.id + " " + r.status);
-      if (r.status === "Yaklaşıyor") assert(r.days >= 0 && r.days <= 30, r.id);
-      if (r.status === "Gelecek dönem") assert(r.days > 30, r.id);
+      if (r.remaining === 0) assert.equal(r.status, "Pagada", r.id);
+      else if (r.due < SNAPSHOT) assert.equal(r.status, "Vencida", r.id);
+      else if (r.paid > 0) assert.equal(r.status, "Pago parcial", r.id);
+      else assert(["Próxima", "Futura"].includes(r.status), r.id + " " + r.status);
+      if (r.status === "Próxima") assert(r.days >= 0 && r.days <= 30, r.id);
+      if (r.status === "Futura") assert(r.days > 30, r.id);
     }
-    for (const st of ["Gecikti", "Yaklaşıyor", "Gelecek dönem", "Ödendi"]) assert(seen.has(st), `${s.basePricing} has ${st}`);
+    for (const st of ["Vencida", "Próxima", "Futura", "Pagada"]) assert(seen.has(st), `${s.basePricing} has ${st}`);
     // Peşinatın geciken parçası ve gelecek parçası ayrı izlenir
-    const dep = rows.filter((r) => r.customerId === "agva-1" && r.kind === "Peşinat");
-    assert(dep.length === 2);
+    const dep = rows.filter((r) => r.customerId === "alion-26" && r.kind === "Anticipo");
+    assert(dep.length === 3);
   }
 });
 
@@ -200,7 +200,7 @@ test("Names, contract numbers, unit codes and totals agree across every view (bo
     }
     for (const a of agenda(s, "all", 30))
       if (a.ref.type === "customer") assert(a.title.startsWith(people.get(a.ref.id).name), a.id);
-    for (const id of ["agva-1", "cengilli-1"])
+    for (const id of ["business-5", "vtower-1"])
       for (const d of systemDocuments(s, id)) assert(d.name.startsWith(contractNumber(id)) || d.name.startsWith("THS-"), d.name);
     // Portföy toplamları kişi hesaplarının toplamıdır
     const sum = (f) => Math.round([...people.values()].reduce((a, c) => a + f(accountOf(s, c)), 0) * 100) / 100;
@@ -209,7 +209,7 @@ test("Names, contract numbers, unit codes and totals agree across every view (bo
     assert.equal(total.collected, sum((a) => a.collected));
     assert.equal(total.balance, sum((a) => a.balance));
     assert.equal(collectionBreakdown(s).total, total.collected);
-    assert.equal(summary(s, "cengilli").revenue + summary(s, "nergis").revenue + summary(s, "agva").revenue, total.revenue);
+    assert.equal(["lofty", "alion", "vtower", "business"].reduce((a, p) => a + summary(s, p).revenue, 0), total.revenue);
   }
 });
 

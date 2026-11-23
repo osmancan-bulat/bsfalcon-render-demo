@@ -50,12 +50,14 @@ import {
   demoOffsets,
   demoReminders,
   demoAudit,
+  demoBilling,
 } from "./demo-seed.ts";
+import { applyBillingAction, DEFAULT_FX, type BillingAction, type BillingRecord, type FxSettings } from "./billing.ts";
 /** Ay başı: bu tarihten önceki tahsilatlar demo açılış kasasına dahildir. */
 export const MONTH_START = "2026-11-01";
 export { projects, customers, installments, workItems, documents, SNAPSHOT };
 export type ContractStatus =
-  "Taslak" | "İmza bekliyor" | "Aktif" | "Tamamlandı" | "İptal";
+  "Borrador" | "Pendiente de firma" | "Activo" | "Finalizado" | "Anulado";
 export type ContractEvent = { date: string; status: string; note: string };
 export type ContractMeta = {
   status: ContractStatus;
@@ -203,6 +205,10 @@ export type EnterpriseState = {
   landshare?: LandShareState;
   /** BŞ Falcon: proje süreci adımları ve güvence belge takibi (temsili). */
   process?: ProcessState;
+  /** EDIFICA: registro de facturación por cobro (fuente → factura). */
+  billing?: Record<string, BillingRecord>;
+  /** EDIFICA: tipo de cambio de referencia definido por el usuario (₲ por USD). */
+  fx?: FxSettings;
 };
 export type WorkItem = {
   id: string;
@@ -237,7 +243,7 @@ export const seedState: EnterpriseState = {
         installmentId: i.id,
         amount: i.amount,
         date: "2026-11-10",
-        method: "Banka havalesi",
+        method: "Transferencia bancaria",
         reference: `HVL-261110-00${n + 1}`,
       })),
     ...demoReceipts,
@@ -267,6 +273,8 @@ export const seedState: EnterpriseState = {
   workCustom: [],
   landshare: seedLandShare,
   process: seedProcess,
+  billing: demoBilling,
+  fx: DEFAULT_FX,
 };
 /**
  * Tarayıcıda kayıtlı durumu güvenle okur. Önceki demo sürümünün jenerik adları
@@ -397,8 +405,8 @@ export type Action =
   | { type: "note"; text: string; project: string }
   | { type: "delete-note"; id: string }
   | { type: "reserve" | "release"; id: string }
-  | { type: "contract"; record: Customer; status?: "Taslak" | "İmza bekliyor" }
-  | { type: "contract-status"; id: string; status: "İmza bekliyor" }
+  | { type: "contract"; record: Customer; status?: "Borrador" | "Pendiente de firma" }
+  | { type: "contract-status"; id: string; status: "Pendiente de firma" }
   | { type: "contract-sign"; id: string; depositPaid: number }
   | { type: "contract-cancel"; id: string; reason: string }
   | { type: "contract-transfer"; id: string; name: string; note: string }
@@ -409,6 +417,7 @@ export type Action =
       amount: number;
     }
   | { type: "reset" }
+  | BillingAction
   | { type: "share-assign"; unit: string; owner: string; note?: string }
   | { type: "share-step"; project: string; key: string; status: StepStatus }
   | { type: "obligation-toggle"; project: string; id: string }
@@ -452,7 +461,7 @@ export type Action =
       patch: { type: string; gross: number; listPrice: number; facade: string };
     };
 export const pname = (id: string) =>
-  projects.find((p) => p.id === id)?.name ?? "Tüm projeler";
+  projects.find((p) => p.id === id)?.name ?? "Todos los proyectos";
 export const customerList = (s: EnterpriseState) => {
   syncCatalog(s);
   return customerListRaw(s);
@@ -520,14 +529,14 @@ export const netPayable = (s: EnterpriseState, r: RequestRecord) =>
   r2(r.amount - offsetFor(s, r.id));
 export const requestStatus = (s: EnterpriseState, r: RequestRecord) =>
   s.paidOrders.includes(r.id)
-    ? "Ödendi"
+    ? "Pagada"
     : s.rejected.includes(r.id)
-      ? "İade edildi"
-      : s.approved.includes(r.id) || r.status === "Onaylandı"
+      ? "Devuelto"
+      : s.approved.includes(r.id) || r.status === "Aprobado"
         ? netPayable(s, r) <= 0
-          ? "Mahsup edildi"
-          : "Onaylandı"
-        : "Onay bekliyor";
+          ? "Compensado"
+          : "Aprobado"
+        : "Pendiente de aprobación";
 export const outstanding = (s: EnterpriseState, i: Installment) =>
   Math.max(
     0,
@@ -591,7 +600,7 @@ export function reservedUnits(s: EnterpriseState, id: string) {
   );
 }
 /** Temsili ay başı kasa bakiyesi (yalnızca yerleşik projeler; demo varsayımı). */
-const OPENING_CASH: Record<string, number> = { agva: 1200000, cengilli: 6500000, nergis: 9800000 };
+const OPENING_CASH: Record<string, number> = { lofty: 420000, alion: 310000, vtower: 260000, business: 150000 };
 export function summary(s: EnterpriseState, project = "all") {
   syncCatalog(s);
   const inScope = (id: string) => project === "all" || id === project;
@@ -624,12 +633,12 @@ export function summary(s: EnterpriseState, project = "all") {
     .reduce((a, r) => a + r.amount, 0);
   const payable = r2(
       requests
-        .filter((r) => requestStatus(s, r) === "Onaylandı")
+        .filter((r) => requestStatus(s, r) === "Aprobado")
         .reduce((a, r) => a + netPayable(s, r), 0),
     ),
     paid = r2(
       requests
-        .filter((r) => requestStatus(s, r) === "Ödendi")
+        .filter((r) => requestStatus(s, r) === "Pagada")
         .reduce((a, r) => a + netPayable(s, r), 0),
     ),
     offset = r2(
@@ -714,7 +723,7 @@ export function summary(s: EnterpriseState, project = "all") {
     overdueTotal: r2(overdueInstallments + depositOverdue),
     opening,
     cash: r2(opening + received - reversedThisMonth + deposits - paid),
-    pending: requests.filter((r) => requestStatus(s, r) === "Onay bekliyor")
+    pending: requests.filter((r) => requestStatus(s, r) === "Pendiente de aprobación")
       .length,
     progress: (() => {
       const budget = ps.reduce((a, p) => a + p.budget, 0);
@@ -754,16 +763,22 @@ export function applyAction(
     : action.type === "barter" ? action.record.unitId
     : null;
   if (targetUnit && isLandownerUnit(s, targetUnit))
-    throw Error("Bu bağımsız bölüm arsa sahibi payında; yüklenici satışı, rezervasyonu veya barteri yapılamaz.");
-  if (action.type === "share-assign") {
+    throw Error("Esta unidad pertenece al propietario del terreno; no se puede vender, reservar ni canjear.");
+  if (action.type === "invoice-issue" || action.type === "invoice-void" || action.type === "fx-set") {
+    const r = applyBillingAction(s, action);
+    next = { ...next, ...r.patch };
+    entity = r.entity;
+    project = r.project;
+    message = r.message;
+  } else if (action.type === "share-assign") {
     const u = unitById(action.unit);
     const ls = s.landshare ?? seedLandShare;
     const ag = u && ls.agreements.find((a) => a.project === u.project);
-    if (!u || !ag) throw Error("Bu proje için kat karşılığı anlaşması tanımlı değil.");
+    if (!u || !ag) throw Error("Este proyecto no tiene acuerdo de canje por terreno.");
     const from = unitOwner(s, u.id);
     const to = action.owner;
-    if (to !== CONTRACTOR && !ag.owners.some((o) => o.id === to)) throw Error("Geçersiz arsa sahibi.");
-    if (from === to) throw Error("Bağımsız bölüm zaten bu paydaşta.");
+    if (to !== CONTRACTOR && !ag.owners.some((o) => o.id === to)) throw Error("Propietario inválido.");
+    if (from === to) throw Error("La unidad ya pertenece a este titular.");
     // Yüklenicide satılmış, imza sürecindeki, barterli veya rezerve bölüm arsa sahibine aktarılamaz
     if (
       from === CONTRACTOR &&
@@ -772,8 +787,8 @@ export function applyAction(
         s.barters.some((b) => b.unitId === u.id) ||
         reservedUnits(s, u.project).includes(u.id))
     )
-      throw Error("Satılmış, imza sürecinde, barterli veya rezerve bölüm arsa sahibine aktarılamaz.");
-    const name = (id: string) => (id === CONTRACTOR ? "Yüklenici" : ag.owners.find((o) => o.id === id)?.name ?? id);
+      throw Error("Una unidad vendida, en firma, canjeada o reservada no puede transferirse.");
+    const name = (id: string) => (id === CONTRACTOR ? "Contratista" : ag.owners.find((o) => o.id === id)?.name ?? id);
     const owners = { ...ls.owners };
     if (to === CONTRACTOR) delete owners[u.id];
     else owners[u.id] = to;
@@ -781,72 +796,72 @@ export function applyAction(
     next.landshare = { ...ls, owners, history: [{ id: id(), date: SNAPSHOT, project: u.project, text }, ...ls.history].slice(0, 60) };
     entity = u.id;
     project = u.project;
-    message = `Kat karşılığı paylaşımı güncellendi: ${text}`;
+    message = `Distribución de unidades actualizada: ${text}`;
   } else if (action.type === "share-step") {
     const ls = s.landshare ?? seedLandShare;
     const ag = ls.agreements.find((a) => a.project === action.project);
     const st = ag?.steps.find((x) => x.key === action.key);
-    if (!ag || !st) throw Error("Anlaşma aşaması bulunamadı.");
+    if (!ag || !st) throw Error("Etapa del acuerdo no encontrada.");
     next.landshare = {
       ...ls,
       agreements: ls.agreements.map((a) =>
-        a !== ag ? a : { ...a, steps: a.steps.map((x) => (x.key !== st.key ? x : { ...x, status: action.status, date: action.status === "Tamamlandı" ? x.date || SNAPSHOT : x.date })) },
+        a !== ag ? a : { ...a, steps: a.steps.map((x) => (x.key !== st.key ? x : { ...x, status: action.status, date: action.status === "Finalizado" ? x.date || SNAPSHOT : x.date })) },
       ),
-      history: [{ id: id(), date: SNAPSHOT, project: ag.project, text: `Anlaşma aşaması: ${st.title} → ${action.status}` }, ...ls.history].slice(0, 60),
+      history: [{ id: id(), date: SNAPSHOT, project: ag.project, text: `Etapa del acuerdo: ${st.title} → ${action.status}` }, ...ls.history].slice(0, 60),
     };
     entity = st.key;
     project = ag.project;
-    message = `Kat karşılığı aşaması güncellendi: ${st.title} · ${action.status}`;
+    message = `Etapa actualizada: ${st.title} · ${action.status}`;
   } else if (action.type === "obligation-toggle") {
     const ls = s.landshare ?? seedLandShare;
     const ag = ls.agreements.find((a) => a.project === action.project);
     const ob = ag?.obligations.find((o) => o.id === action.id);
-    if (!ag || !ob) throw Error("Yükümlülük bulunamadı.");
+    if (!ag || !ob) throw Error("Obligación no encontrada.");
     next.landshare = {
       ...ls,
       agreements: ls.agreements.map((a) => (a !== ag ? a : { ...a, obligations: a.obligations.map((o) => (o.id === ob.id ? { ...o, done: !o.done } : o)) })),
-      history: [{ id: id(), date: SNAPSHOT, project: ag.project, text: `Yükümlülük ${ob.done ? "yeniden açıldı" : "tamamlandı"}: ${ob.title}` }, ...ls.history].slice(0, 60),
+      history: [{ id: id(), date: SNAPSHOT, project: ag.project, text: `Obligación ${ob.done ? "reabierta" : "cumplida"}: ${ob.title}` }, ...ls.history].slice(0, 60),
     };
     entity = ob.id;
     project = ag.project;
-    message = `Teslim yükümlülüğü ${ob.done ? "yeniden açıldı" : "tamamlandı"}`;
+    message = `Obligación de entrega ${ob.done ? "reabierta" : "cumplida"}`;
   } else if (action.type === "process-step") {
     const pr = s.process ?? seedProcess;
     const cur = pr[action.project];
     const st = cur?.steps.find((x) => x.key === action.key);
-    if (!cur || !st) throw Error("Süreç adımı bulunamadı.");
+    if (!cur || !st) throw Error("Etapa del proceso no encontrada.");
     next.process = {
       ...pr,
       [action.project]: {
         ...cur,
-        steps: cur.steps.map((x) => (x.key !== st.key ? x : { ...x, status: action.status, note: action.note ?? x.note, date: action.status === "Tamamlandı" ? x.date || SNAPSHOT : x.date })),
+        steps: cur.steps.map((x) => (x.key !== st.key ? x : { ...x, status: action.status, note: action.note ?? x.note, date: action.status === "Finalizado" ? x.date || SNAPSHOT : x.date })),
       },
     };
     entity = st.key;
     project = action.project;
-    message = `Proje süreci güncellendi: ${st.title} · ${action.status}`;
+    message = `Proceso del proyecto actualizado: ${st.title} · ${action.status}`;
   } else if (action.type === "expense") {
     const r = action.record;
     const pj = projects.find((x) => x.id === r.project);
-    if (!pj) throw Error("Proje bulunamadı.");
-    if (pj.status !== "Aktif") throw Error("Yalnızca aktif projeye şantiye gideri kaydedilebilir.");
-    if (!r.name.trim() || !r.company.trim()) throw Error("Gider açıklaması ve firma zorunludur.");
-    if (!Number.isFinite(r.amount) || r.amount <= 0) throw Error("Gider tutarı pozitif olmalı.");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date) || r.date > SNAPSHOT) throw Error("Gider tarihi geçerli olmalı ve bugünden ileri olamaz.");
+    if (!pj) throw Error("Proyecto no encontrado.");
+    if (pj.status !== "Activo") throw Error("Solo se pueden registrar gastos de obra en proyectos activos.");
+    if (!r.name.trim() || !r.company.trim()) throw Error("La descripción del gasto y el proveedor son obligatorios.");
+    if (!Number.isFinite(r.amount) || r.amount <= 0) throw Error("El monto del gasto debe ser positivo.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date) || r.date > SNAPSHOT) throw Error("La fecha del gasto debe ser válida y no puede ser futura.");
     const all = requestList(s);
     let n = all.filter((x) => x.id.startsWith("GDR-")).length + 1;
     while (all.some((x) => x.id === `GDR-${String(n).padStart(3, "0")}`)) n++;
     const gid = `GDR-${String(n).padStart(3, "0")}`;
     next.requests = [
       ...s.requests,
-      { id: gid, project: r.project, company: r.company.trim(), name: r.name.trim(), type: "Şantiye gideri", amount: r2(r.amount), due: r.date, status: "Ödendi", description: r.category },
+      { id: gid, project: r.project, company: r.company.trim(), name: r.name.trim(), type: "Gasto de obra", amount: r2(r.amount), due: r.date, status: "Pagada", description: r.category },
     ];
     next.approved = [...s.approved, gid];
     next.paidOrders = [...s.paidOrders, gid];
     next.paidDates = { ...(s.paidDates ?? {}), [gid]: r.date };
     entity = gid;
     project = r.project;
-    message = `Şantiye gideri kaydedildi (${r.category}); kasa ve bütçe raporu güncellendi`;
+    message = `Gasto de obra registrado (${r.category}); caja y presupuesto actualizados`;
   } else if (action.type === "barter") {
     const b = action.record,
       p = projects.find((p) => p.id === b.project),
@@ -859,9 +874,9 @@ export function applyAction(
       reservedUnits(s, p.id).includes(b.unitId) ||
       s.barters.some((v) => v.id === b.id)
     )
-      throw Error("Konut satılmış, rezerve, barter kapsamında veya geçersiz.");
-    if (p.status !== "Aktif")
-      throw Error("Yalnızca aktif projede barter anlaşması yapılabilir.");
+      throw Error("La unidad está vendida, reservada, canjeada o no es válida.");
+    if (p.status !== "Activo")
+      throw Error("Solo se pueden registrar canjes en proyectos activos.");
     if (
       !b.company.trim() ||
       !b.work.trim() ||
@@ -873,11 +888,11 @@ export function applyAction(
       b.progress < 0 ||
       b.progress > 100
     )
-      throw Error("Firma, iş, bedel ve tarih aralığını kontrol edin.");
+      throw Error("Verifique proveedor, trabajo, monto y fechas.");
     next.barters = [b, ...s.barters]; // en yeni anlaşma başta
     entity = b.id;
     project = b.project;
-    message = "Barter kaydedildi; konut ayrıldı, nakit hareketi oluşturulmadı";
+    message = "Canje registrado; unidad asignada sin movimiento de caja";
   } else if (action.type === "barter-progress") {
     const b = s.barters.find((b) => b.id === action.id);
     if (
@@ -885,9 +900,9 @@ export function applyAction(
       !Number.isFinite(action.progress) ||
       action.progress < 0 ||
       action.progress > 100 ||
-      !["Bekliyor", "Devir sürecinde", "Devredildi"].includes(action.transfer)
+      !["Pendiente", "En transferencia", "Devredildi"].includes(action.transfer)
     )
-      throw Error("Geçerli ilerleme ve devir durumu gerekli.");
+      throw Error("Se requiere un avance y un estado de transferencia válidos.");
     next.barters = s.barters.map((b) =>
       b.id === action.id
         ? { ...b, progress: action.progress, transfer: action.transfer }
@@ -895,34 +910,34 @@ export function applyAction(
     );
     entity = b.id;
     project = b.project;
-    message = "Barter iş ve devir durumu güncellendi";
+    message = "Estado del canje actualizado";
   } else if (action.type === "barter-offset") {
     const b = s.barters.find((b) => b.id === action.barterId),
       r = requestList(s).find((r) => r.id === action.requestId);
-    if (!b || !r) throw Error("Barter veya hakediş bulunamadı.");
-    if (r.type !== "Hakediş" || r.project !== b.project)
-      throw Error("Mahsup yalnızca aynı projedeki hakedişe yapılabilir.");
+    if (!b || !r) throw Error("Canje o certificado no encontrado.");
+    if (r.type !== "Certificado de obra" || r.project !== b.project)
+      throw Error("La compensación solo se aplica a certificados del mismo proyecto.");
     if (
-      r.company.trim().toLocaleLowerCase("tr") !==
-      b.company.trim().toLocaleLowerCase("tr")
+      r.company.trim().toLocaleLowerCase("es") !==
+      b.company.trim().toLocaleLowerCase("es")
     )
-      throw Error("Hakediş firması barter firmasıyla aynı olmalı.");
-    if (requestStatus(s, r) !== "Onaylandı")
-      throw Error("Mahsup için hakediş onaylı ve ödenmemiş olmalı.");
+      throw Error("El proveedor del certificado debe ser el mismo del canje.");
+    if (requestStatus(s, r) !== "Aprobado")
+      throw Error("Para compensar, el certificado debe estar aprobado y sin pagar.");
     const amount = r2(action.amount);
     if (!Number.isFinite(amount) || amount <= 0)
-      throw Error("Pozitif mahsup tutarı gerekli.");
+      throw Error("Se requiere un monto de compensación positivo.");
     if (amount > r2(b.amount - barterOffset(s, b.id)))
-      throw Error("Tutar barterın kalan mahsup bakiyesini aşamaz.");
+      throw Error("El monto no puede superar el saldo del canje.");
     if (amount > netPayable(s, r))
-      throw Error("Tutar hakedişin kalan ödemesini aşamaz.");
+      throw Error("El monto no puede superar el saldo del certificado.");
     next.offsets = [
       ...(s.offsets ?? []),
       { id: id(), barterId: b.id, requestId: r.id, amount, date: SNAPSHOT },
     ];
     entity = r.id;
     project = r.project;
-    message = `${amount.toLocaleString("tr-TR")} TL barter karşılığı mahsup edildi; kasa değişmedi`;
+    message = `US$ ${amount.toLocaleString("es-PY")} compensados con canje; la caja no cambió`;
   } else if (action.type === "reminder") {
     const r = action.record;
     if (
@@ -930,20 +945,20 @@ export function applyAction(
       !isIsoDate(r.due) ||
       s.reminders.some((v) => v.id === r.id)
     )
-      throw Error("Hatırlatma başlığı ve tarih gerekli.");
+      throw Error("Se requieren el título y la fecha del recordatorio.");
     next.reminders = [r, ...s.reminders]; // en yeni hatırlatma başta
     entity = r.id;
     project = r.project;
-    message = "Uygulama içi hatırlatma oluşturuldu";
+    message = "Recordatorio creado";
   } else if (action.type === "reminder-done") {
     const r = s.reminders.find((r) => r.id === action.id);
-    if (!r) throw Error("Hatırlatma bulunamadı.");
+    if (!r) throw Error("Recordatorio no encontrado.");
     next.reminders = s.reminders.map((r) =>
       r.id === action.id ? { ...r, done: !r.done } : r,
     );
     entity = r.id;
     project = r.project;
-    message = "Hatırlatma durumu güncellendi";
+    message = "Estado del recordatorio actualizado";
   } else if (action.type === "deposit-receipt") {
     const c = s.contracts.find((c) => c.id === action.id);
     if (
@@ -953,7 +968,7 @@ export function applyAction(
       toKurus(action.amount) >
         toKurus((c.depositExpected ?? c.deposit) - c.deposit)
     )
-      throw Error("Tutar kalan peşinatı aşamaz.");
+      throw Error("El monto no puede superar el anticipo pendiente.");
     const amount = r2(action.amount);
     next.contracts = s.contracts.map((v) =>
       v.id === c.id ? { ...v, deposit: r2(v.deposit + amount) } : v,
@@ -964,41 +979,41 @@ export function applyAction(
     ];
     entity = c.id;
     project = c.project;
-    message = "Peşinat tahsil edildi; kasa ve müşteri bakiyesi güncellendi";
+    message = "Anticipo cobrado; caja y saldo del cliente actualizados";
   } else if (action.type === "contract-status") {
     const d = (s.drafts ?? []).find((d) => d.id === action.id);
     const meta = s.contractMeta[action.id];
-    if (!d || !meta || meta.status !== "Taslak")
-      throw Error("Yalnızca taslak sözleşme imzaya gönderilebilir.");
+    if (!d || !meta || meta.status !== "Borrador")
+      throw Error("Solo un borrador puede enviarse a firma.");
     next.contractMeta = {
       ...s.contractMeta,
       [d.id]: {
         ...meta,
-        status: "İmza bekliyor",
+        status: "Pendiente de firma",
         history: [
           ...meta.history,
           {
             date: SNAPSHOT,
-            status: "İmza bekliyor",
-            note: "Sözleşme imzaya gönderildi",
+            status: "Pendiente de firma",
+            note: "Contrato enviado a firma",
           },
         ],
       },
     };
     entity = d.id;
     project = d.project;
-    message = "Sözleşme imzaya gönderildi";
+    message = "Contrato enviado a firma";
   } else if (action.type === "contract-sign") {
     const d = (s.drafts ?? []).find((d) => d.id === action.id);
     const meta = s.contractMeta[action.id];
-    if (!d || !meta) throw Error("İmzalanacak taslak sözleşme bulunamadı.");
+    if (!d || !meta) throw Error("No se encontró el borrador a firmar.");
     const expected = d.depositExpected ?? 0;
     if (
       !Number.isFinite(action.depositPaid) ||
       action.depositPaid < 0 ||
       toKurus(action.depositPaid) > toKurus(expected)
     )
-      throw Error("İmzada alınan peşinat anlaşmalı peşinatı aşamaz.");
+      throw Error("El anticipo cobrado en la firma no puede superar el anticipo pactado.");
     const paid = r2(action.depositPaid);
     const signed: Customer = {
       ...d,
@@ -1011,50 +1026,50 @@ export function applyAction(
       ...s.contractMeta,
       [d.id]: {
         ...meta,
-        status: "Aktif",
+        status: "Activo",
         signedAt: SNAPSHOT,
         history: [
           ...meta.history,
           {
             date: SNAPSHOT,
-            status: "Aktif",
-            note: `İmzalandı · imzada peşinat ${paid.toLocaleString("tr-TR")} TL`,
+            status: "Activo",
+            note: `Firmado · anticipo cobrado en la firma US$ ${paid.toLocaleString("es-PY")}`,
           },
         ],
       },
     };
     entity = d.id;
     project = d.project;
-    message = "Sözleşme imzalandı; ödeme planı ve alacaklar oluşturuldu";
+    message = "Contrato firmado; plan de pagos y cuentas por cobrar generados";
   } else if (action.type === "contract-cancel") {
     const meta = s.contractMeta[action.id];
     const d = (s.drafts ?? []).find((d) => d.id === action.id);
     if (!d || !meta)
       throw Error(
-        "Aktif sözleşmenin feshi iade süreci gerektirir; demoda yalnızca taslak iptal edilir.",
+        "La rescisión de un contrato activo requiere un proceso de devolución; en la demo solo se anulan borradores.",
       );
-    if (!action.reason.trim()) throw Error("İptal gerekçesi gerekli.");
+    if (!action.reason.trim()) throw Error("Indique el motivo de la anulación.");
     next.drafts = s.drafts.filter((v) => v.id !== d.id);
     next.cancelled = [...(s.cancelled ?? []), d];
     next.contractMeta = {
       ...s.contractMeta,
       [d.id]: {
         ...meta,
-        status: "İptal",
+        status: "Anulado",
         history: [
           ...meta.history,
-          { date: SNAPSHOT, status: "İptal", note: action.reason.trim() },
+          { date: SNAPSHOT, status: "Anulado", note: action.reason.trim() },
         ],
       },
     };
     entity = d.id;
     project = d.project;
-    message = "Taslak sözleşme iptal edildi; konut stoka döndü";
+    message = "Borrador anulado; la unidad volvió a estar disponible";
   } else if (action.type === "contract-transfer") {
     const c = customerList(s).find((c) => c.id === action.id);
-    if (!c) throw Error("Aktif sözleşme bulunamadı.");
+    if (!c) throw Error("Contrato activo no encontrado.");
     const name = action.name.trim();
-    if (!name || name === c.name) throw Error("Devralan kişinin adı gerekli.");
+    if (!name || name === c.name) throw Error("Se requiere el nombre del cesionario.");
     const prev = s.customerEdits[c.id] ?? {
       name: c.name,
       phone: "",
@@ -1064,7 +1079,7 @@ export function applyAction(
     };
     next.customerEdits = { ...s.customerEdits, [c.id]: { ...prev, name } };
     const meta = s.contractMeta[c.id] ?? {
-      status: "Aktif" as const,
+      status: "Activo" as const,
       created: contractSignedAt(s, c),
       signedAt: contractSignedAt(s, c),
       history: [],
@@ -1077,7 +1092,7 @@ export function applyAction(
           ...meta.history,
           {
             date: SNAPSHOT,
-            status: "Devir",
+            status: "Cesión",
             note: `${c.name} → ${name}${action.note.trim() ? ` · ${action.note.trim()}` : ""}`,
           },
         ],
@@ -1085,27 +1100,27 @@ export function applyAction(
     };
     entity = c.id;
     project = c.project;
-    message = "Sözleşme devri kaydedildi; bakiye ve plan devralana geçti";
+    message = "Cesión registrada; saldo y plan pasan al cesionario";
   } else if (action.type === "receipt") {
     const i = installmentList(s).find((i) => i.id === action.installmentId);
-    if (!i) throw Error("Taksit bulunamadı.");
+    if (!i) throw Error("Cuota no encontrada.");
     if (
       !Number.isFinite(action.amount) ||
       toKurus(action.amount) <= 0 ||
       toKurus(action.amount) > toKurus(outstanding(s, i))
     )
-      throw Error("Tutar kalan taksit bakiyesini aşamaz.");
+      throw Error("El monto no puede superar el saldo de la cuota.");
     const ref = action.reference.trim();
-    if (!ref) throw Error("Dekont / işlem açıklaması gerekli.");
+    if (!ref) throw Error("Se requiere el comprobante o la referencia del pago.");
     // Aynı dekont aynı taksite ikinci kez işlenemez (çift tıklama ve tekrar kayıt koruması).
     if (
       activeReceipts(s).some(
         (r) =>
           r.installmentId === i.id &&
-          r.reference.toLocaleLowerCase("tr") === ref.toLocaleLowerCase("tr"),
+          r.reference.toLocaleLowerCase("es") === ref.toLocaleLowerCase("es"),
       )
     )
-      throw Error("Bu dekont bu ödeme için zaten kaydedildi.");
+      throw Error("Este comprobante ya fue registrado para esta cuota.");
     next.receipts = [
       ...s.receipts,
       {
@@ -1119,45 +1134,45 @@ export function applyAction(
     ];
     entity = i.id;
     project = i.project;
-    message = `${action.amount.toLocaleString("tr-TR")} TL tahsilat kaydedildi`;
+    message = `Cobro de US$ ${action.amount.toLocaleString("es-PY")} registrado`;
   } else if (
     ["approve", "reject", "pay-order", "deliver"].includes(action.type)
   ) {
-    if (!req) throw Error("İşlem bulunamadı.");
+    if (!req) throw Error("Operación no encontrada.");
     const status = requestStatus(s, req);
     entity = req.id;
     project = req.project;
     if (action.type === "approve") {
-      if (status !== "Onay bekliyor")
-        throw Error("Bu işlem zaten değerlendirildi.");
+      if (status !== "Pendiente de aprobación")
+        throw Error("Esta operación ya fue evaluada.");
       next.approved = [...s.approved, req.id];
-      message = "Onaylandı; ödeme planına eklendi";
+      message = "Aprobado; agregado a pagos programados";
     }
     if (action.type === "reject") {
-      if (status !== "Onay bekliyor")
-        throw Error("Yalnızca bekleyen işlem iade edilebilir.");
+      if (status !== "Pendiente de aprobación")
+        throw Error("Solo se puede devolver una operación pendiente.");
       next.rejected = [...s.rejected, req.id];
-      message = "Revizyon için iade edildi";
+      message = "Devuelto para revisión";
     }
     if (action.type === "pay-order") {
-      if (status !== "Onaylandı")
-        throw Error("Ödeme için önce yönetici onayı gerekir.");
+      if (status !== "Aprobado")
+        throw Error("El pago requiere aprobación previa.");
       if (netPayable(s, req) > summary(s, req.project).cash)
-        throw Error("Projenin demo kasa bakiyesi yetersiz.");
+        throw Error("Saldo de caja del proyecto insuficiente.");
       next.paidOrders = [...s.paidOrders, req.id];
       next.paidDates = { ...(s.paidDates ?? {}), [req.id]: SNAPSHOT };
-      message = "Ödeme kaydedildi; kasa ve ödeme planı güncellendi";
+      message = "Pago registrado; caja y pagos programados actualizados";
     }
     if (action.type === "deliver") {
       if (
-        req.type !== "Satın alma" ||
-        !["Onaylandı", "Ödendi"].includes(status)
+        req.type !== "Compra" ||
+        !["Aprobado", "Pagada"].includes(status)
       )
-        throw Error("Teslim için onaylı satın alma gerekir.");
+        throw Error("La recepción requiere una compra aprobada.");
       if (s.delivered.includes(req.id))
-        throw Error("Teslim zaten kaydedilmiş.");
+        throw Error("La recepción ya fue registrada.");
       next.delivered = [...s.delivered, req.id];
-      message = "Malzeme teslim alındı; saha kaydı güncellendi";
+      message = "Material recibido en obra";
     }
   } else if (action.type === "request") {
     const r = action.record;
@@ -1167,21 +1182,21 @@ export function applyAction(
       !Number.isFinite(r.amount) ||
       r.amount <= 0
     )
-      throw Error("Firma, açıklama ve pozitif tutar gerekli.");
+      throw Error("Se requieren proveedor, descripción y monto positivo.");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(r.due))
-      throw Error("Geçerli tarih gerekli.");
+      throw Error("Se requiere una fecha válida.");
     if (requestList(s).some((v) => v.id === r.id))
-      throw Error("Kayıt zaten mevcut.");
+      throw Error("El registro ya existe.");
     next.requests = [...s.requests, r];
     entity = r.id;
     project = r.project;
-    message = "Yeni talep oluşturuldu";
+    message = "Solicitud creada";
   } else if (action.type === "edit-request") {
     if (
       !req ||
-      !["Onay bekliyor", "İade edildi"].includes(requestStatus(s, req))
+      !["Pendiente de aprobación", "Devuelto"].includes(requestStatus(s, req))
     )
-      throw Error("Onaylı işlem düzenlenemez.");
+      throw Error("Una operación aprobada no puede editarse.");
     const r = { ...req, ...action.patch };
     if (
       !r.name.trim() ||
@@ -1189,30 +1204,30 @@ export function applyAction(
       !Number.isFinite(r.amount) ||
       r.amount <= 0
     )
-      throw Error("Geçerli firma, açıklama ve tutar gerekli.");
+      throw Error("Se requieren proveedor, descripción y monto válidos.");
     next.requestEdits = { ...s.requestEdits, [req.id]: r };
     next.rejected = s.rejected.filter((i) => i !== req.id);
     entity = req.id;
     project = req.project;
-    message = "Talep güncellendi ve onaya sunuldu";
+    message = "Solicitud actualizada y enviada a aprobación";
   } else if (action.type === "customer") {
     const c = customerList(s).find((c) => c.id === action.id);
     if (!c || !action.patch.name.trim())
-      throw Error("Geçerli müşteri adı gerekli.");
+      throw Error("Se requiere un nombre de cliente válido.");
     next.customerEdits = { ...s.customerEdits, [c.id]: action.patch };
     entity = c.id;
     project = c.project;
-    message = "Müşteri bilgileri güncellendi";
+    message = "Datos del cliente actualizados";
   } else if (action.type === "reschedule") {
     const i = installmentList(s).find((i) => i.id === action.id);
     if (!i || !outstanding(s, i))
-      throw Error("Ödenmiş taksit yeniden planlanamaz.");
+      throw Error("Una cuota pagada no puede reprogramarse.");
     if (action.date < SNAPSHOT)
-      throw Error("Yeni vade senaryo tarihinden önce olamaz.");
+      throw Error("El nuevo vencimiento no puede ser anterior a la fecha de corte.");
     next.dueEdits = { ...s.dueEdits, [i.id]: action.date };
     entity = i.id;
     project = i.project;
-    message = `Taksit vadesi ${action.date} olarak güncellendi`;
+    message = `Vencimiento de la cuota cambiado a ${action.date}`;
   } else if (action.type === "work") {
     const w = workList(s).find((w) => w.id === action.id);
     if (
@@ -1221,60 +1236,60 @@ export function applyAction(
       action.patch.progress < 0 ||
       action.patch.progress > 100
     )
-      throw Error("İlerleme 0–100 arasında olmalı.");
+      throw Error("El avance debe estar entre 0 y 100.");
     next.workEdits = { ...s.workEdits, [w.id]: action.patch };
     entity = w.id;
     project = w.project;
-    message = `İmalat ilerlemesi %${action.patch.progress} olarak güncellendi`;
+    message = `Avance de obra actualizado a ${action.patch.progress} %`;
   } else if (action.type === "document") {
     const d = documents.find((d) => d.id === action.id);
-    if (!d || !action.patch.owner.trim()) throw Error("Sorumlu gerekli.");
+    if (!d || !action.patch.owner.trim()) throw Error("Se requiere un responsable.");
     next.documentEdits = { ...s.documentEdits, [d.id]: action.patch };
     entity = d.id;
     project = d.project;
-    message = `Evrak durumu: ${action.patch.status}`;
+    message = `Estado del documento: ${action.patch.status}`;
   } else if (action.type === "note") {
-    if (!action.text.trim()) throw Error("Not boş olamaz.");
+    if (!action.text.trim()) throw Error("La nota no puede estar vacía.");
     entity = id();
     project = action.project;
     next.notes = [
       ...s.notes,
       { id: entity, text: action.text.trim(), project },
     ];
-    message = "Yönetici notu eklendi";
+    message = "Nota de gerencia agregada";
   } else if (action.type === "delete-note") {
     next.notes = s.notes.filter((n) => n.id !== action.id);
     entity = action.id;
-    message = "Yönetici notu kaldırıldı";
+    message = "Nota de gerencia eliminada";
   } else if (action.type === "reserve" || action.type === "release") {
     const projectId = action.id.split("-")[0];
     const p = projects.find((p) => p.id === projectId);
     const u = unitById(action.id);
     if (!p || !u || u.project !== p.id || unitTaken(s, action.id))
-      throw Error("Satılmış veya geçersiz konut için işlem yapılamaz.");
-    if (p.status === "Arşiv")
-      throw Error("Arşivdeki projede rezervasyon yapılamaz; önce projeyi aktifleştirin.");
+      throw Error("No se puede operar sobre una unidad vendida o inválida.");
+    if (p.status === "Archivado")
+      throw Error("No se puede reservar en un proyecto archivado; reactívelo primero.");
     project = p.id;
     entity = action.id;
     if (action.type === "reserve") {
       if (reservedUnits(s, p.id).includes(action.id))
-        throw Error("Bu konut zaten rezerve.");
+        throw Error("Esta unidad ya está reservada.");
       next.reserved = [...new Set([...s.reserved, action.id])];
       next.released = s.released.filter((k) => k !== action.id);
-      message = "Konut rezerve edildi";
+      message = "Unidad reservada";
     } else {
       next.reserved = s.reserved.filter((k) => k !== action.id);
       next.released = [...new Set([...s.released, action.id])];
-      message = "Rezervasyon kaldırıldı";
+      message = "Reserva liberada";
     }
   } else if (action.type === "contract") {
     const c = action.record,
       p = projects.find((p) => p.id === c.project);
     const u = unitById(c.id);
     if (!p || !u || u.project !== p.id || unitTaken(s, c.id))
-      throw Error("Konut satılmış veya geçersiz.");
-    if (p.status !== "Aktif")
-      throw Error("Yalnızca aktif projede yeni satış yapılabilir.");
+      throw Error("La unidad está vendida o no es válida.");
+    if (p.status !== "Activo")
+      throw Error("Solo se pueden registrar ventas en proyectos activos.");
     const expected = c.depositExpected ?? c.deposit;
     if (
       ![c.price, c.deposit, c.installment, expected].every(Number.isFinite) ||
@@ -1286,14 +1301,14 @@ export function applyAction(
       toKurus(c.deposit) > toKurus(expected) ||
       toKurus(expected) >= toKurus(c.price)
     )
-      throw Error("Sözleşme ve taksit tutarları tutarsız.");
+      throw Error("El precio del contrato y las cuotas no coinciden.");
     let record: Customer = c;
     if (c.plan) {
       // Esnek plan: peşinat parçaları + ara ödemeler + taksitler kuruşu kuruşuna bedele eşit olmalı.
       const sch = buildSchedule(c.price, c.plan);
       if (toKurus(sch.depositTotal) !== toKurus(expected))
         throw Error(
-          "Peşinat parçalarının toplamı anlaşmalı peşinata eşit olmalı.",
+          "La suma de las partes del anticipo debe ser igual al anticipo pactado.",
         );
       record = {
         ...c,
@@ -1302,10 +1317,10 @@ export function applyAction(
         depositDue: c.plan.deposits[0]?.due,
       };
     } else if (Math.abs(expected + 36 * c.installment - c.price) > 0.01)
-      throw Error("Sözleşme ve taksit tutarları tutarsız.");
+      throw Error("El precio del contrato y las cuotas no coinciden.");
     const draft =
-      action.status === "Taslak" || action.status === "İmza bekliyor";
-    const status: ContractStatus = draft ? action.status! : "Aktif";
+      action.status === "Borrador" || action.status === "Pendiente de firma";
+    const status: ContractStatus = draft ? action.status! : "Activo";
     if (draft) record = { ...record, deposit: 0, depositDate: undefined };
     if (draft) next.drafts = [...(s.drafts ?? []), record];
     else next.contracts = [...s.contracts, record];
@@ -1321,8 +1336,8 @@ export function applyAction(
             date: SNAPSHOT,
             status,
             note: draft
-              ? "Sözleşme taslağı oluşturuldu"
-              : "Sözleşme imzalandı ve aktifleştirildi",
+              ? "Borrador de contrato creado"
+              : "Contrato firmado y activado",
           },
         ],
       },
@@ -1331,27 +1346,27 @@ export function applyAction(
     project = c.project;
     const n2 = c.plan ? c.plan.count + c.plan.interim.length : 36;
     message = draft
-      ? "Sözleşme taslağı kaydedildi; konut bloke edildi"
-      : `Konut satışı kaydedildi; ${n2} ödeme satırı oluşturuldu`;
+      ? "Borrador guardado; unidad bloqueada"
+      : `Venta registrada; ${n2} vencimientos generados`;
   } else if (action.type === "work-create") {
     const r = action.record;
     const p = projects.find((x) => x.id === r.project);
-    if (!p) throw Error("Proje bulunamadı.");
-    if (p.status === "Arşiv") throw Error("Arşivdeki projeye iş paketi eklenemez.");
+    if (!p) throw Error("Proyecto no encontrado.");
+    if (p.status === "Archivado") throw Error("No se pueden agregar paquetes de obra a un proyecto archivado.");
     const name = r.name.trim(),
       company = r.company.trim();
     if (name.length < 3 || company.length < 2)
-      throw Error("İş paketi adı ve taşeron firma gerekli.");
-    if (!(r.value > 0)) throw Error("Sözleşme bedeli pozitif olmalı.");
+      throw Error("Se requieren el nombre del paquete y el contratista.");
+    if (!(r.value > 0)) throw Error("El precio del contrato debe ser positivo.");
     if (!Number.isInteger(r.weight) || r.weight < 1 || r.weight > 100)
-      throw Error("Ağırlık 1–100 arasında tam sayı olmalı.");
+      throw Error("El peso debe ser un entero entre 1 y 100.");
     const used = workList(s)
       .filter((w) => w.project === p.id)
       .reduce((a, w) => a + w.weight, 0);
     if (used + r.weight > 100)
-      throw Error(`Projedeki iş paketlerinin ağırlık toplamı %100'ü aşamaz (kalan %${100 - used}).`);
-    if (workList(s).some((w) => w.project === p.id && w.name.toLocaleLowerCase("tr") === name.toLocaleLowerCase("tr")))
-      throw Error("Bu projede aynı adlı iş paketi var.");
+      throw Error(`La suma de pesos de los paquetes no puede superar 100 % (restante ${100 - used} %).`);
+    if (workList(s).some((w) => w.project === p.id && w.name.toLocaleLowerCase("es") === name.toLocaleLowerCase("es")))
+      throw Error("Ya existe un paquete con ese nombre en el proyecto.");
     let n = workList(s).length + 1;
     while (workList(s).some((w) => w.id === `w${n}`)) n++;
     const rec: WorkItem = {
@@ -1362,22 +1377,22 @@ export function applyAction(
       progress: 0,
       weight: r.weight,
       value: r2(r.value),
-      status: "Planlandı",
+      status: "Planificado",
       material: "—",
     };
     next.workCustom = [...(s.workCustom ?? []), rec];
     entity = rec.id;
     project = p.id;
-    message = `İş paketi eklendi: ${name} · ${company}`;
+    message = `Paquete de obra agregado: ${name} · ${company}`;
   } else if (action.type === "deposit-reverse") {
     const d = s.depositPayments.find((x) => x.id === action.id);
-    if (!d) throw Error("Peşinat tahsilatı bulunamadı.");
-    if (d.reversal) throw Error("Bu peşinat tahsilatı zaten iptal edilmiş.");
-    if (!action.reason.trim()) throw Error("İptal gerekçesi gerekli.");
+    if (!d) throw Error("Cobro de anticipo no encontrado.");
+    if (d.reversal) throw Error("Este cobro de anticipo ya fue anulado.");
+    if (!action.reason.trim()) throw Error("Indique el motivo de la anulación.");
     const c = s.contracts.find((x) => x.id === d.customerId);
-    if (!c) throw Error("Sözleşme bulunamadı.");
+    if (!c) throw Error("Contrato no encontrado.");
     if (toKurus(c.deposit) < toKurus(d.amount))
-      throw Error("Peşinat bakiyesi bu iptal için yetersiz.");
+      throw Error("El anticipo cobrado es insuficiente para esta anulación.");
     next.depositPayments = s.depositPayments.map((x) =>
       x.id === d.id
         ? { ...x, reversal: { date: SNAPSHOT, reason: action.reason.trim() } }
@@ -1388,12 +1403,12 @@ export function applyAction(
     );
     entity = c.id;
     project = c.project;
-    message = `Peşinat tahsilatı iptal edildi (${d.amount.toLocaleString("tr-TR")} TL); kalan peşinata geri eklendi`;
+    message = `Cobro de anticipo anulado (US$ ${d.amount.toLocaleString("es-PY")}); se sumó al anticipo pendiente`;
   } else if (action.type === "receipt-reverse") {
     const r = s.receipts.find((x) => x.id === action.id);
-    if (!r) throw Error("Tahsilat bulunamadı.");
-    if (r.reversal) throw Error("Bu tahsilat zaten iptal edilmiş.");
-    if (!action.reason.trim()) throw Error("İptal gerekçesi gerekli.");
+    if (!r) throw Error("Cobro no encontrado.");
+    if (r.reversal) throw Error("Este cobro ya fue anulado.");
+    if (!action.reason.trim()) throw Error("Indique el motivo de la anulación.");
     const i = installmentList(s).find((x) => x.id === r.installmentId);
     next.receipts = s.receipts.map((x) =>
       x.id === r.id
@@ -1402,18 +1417,18 @@ export function applyAction(
     );
     entity = r.installmentId;
     project = i?.project ?? "all";
-    message = `${r.id} tahsilatı iptal edildi (${r.amount.toLocaleString("tr-TR")} TL); bakiye geri eklendi`;
+    message = `Cobro ${r.id} anulado (US$ ${r.amount.toLocaleString("es-PY")}); el saldo se restableció`;
   } else if (action.type === "project-create") {
     const r = action.record;
     const name = r.name.trim(),
-      code = r.code.trim().toLocaleUpperCase("tr");
-    if (name.length < 2) throw Error("Proje adı gerekli.");
-    if (!/^[A-ZÇĞİÖŞÜ]{2,4}$/.test(code))
-      throw Error("Proje kodu 2–4 harf olmalı (ör. KV).");
+      code = r.code.trim().toLocaleUpperCase("es");
+    if (name.length < 2) throw Error("Se requiere el nombre del proyecto.");
+    if (!/^[A-ZÑ]{2,4}$/.test(code))
+      throw Error("El código del proyecto debe tener 2–4 letras (ej.: ALN).");
     if (projects.some((p) => p.code === code))
-      throw Error("Bu proje kodu başka bir projede kullanılıyor.");
-    if (projects.some((p) => p.name.toLocaleLowerCase("tr") === name.toLocaleLowerCase("tr")))
-      throw Error("Bu adla bir proje zaten var.");
+      throw Error("Ese código ya lo usa otro proyecto.");
+    if (projects.some((p) => p.name.toLocaleLowerCase("es") === name.toLocaleLowerCase("es")))
+      throw Error("Ya existe un proyecto con ese nombre.");
     let n = (s.projectsCustom ?? []).length + 3;
     while (projects.some((p) => p.id === `p${n}`)) n++;
     const record: Project = {
@@ -1432,20 +1447,20 @@ export function applyAction(
       mix: "",
       commercial: "",
       code,
-      status: "Aktif",
+      status: "Activo",
       created: SNAPSHOT,
     };
     next.projectsCustom = [...(s.projectsCustom ?? []), record];
     entity = record.id;
     project = record.id;
-    message = `${name} projesi oluşturuldu; blok ve daire ekleyerek başlayın`;
+    message = `Proyecto ${name} creado; agregue torres y unidades para comenzar`;
   } else if (action.type === "project-update") {
     const p = projects.find((x) => x.id === action.id);
-    if (!p) throw Error("Proje bulunamadı.");
+    if (!p) throw Error("Proyecto no encontrado.");
     const name = action.patch.name.trim();
-    if (name.length < 2) throw Error("Proje adı gerekli.");
-    if (projects.some((x) => x.id !== p.id && x.name.toLocaleLowerCase("tr") === name.toLocaleLowerCase("tr")))
-      throw Error("Bu adla bir proje zaten var.");
+    if (name.length < 2) throw Error("Se requiere el nombre del proyecto.");
+    if (projects.some((x) => x.id !== p.id && x.name.toLocaleLowerCase("es") === name.toLocaleLowerCase("es")))
+      throw Error("Ya existe un proyecto con ese nombre.");
     next.projectEdits = {
       ...(s.projectEdits ?? {}),
       [p.id]: {
@@ -1458,11 +1473,11 @@ export function applyAction(
     };
     entity = p.id;
     project = p.id;
-    message = "Proje bilgileri güncellendi";
+    message = "Datos del proyecto actualizados";
   } else if (action.type === "project-status") {
     const p = projects.find((x) => x.id === action.id);
-    if (!p) throw Error("Proje bulunamadı.");
-    if (p.status === action.status) throw Error("Proje zaten bu durumda.");
+    if (!p) throw Error("Proyecto no encontrado.");
+    if (p.status === action.status) throw Error("El proyecto ya está en ese estado.");
     next.projectEdits = {
       ...(s.projectEdits ?? {}),
       [p.id]: { ...(s.projectEdits?.[p.id] ?? {}), status: action.status },
@@ -1470,16 +1485,16 @@ export function applyAction(
     entity = p.id;
     project = p.id;
     message =
-      action.status === "Arşiv"
-        ? "Proje arşivlendi; finansal kayıtları korunur"
-        : action.status === "Aktif"
-          ? "Proje yeniden aktifleştirildi"
-          : "Proje tamamlandı olarak işaretlendi";
+      action.status === "Archivado"
+        ? "Proyecto archivado; sus registros financieros se conservan"
+        : action.status === "Activo"
+          ? "Proyecto reactivado"
+          : "Proyecto marcado como finalizado";
   } else if (action.type === "project-delete") {
     const p = projects.find((x) => x.id === action.id);
-    if (!p) throw Error("Proje bulunamadı.");
+    if (!p) throw Error("Proyecto no encontrado.");
     if (BUILTIN_PROJECT_IDS.includes(p.id) || p.builtIn)
-      throw Error("Kayıtları olan proje silinemez; arşive alın.");
+      throw Error("Un proyecto con registros no puede eliminarse; archívelo.");
     const hasRecords =
       customerList(s).some((c) => c.project === p.id) ||
       (s.drafts ?? []).some((d) => d.project === p.id) ||
@@ -1489,7 +1504,7 @@ export function applyAction(
       s.reminders.some((r) => r.project === p.id) ||
       s.reserved.some((k) => k.startsWith(p.id + "-"));
     if (hasRecords)
-      throw Error("Bu projede satış, sözleşme, barter veya hakediş kaydı var; silinemez, arşive alın.");
+      throw Error("El proyecto tiene ventas, contratos o pagos registrados; no puede eliminarse, archívelo.");
     next.projectsCustom = (s.projectsCustom ?? []).filter((x) => x.id !== p.id);
     next.unitsCustom = (s.unitsCustom ?? []).filter((u) => u.project !== p.id);
     const edits = { ...(s.projectEdits ?? {}) };
@@ -1497,20 +1512,20 @@ export function applyAction(
     next.projectEdits = edits;
     entity = p.id;
     project = "all";
-    message = `${p.name} projesi silindi (kayıt yoktu)`;
+    message = `Proyecto ${p.name} eliminado (no tenía registros)`;
   } else if (action.type === "block-create") {
     const p = projects.find((x) => x.id === action.project);
-    if (!p) throw Error("Proje bulunamadı.");
-    if (p.status === "Arşiv") throw Error("Arşivdeki projeye blok eklenemez.");
-    const block = action.block.trim().toLocaleUpperCase("tr");
-    if (!/^[A-ZÇĞİÖŞÜ0-9]{1,3}$/.test(block)) throw Error("Blok adı 1–3 harf/rakam olmalı (ör. C).");
+    if (!p) throw Error("Proyecto no encontrado.");
+    if (p.status === "Archivado") throw Error("No se pueden agregar torres a un proyecto archivado.");
+    const block = action.block.trim().toLocaleUpperCase("es");
+    if (!/^[A-ZÑ0-9]{1,3}$/.test(block)) throw Error("El nombre de la torre debe tener 1–3 letras o números (ej.: T3).");
     if (units.some((u) => u.project === p.id && u.block === block))
-      throw Error(`${block} blok bu projede zaten var.`);
+      throw Error(`La torre ${block} ya existe en este proyecto.`);
     const ints = [action.floors, action.perFloor, action.startFloor];
     if (!ints.every(Number.isInteger) || action.floors < 1 || action.floors > 40 || action.perFloor < 1 || action.perFloor > 20 || action.startFloor < -3 || action.startFloor > 40)
-      throw Error("Kat sayısı 1–40, kattaki daire 1–20 olmalı.");
+      throw Error("Pisos: 1–40; unidades por piso: 1–20.");
     if (!action.unitType.trim() || !(action.gross > 0) || !(action.listPrice > 0))
-      throw Error("Daire tipi, brüt m² ve liste fiyatı gerekli.");
+      throw Error("Se requieren tipología, superficie y precio de lista.");
     const created = makeBlockUnits(p.id, units, {
       block,
       floors: action.floors,
@@ -1524,15 +1539,15 @@ export function applyAction(
     next.unitsCustom = [...(s.unitsCustom ?? []), ...created];
     entity = p.id;
     project = p.id;
-    message = `${block} blok eklendi: ${created.length} daire`;
+    message = `Torre ${block} agregada: ${created.length} unidades`;
   } else if (action.type === "unit-update") {
     const u = unitById(action.id);
-    if (!u) throw Error("Daire bulunamadı.");
+    if (!u) throw Error("Unidad no encontrada.");
     if (unitTaken(s, u.id))
-      throw Error("Satılmış, imza sürecindeki veya barter verilmiş daire düzenlenemez.");
+      throw Error("Una unidad vendida, en firma o canjeada no puede editarse.");
     const pt = action.patch;
     if (!pt.type.trim() || !(pt.gross > 0) || !(pt.listPrice > 0))
-      throw Error("Tip, brüt m² ve liste fiyatı gerekli.");
+      throw Error("Se requieren tipología, superficie y precio de lista.");
     next.unitEdits = {
       ...(s.unitEdits ?? {}),
       [u.id]: {
@@ -1545,7 +1560,7 @@ export function applyAction(
     };
     entity = u.id;
     project = u.project;
-    message = `${u.label} dairesi güncellendi (liste fiyatı yalnızca yeni satışları etkiler)`;
+    message = `Unidad ${u.label} actualizada (el precio de lista solo afecta ventas nuevas)`;
   }
   const result: EnterpriseState = {
     ...next,
@@ -1555,7 +1570,7 @@ export function applyAction(
         entity,
         message,
         project,
-        time: new Date().toLocaleTimeString("tr-TR", {
+        time: new Date().toLocaleTimeString("es-PY", {
           hour: "2-digit",
           minute: "2-digit",
         }),
@@ -1574,11 +1589,11 @@ export function applyAction(
 const seedFirstDue = new Map<string, string>();
 for (const i of installments)
   if (!seedFirstDue.has(i.customerId)) seedFirstDue.set(i.customerId, i.due);
-const PROJECT_CODE: Record<string, string> = { agva: "AG", cengilli: "CV", nergis: "NP" };
+const PROJECT_CODE: Record<string, string> = { lofty: "LCH", alion: "ALN", vtower: "VTL", business: "B1" };
 
 export const contractNumber = (id: string) => {
   const [p, n] = id.split("-");
-  return `SZL-${PROJECT_CODE[p] ?? projectCode(p)}-${String(n).padStart(3, "0")}`;
+  return `CTR-${PROJECT_CODE[p] ?? projectCode(p)}-${String(n).padStart(3, "0")}`;
 };
 
 /** Sözleşme imza tarihi: yeni kayıtlarda kayıtlı tarih, örnek kayıtlarda ilk taksitten bir ay öncesi. */
@@ -1670,8 +1685,8 @@ export type ContractView = {
 
 const planLabelOf = (c: Customer) =>
   c.plan
-    ? `${c.plan.deposits.length > 1 ? `${c.plan.deposits.length} parça peşinat` : "Peşinat"} + ${c.plan.count} taksit${c.plan.interim.length ? ` + ${c.plan.interim.length} ara ödeme` : ""}`
-    : `Peşinat + 36 taksit`;
+    ? `${c.plan.deposits.length > 1 ? `Anticipo en ${c.plan.deposits.length} partes` : "Anticipo"} + ${c.plan.count} cuotas${c.plan.interim.length ? ` + ${c.plan.interim.length} pagos intermedios` : ""}`
+    : `Anticipo + 36 cuotas`;
 
 /** Tüm sözleşmeler: aktif, tamamlanan, taslak, imza bekleyen ve iptal edilenler. */
 export function contractList(s: EnterpriseState): ContractView[] {
@@ -1701,15 +1716,15 @@ export function contractList(s: EnterpriseState): ContractView[] {
       discount: listPrice ? r2(listPrice - c.price) : 0,
       status,
       signedAt:
-        status === "Aktif" || status === "Tamamlandı"
+        status === "Activo" || status === "Finalizado"
           ? contractSignedAt(s, c)
           : undefined,
       planLabel: planLabelOf(c),
       history: meta?.history ?? [
         {
           date: contractSignedAt(s, c),
-          status: "Aktif",
-          note: "Örnek sözleşme kaydı (demo başlangıç verisi)",
+          status: "Activo",
+          note: "Contrato de ejemplo (datos iniciales de la demo)",
         },
       ],
       account,
@@ -1717,10 +1732,10 @@ export function contractList(s: EnterpriseState): ContractView[] {
   };
   const active = customerList(s).map((c) => {
     const acc = accountOf(s, c, all);
-    return view(c, acc.balance <= 0 ? "Tamamlandı" : "Aktif", acc);
+    return view(c, acc.balance <= 0 ? "Finalizado" : "Activo", acc);
   });
   const drafts = (s.drafts ?? []).map((d) =>
-    view(d, s.contractMeta[d.id]?.status ?? "Taslak"),
+    view(d, s.contractMeta[d.id]?.status ?? "Borrador"),
   );
   const cancelled = (s.cancelled ?? [])
     .filter(
@@ -1728,7 +1743,7 @@ export function contractList(s: EnterpriseState): ContractView[] {
         !customerList(s).some((c) => c.id === d.id) &&
         !(s.drafts ?? []).some((x) => x.id === d.id),
     )
-    .map((d) => view(d, "İptal"));
+    .map((d) => view(d, "Anulado"));
   return [...drafts, ...active, ...cancelled];
 }
 
@@ -1737,7 +1752,7 @@ export type LedgerEntry = {
   sourceId?: string;
   reversed?: boolean;
   date: string;
-  kind: "Sözleşme" | "Peşinat" | "Taksit" | "Ara ödeme" | "Tahsilat" | "İptal";
+  kind: "Contrato" | "Anticipo" | "Cuota" | "Pago intermedio" | "Cobro" | "Anulado";
   label: string;
   ref: string;
   debit: number;
@@ -1758,8 +1773,8 @@ export function customerLedger(
   const raw: Omit<LedgerEntry, "balance">[] = [
     {
       date: signed,
-      kind: "Sözleşme",
-      label: `${contractNumber(c.id)} sözleşme bedeli`,
+      kind: "Contrato",
+      label: `Precio del contrato ${contractNumber(c.id)}`,
       ref: contractNumber(c.id),
       debit: c.price,
       credit: 0,
@@ -1773,8 +1788,8 @@ export function customerLedger(
   if (atSigning > 0)
     raw.push({
       date: c.depositDate ?? signed,
-      kind: "Peşinat",
-      label: "Peşinat tahsilatı (imzada)",
+      kind: "Anticipo",
+      label: "Cobro de anticipo (en la firma)",
       ref: "PSN-0",
       debit: 0,
       credit: atSigning,
@@ -1782,8 +1797,8 @@ export function customerLedger(
   depositLater.forEach((d, n) => {
     raw.push({
       date: d.date,
-      kind: "Peşinat",
-      label: "Peşinat tahsilatı",
+      kind: "Anticipo",
+      label: "Cobro de anticipo",
       ref: `PSN-${n + 1}`,
       debit: 0,
       credit: d.amount,
@@ -1793,9 +1808,9 @@ export function customerLedger(
     if (d.reversal)
       raw.push({
         date: d.reversal.date,
-        kind: "İptal",
-        label: `PSN-${n + 1} peşinat iptali · ${d.reversal.reason}`,
-        ref: `PSN-${n + 1}-İPT`,
+        kind: "Anulado",
+        label: `ANT-${n + 1} anulación de anticipo · ${d.reversal.reason}`,
+        ref: `ANT-${n + 1}-ANU`,
         debit: 0,
         credit: -d.amount,
       });
@@ -1803,9 +1818,9 @@ export function customerLedger(
   for (let k = 1; k <= c.paidMonths; k++)
     raw.push({
       date: addMonths(signed, k),
-      kind: "Taksit",
-      label: `${k}. taksit tahsilatı`,
-      ref: `ÖNC-${k}`,
+      kind: "Cuota",
+      label: `Cobro de cuota ${k}`,
+      ref: `PREV-${k}`,
       debit: 0,
       credit: c.installment,
     });
@@ -1814,8 +1829,8 @@ export function customerLedger(
     if (!i) continue;
     raw.push({
       date: r.date,
-      kind: i.kind === "Ara ödeme" ? "Ara ödeme" : "Tahsilat",
-      label: `${i.label ?? `${i.id.split("-").pop()}. taksit`} · ${r.method}`,
+      kind: i.kind === "Pago intermedio" ? "Pago intermedio" : "Cobro",
+      label: `${i.label ?? `Cuota ${i.id.split("-").pop()}`} · ${r.method}`,
       ref: r.id,
       debit: 0,
       credit: r.amount,
@@ -1826,9 +1841,9 @@ export function customerLedger(
     if (r.reversal)
       raw.push({
         date: r.reversal.date,
-        kind: "İptal",
-        label: `${r.id} tahsilat iptali · ${r.reversal.reason}`,
-        ref: `${r.id}-İPT`,
+        kind: "Anulado",
+        label: `Anulación del cobro ${r.id} · ${r.reversal.reason}`,
+        ref: `${r.id}-ANU`,
         debit: 0,
         credit: -r.amount,
       });
@@ -1857,14 +1872,14 @@ export type { PlanSpec };
 /* Ödeme takibi: peşinat + taksit + ara ödeme satırları tek listede   */
 /* ------------------------------------------------------------------ */
 export const PAYMENT_STATUSES = [
-  "Gecikti",
-  "Yaklaşıyor",
-  "Kısmen ödendi",
-  "Gelecek dönem",
-  "Ödendi",
+  "Vencida",
+  "Próxima",
+  "Pago parcial",
+  "Futura",
+  "Pagada",
 ] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
-/** "Yaklaşıyor" penceresi: senaryo tarihinden itibaren 30 gün. */
+/** "Próxima" penceresi: senaryo tarihinden itibaren 30 gün. */
 export const UPCOMING_DAYS = 30;
 const dayDiff = (iso: string) =>
   Math.round(
@@ -1882,11 +1897,11 @@ export function paymentStatus(
   remaining: number,
   due: string,
 ): PaymentStatus {
-  if (remaining <= 0) return "Ödendi";
-  if (due < SNAPSHOT) return "Gecikti";
-  if (remaining < amount) return "Kısmen ödendi";
-  if (dayDiff(due) <= UPCOMING_DAYS) return "Yaklaşıyor";
-  return "Gelecek dönem";
+  if (remaining <= 0) return "Pagada";
+  if (due < SNAPSHOT) return "Vencida";
+  if (remaining < amount) return "Pago parcial";
+  if (dayDiff(due) <= UPCOMING_DAYS) return "Próxima";
+  return "Futura";
 }
 
 export type PaymentRow = {
@@ -1895,7 +1910,7 @@ export type PaymentRow = {
   installmentId?: string;
   customerId: string;
   project: string;
-  kind: "Peşinat" | "Taksit" | "Ara ödeme";
+  kind: "Anticipo" | "Cuota" | "Pago intermedio";
   label: string;
   due: string;
   amount: number;
@@ -1914,8 +1929,8 @@ export function paymentRows(s: EnterpriseState): PaymentRow[] {
       installmentId: i.id,
       customerId: i.customerId,
       project: i.project,
-      kind: i.kind === "Ara ödeme" ? "Ara ödeme" : "Taksit",
-      label: i.label ?? `${i.id.split("-").pop()}. taksit`,
+      kind: i.kind === "Pago intermedio" ? "Pago intermedio" : "Cuota",
+      label: i.label ?? `Cuota ${i.id.split("-").pop()}`,
       due: i.due,
       amount: i.amount,
       paid: r2(i.amount - remaining),
@@ -1931,8 +1946,8 @@ export function paymentRows(s: EnterpriseState): PaymentRow[] {
         id: `deposit:${c.id}:${n}`,
         customerId: c.id,
         project: c.project,
-        kind: "Peşinat",
-        label: parts.length > 1 ? `${n + 1}. peşinat` : "Peşinat",
+        kind: "Anticipo",
+        label: parts.length > 1 ? `Anticipo ${n + 1}` : "Anticipo",
         due: p.due,
         amount: p.amount,
         paid: p.paid,
@@ -1953,7 +1968,7 @@ export type AgendaItem = {
   project: string;
   date: string;
   days: number;
-  kind: "Peşinat" | "Taksit" | "Sözleşme" | "Hakediş" | "Barter" | "Hatırlatma";
+  kind: "Anticipo" | "Cuota" | "Contrato" | "Certificado de obra" | "Canje" | "Recordatorio";
   title: string;
   detail: string;
   amount?: number;
@@ -1988,7 +2003,7 @@ export function agenda(
       project: r.project,
       date: r.due,
       days: r.days,
-      kind: r.kind === "Peşinat" ? "Peşinat" : "Taksit",
+      kind: r.kind === "Anticipo" ? "Anticipo" : "Cuota",
       title: `${c?.name ?? ""} · ${unitShort(r.customerId)}`,
       detail: r.label,
       amount: r.remaining,
@@ -2007,16 +2022,16 @@ export function agenda(
       project: d.project,
       date: due < SNAPSHOT ? SNAPSHOT : due,
       days: Math.max(0, dayDiff(due)),
-      kind: "Sözleşme",
+      kind: "Contrato",
       title: `${contractNumber(d.id)} · ${d.name}`,
-      detail: `${s.contractMeta[d.id]?.status ?? "Taslak"} · imza ve ilk peşinat`,
+      detail: `${s.contractMeta[d.id]?.status ?? "Borrador"} · firma y primer anticipo`,
       amount: d.depositExpected,
       ref: { type: "draft", id: d.id },
     });
   }
   for (const r of requestList(s)) {
     const st = requestStatus(s, r);
-    if (!inScope(r.project) || !["Onay bekliyor", "Onaylandı"].includes(st))
+    if (!inScope(r.project) || !["Pendiente de aprobación", "Aprobado"].includes(st))
       continue;
     const days = dayDiff(r.due);
     if (days > horizon) continue;
@@ -2025,7 +2040,7 @@ export function agenda(
       project: r.project,
       date: r.due,
       days,
-      kind: "Hakediş",
+      kind: "Certificado de obra",
       title: `${r.id} · ${r.company}`,
       detail: `${r.name} · ${st}`,
       amount: netPayable(s, r),
@@ -2046,9 +2061,9 @@ export function agenda(
       project: b.project,
       date: b.end,
       days,
-      kind: "Barter",
+      kind: "Canje",
       title: `${b.company} · ${unitById(b.unitId)?.label ?? b.unitId}`,
-      detail: `İş bitiş tarihi · %${b.progress} tamamlandı`,
+      detail: `Fin del trabajo · ${b.progress} % completado`,
       ref: { type: "barter", id: b.id },
     });
   }
@@ -2060,9 +2075,9 @@ export function agenda(
       project: r.project,
       date: r.due,
       days,
-      kind: "Hatırlatma",
+      kind: "Recordatorio",
       title: r.title,
-      detail: "Özel hatırlatma",
+      detail: "Recordatorio",
       ref: { type: "reminder", id: r.id },
     });
   }
@@ -2120,37 +2135,37 @@ export function systemDocuments(
     return [
       {
         id: `${no}-szl`,
-        name: `${no} · Satış sözleşmesi özeti`,
-        kind: "Satış sözleşmesi",
+        name: `${no} · Resumen del contrato de compraventa`,
+        kind: "Contrato de compraventa",
         date: signed,
         href: `/belge/?tur=sozlesme&id=${c.id}`,
         detail: `${c.name} · ${c.unit}`,
       },
       {
         id: `${no}-plan`,
-        name: `${no} · Ödeme planı`,
-        kind: "Ödeme planı",
+        name: `${no} · Plan de pagos`,
+        kind: "Plan de pagos",
         date: signed,
         href: `/belge/?tur=plan&id=${c.id}`,
-        detail: "Peşinat, taksit ve ara ödemeler",
+        detail: "Anticipo, cuotas y pagos intermedios",
       },
       {
         id: `${no}-ekstre`,
-        name: `${no} · Cari hesap ekstresi`,
-        kind: "Cari ekstre",
+        name: `${no} · Estado de cuenta`,
+        kind: "Estado de cuenta",
         date: SNAPSHOT,
         href: `/belge/?tur=ekstre&id=${c.id}`,
-        detail: "Borç, tahsilat ve bakiye",
+        detail: "Cargos, cobros y saldo",
       },
       ...s.receipts
         .filter((r) => ids.has(r.installmentId))
         .map((r) => ({
           id: r.id,
-          name: `${r.id} · Tahsilat makbuzu`,
-          kind: "Makbuz",
+          name: `${r.id} · Recibo de cobro`,
+          kind: "Recibo",
           date: r.date,
           href: `/belge/?tur=makbuz&id=${r.id}`,
-          detail: `${r.amount.toLocaleString("tr-TR")} TL · ${r.method}${r.reversal ? " · İPTAL EDİLDİ" : ""}`,
+          detail: `US$ ${r.amount.toLocaleString("es-PY")} · ${r.method}${r.reversal ? " · ANULADO" : ""}`,
         })),
     ];
   }
@@ -2159,11 +2174,11 @@ export function systemDocuments(
     return [
       {
         id: `${contractNumber(d.id)}-szl`,
-        name: `${contractNumber(d.id)} · Sözleşme taslağı`,
-        kind: "Satış sözleşmesi",
+        name: `${contractNumber(d.id)} · Borrador de contrato`,
+        kind: "Contrato de compraventa",
         date: s.contractMeta[d.id]?.created ?? SNAPSHOT,
         href: `/belge/?tur=sozlesme&id=${d.id}`,
-        detail: `${d.name} · ${s.contractMeta[d.id]?.status ?? "Taslak"}`,
+        detail: `${d.name} · ${s.contractMeta[d.id]?.status ?? "Borrador"}`,
       },
     ];
   const b = s.barters.find((b) => b.id === recordId);
@@ -2171,8 +2186,8 @@ export function systemDocuments(
     return [
       {
         id: `${b.id}-szl`,
-        name: `${b.id} · Barter sözleşmesi özeti`,
-        kind: "Barter sözleşmesi",
+        name: `${b.id} · Resumen del canje`,
+        kind: "Contrato de canje",
         date: b.start,
         href: `/belge/?tur=barter&id=${b.id}`,
         detail: `${b.company} · ${unitById(b.unitId)?.label ?? b.unitId}`,
@@ -2183,7 +2198,7 @@ export function systemDocuments(
 
 export type HistoryEvent = {
   date: string;
-  kind: "Sözleşme" | "Tahsilat" | "Peşinat" | "Değişiklik";
+  kind: "Contrato" | "Cobro" | "Anticipo" | "Cambio";
   title: string;
   detail: string;
   amount?: number;
@@ -2206,28 +2221,28 @@ export function fileHistory(
   const contractEvents = meta?.history ?? [
     {
       date: contractSignedAt(s, c),
-      status: "Aktif",
-      note: "Sözleşme imzalandı (örnek kayıt)",
+      status: "Activo",
+      note: "Contrato firmado (registro de ejemplo)",
     },
   ];
   for (const h of contractEvents)
     events.push({
       date: h.date,
-      kind: "Sözleşme",
+      kind: "Contrato",
       title:
-        h.status === "Aktif"
-          ? "Sözleşme imzalandı"
-          : h.status === "Devir"
-            ? "Sözleşme devredildi"
-            : `Sözleşme · ${h.status}`,
+        h.status === "Activo"
+          ? "Contrato firmado"
+          : h.status === "Cesión"
+            ? "Contrato cedido"
+            : `Contrato · ${h.status}`,
       detail: h.note,
     });
   for (const e of customerLedger(s, c.id)) {
     if (!e.credit) continue;
     events.push({
       date: e.date,
-      kind: e.kind === "Peşinat" ? "Peşinat" : "Tahsilat",
-      title: e.kind === "Peşinat" ? "Peşinat tahsil edildi" : "Tahsilat",
+      kind: e.kind === "Anticipo" ? "Anticipo" : "Cobro",
+      title: e.kind === "Anticipo" ? "Anticipo cobrado" : "Cobro",
       detail: `${e.label} · ${e.ref}`,
       amount: e.credit,
     });
@@ -2241,18 +2256,18 @@ export function fileHistory(
     if (ids.has(id))
       events.push({
         date: SNAPSHOT,
-        kind: "Değişiklik",
-        title: "Vade değiştirildi",
-        detail: `${id.split("-").pop()}. taksit yeni vade ${due}`,
+        kind: "Cambio",
+        title: "Vencimiento modificado",
+        detail: `Cuota ${id.split("-").pop()}: nuevo vencimiento ${due}`,
       });
   if (
     s.customerEdits[c.id] &&
-    !events.some((e) => e.title === "Sözleşme devredildi")
+    !events.some((e) => e.title === "Contrato cedido")
   )
     events.push({
       date: SNAPSHOT,
-      kind: "Değişiklik",
-      title: "Müşteri bilgileri güncellendi",
+      kind: "Cambio",
+      title: "Datos del cliente actualizados",
       detail: s.customerEdits[c.id].name,
     });
   return events.sort((a, b) => b.date.localeCompare(a.date));
@@ -2274,7 +2289,7 @@ export type WorkContract = {
   offset: number;
   barterId?: string;
 };
-const firmKey = (s: string) => s.trim().toLocaleLowerCase("tr");
+const firmKey = (s: string) => s.trim().toLocaleLowerCase("es");
 export function workContracts(
   s: EnterpriseState,
   project = "all",
@@ -2297,14 +2312,14 @@ export function workContracts(
   for (const g of groups.values()) {
     g.requests = requestList(s).filter(
       (r) =>
-        r.type === "Hakediş" &&
+        r.type === "Certificado de obra" &&
         r.project === g.project &&
         firmKey(r.company) === firmKey(g.company),
     );
     g.hakedisTotal = r2(g.requests.reduce((a, r) => a + r.amount, 0));
     g.paid = r2(
       g.requests
-        .filter((r) => requestStatus(s, r) === "Ödendi")
+        .filter((r) => requestStatus(s, r) === "Pagada")
         .reduce((a, r) => a + netPayable(s, r), 0),
     );
     g.offset = r2(g.requests.reduce((a, r) => a + offsetFor(s, r.id), 0));
@@ -2323,8 +2338,8 @@ export function workContractDocument(
 ): SystemDocument {
   return {
     id: wc.id,
-    name: `${wc.id} · İş sözleşmesi özeti`,
-    kind: "İş sözleşmesi",
+    name: `${wc.id} · Resumen del contrato de obra`,
+    kind: "Contrato de obra",
     date: wc.requests.map((r) => r.due).sort()[0] ?? SNAPSHOT,
     href: `/belge/?tur=is&id=${encodeURIComponent(wc.id)}`,
     detail: `${wc.company} · ${wc.packages.map((p) => p.name).join(", ")}`,

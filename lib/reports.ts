@@ -1,7 +1,7 @@
 // Raporlama motoru. Tüm rakamlar o anki durumdan (EnterpriseState) hesaplanır; sabit veya
 // tahmini finansal değer yoktur. Kapsam kuralları:
-// - "Durum" göstergeleri (sözleşmeli satış, kalan alacak, gecikme) senaryo tarihine (SNAPSHOT) göredir.
-// - "Dönem" göstergeleri (kasaya giren/çıkan, mahsup, imzalanan satış) tarih filtresine uygulanır.
+// - "Estado" göstergeleri (sözleşmeli satış, kalan alacak, gecikme) senaryo tarihine (SNAPSHOT) göredir.
+// - "Período" göstergeleri (kasaya giren/çıkan, mahsup, imzalanan satış) tarih filtresine uygulanır.
 // - Barter nakit değildir: kasaya giren/çıkan hesaplarına girmez, ayrı "nakit dışı" kalem olarak raporlanır.
 import {
   SNAPSHOT,
@@ -63,8 +63,8 @@ export const inRange = (f: ReportFilter, d: string) =>
 export const scopeProjects = (f: ReportFilter) => projects.filter((p) => inScope(f, p.id));
 export const periodLabel = (f: ReportFilter) =>
   f.from || f.to
-    ? `${f.from ? fmt(f.from) : "başlangıç"} – ${f.to ? fmt(f.to) : "bugün"}`
-    : "Tüm dönemler";
+    ? `${f.from ? fmt(f.from) : "inicio"} – ${f.to ? fmt(f.to) : "hoy"}`
+    : "Todos los períodos";
 const fmt = (d: string) => d.split("-").reverse().join(".");
 const daysBetween = (a: string, b: string) =>
   Math.round((new Date(b + "T12:00:00").getTime() - new Date(a + "T12:00:00").getTime()) / 86400000);
@@ -91,11 +91,11 @@ export function financialReport(s: EnterpriseState, f: ReportFilter) {
   // Kasadan çıkan: ödenen hakediş ve satın almaların nakit kısmı (barter mahsubu hariç).
   // Dönem, kaydedilen gerçek ödeme tarihine göre belirlenir; hakediş vadesi yalnızca bilgi içindir.
   // Ödeme tarihi kaydı olmayan (önceki sürümden gelen) ödemeler tarih filtresinde dönemlere dağıtılmaz,
-  // yalnızca "Tüm dönemler" toplamında yer alır ve ayrıca belirtilir.
+  // yalnızca "Todos los períodos" toplamında yer alır ve ayrıca belirtilir.
   const dated = !f.from && !f.to;
   const requests = requestList(s).filter((r) => inScope(f, r.project));
   const paidRows = requests
-    .filter((r) => requestStatus(s, r) === "Ödendi")
+    .filter((r) => requestStatus(s, r) === "Pagada")
     .map((r) => ({ id: r.id, project: r.project, company: r.company, type: r.type, paidAt: paidDate(s, r.id), due: r.due, amount: netPayable(s, r) }));
   const outflowRows = paidRows.filter((r) => (r.paidAt ? inRange(f, r.paidAt) : dated));
   const undatedPaid = paidRows.filter((r) => !r.paidAt);
@@ -115,9 +115,9 @@ export function financialReport(s: EnterpriseState, f: ReportFilter) {
     overdueInstallments: sum(scopeSummaries, (x) => x.overdue),
     overdueDeposits: sum(scopeSummaries, (x) => x.depositOverdue),
     inflow,
-    inflowDeposit: inflowBy(["Peşinat"]),
-    inflowInstallment: inflowBy(["Taksit", "Tahsilat", "İptal"]),
-    inflowInterim: inflowBy(["Ara ödeme"]),
+    inflowDeposit: inflowBy(["Anticipo"]),
+    inflowInstallment: inflowBy(["Cuota", "Cobro", "Anulado"]),
+    inflowInterim: inflowBy(["Pago intermedio"]),
     outflow,
     net: r2(inflow - outflow),
     outflowRows,
@@ -129,7 +129,7 @@ export function financialReport(s: EnterpriseState, f: ReportFilter) {
     barterValue: sum(barters, (b) => b.amount),
     barterRemaining: sum(barters, (b) => b.amount - barterOffset(s, b.id)),
     payableApproved: sum(
-      requests.filter((r) => requestStatus(s, r) === "Onaylandı"),
+      requests.filter((r) => requestStatus(s, r) === "Aprobado"),
       (r) => netPayable(s, r),
     ),
   };
@@ -146,7 +146,7 @@ export function salesReport(s: EnterpriseState, f: ReportFilter) {
   const barter = new Set(s.barters.map((b) => b.unitId));
   const reserved = new Set(scopeProjects(f).flatMap((p) => reservedUnits(s, p.id)));
   const status = (id: string) =>
-    sold.has(id) ? "Satıldı" : drafts.has(id) ? "İmza sürecinde" : barter.has(id) ? "Barter" : reserved.has(id) ? "Rezerve" : isLandownerUnit(s, id) ? "Arsa sahibi" : "Müsait";
+    sold.has(id) ? "Vendida" : drafts.has(id) ? "En firma" : barter.has(id) ? "Canje" : reserved.has(id) ? "Reservada" : isLandownerUnit(s, id) ? "Propietario del terreno" : "Disponible";
   const scopeUnits = units.filter((u) => inScope(f, u.project));
   const row = (list: typeof scopeUnits) => {
     const soldList = list.filter((u) => sold.has(u.id)).map((u) => sold.get(u.id)!);
@@ -155,16 +155,16 @@ export function salesReport(s: EnterpriseState, f: ReportFilter) {
     return {
       total: list.length,
       sold: soldList.length,
-      inSigning: list.filter((u) => status(u.id) === "İmza sürecinde").length,
-      barter: list.filter((u) => status(u.id) === "Barter").length,
-      reserved: list.filter((u) => status(u.id) === "Rezerve").length,
-      landowner: list.filter((u) => status(u.id) === "Arsa sahibi").length,
-      available: list.filter((u) => status(u.id) === "Müsait").length,
+      inSigning: list.filter((u) => status(u.id) === "En firma").length,
+      barter: list.filter((u) => status(u.id) === "Canje").length,
+      reserved: list.filter((u) => status(u.id) === "Reservada").length,
+      landowner: list.filter((u) => status(u.id) === "Propietario del terreno").length,
+      available: list.filter((u) => status(u.id) === "Disponible").length,
       value,
       collected,
       rate: value ? collected / value : 0,
       avgPrice: soldList.length ? r2(value / soldList.length) : 0,
-      availableListValue: sum(list.filter((u) => status(u.id) === "Müsait"), (u) => u.listPrice),
+      availableListValue: sum(list.filter((u) => status(u.id) === "Disponible"), (u) => u.listPrice),
     };
   };
   const byProject = scopeProjects(f).map((p) => ({ project: p.id, name: p.name, ...row(scopeUnits.filter((u) => u.project === p.id)) }));
@@ -196,17 +196,17 @@ export function salesReport(s: EnterpriseState, f: ReportFilter) {
 /* C. Taksit ve gecikme raporu                                        */
 /* ------------------------------------------------------------------ */
 export const AGING = [
-  { key: "0-30", label: "0–30 gün", min: 1, max: 30 },
-  { key: "31-60", label: "31–60 gün", min: 31, max: 60 },
-  { key: "61-90", label: "61–90 gün", min: 61, max: 90 },
-  { key: "90+", label: "90+ gün", min: 91, max: Infinity },
+  { key: "0-30", label: "0–30 días", min: 1, max: 30 },
+  { key: "31-60", label: "31–60 días", min: 31, max: 60 },
+  { key: "61-90", label: "61–90 días", min: 61, max: 90 },
+  { key: "90+", label: "Más de 90 días", min: 91, max: Infinity },
 ] as const;
 
 export function installmentReport(s: EnterpriseState, f: ReportFilter, horizonDays = 90) {
   syncCatalog(s);
   const names = new Map(customerList(s).map((c) => [c.id, c]));
   const rows = paymentRows(s).filter((r) => inScope(f, r.project) && r.remaining > 0);
-  const overdueRows = rows.filter((r) => r.status === "Gecikti" && inRange(f, r.due));
+  const overdueRows = rows.filter((r) => r.status === "Vencida" && inRange(f, r.due));
   // Yaklaşan: tarih filtresi varsa o aralık, yoksa önümüzdeki `horizonDays` gün
   const upcomingRows = rows
     .filter((r) => r.due >= SNAPSHOT && (f.from || f.to ? inRange(f, r.due) : r.days <= horizonDays))
@@ -321,11 +321,11 @@ export function subcontractorReport(s: EnterpriseState, f: ReportFilter) {
       packages: w.packages.map((p) => `${p.name} (%${p.progress})`).join(", "),
       value: w.value,
       hakedis: sum(reqs, (r) => r.amount),
-      approved: sum(by("Onaylandı"), (r) => r.amount),
-      paid: sum(by("Ödendi"), (r) => r.amount),
-      pending: sum(by("Onay bekliyor"), (r) => r.amount),
-      cashPaid: sum(by("Ödendi"), (r) => netPayable(s, r)),
-      cashDue: sum(by("Onaylandı"), (r) => netPayable(s, r)),
+      approved: sum(by("Aprobado"), (r) => r.amount),
+      paid: sum(by("Pagada"), (r) => r.amount),
+      pending: sum(by("Pendiente de aprobación"), (r) => r.amount),
+      cashPaid: sum(by("Pagada"), (r) => netPayable(s, r)),
+      cashDue: sum(by("Aprobado"), (r) => netPayable(s, r)),
       barterOffset: sum(reqs, (r) => offsetFor(s, r.id)),
       requests: reqs.map((r) => ({ id: r.id, name: r.name, due: r.due, paidAt: paidDate(s, r.id), amount: r.amount, status: requestStatus(s, r), offset: offsetFor(s, r.id), cash: netPayable(s, r) })),
       barterId: w.barterId,
@@ -350,7 +350,7 @@ export function managerReport(s: EnterpriseState, f: ReportFilter) {
     const fin = financialReport(s, pf);
     const sales = salesReport(s, pf).total;
     const inst = installmentReport(s, pf);
-    return { project: p, name: p === "all" ? "Şirket toplamı" : pname(p), fin, sales, inst };
+    return { project: p, name: p === "all" ? "Total de la empresa" : pname(p), fin, sales, inst };
   };
   const rows = [...scopeProjects(f).map((p) => per(p.id)), ...(f.project === "all" ? [per("all")] : [])];
   const alerts: Alert[] = [];
@@ -363,25 +363,25 @@ export function managerReport(s: EnterpriseState, f: ReportFilter) {
       alerts.push({
         tone: "danger",
         project: p.id,
-        title: `${inst.perCustomer.length} müşteride geciken ödeme`,
-        detail: `En uzun gecikme ${inst.perCustomer[0]?.maxDays ?? 0} gün · ${inst.perCustomer[0]?.name ?? ""}${sm.depositOverdue > 0 ? ` · ${new Intl.NumberFormat("tr-TR").format(sm.depositOverdue)} TL peşinat parçası dahil` : ""}`,
+        title: `${inst.perCustomer.length} clientes con cuotas vencidas`,
+        detail: `Mayor atraso: ${inst.perCustomer[0]?.maxDays ?? 0} días · ${inst.perCustomer[0]?.name ?? ""}${sm.depositOverdue > 0 ? ` · incluye US$ ${new Intl.NumberFormat("es-PY").format(sm.depositOverdue)} de anticipos` : ""}`,
         amount: inst.overdueTotal,
-        href: "/odemeler?durum=Gecikti",
+        href: "/cobros?durum=Vencida",
       });
     const drafts = (s.drafts ?? []).filter((d) => d.project === p.id);
     if (drafts.length)
-      alerts.push({ tone: "warning", project: p.id, title: `${drafts.length} sözleşme imza sürecinde`, detail: drafts.map((d) => `${contractNumber(d.id)} · ${d.name}`).join(", "), amount: sum(drafts, (d) => d.price), href: "/sozlesmeler" });
-    const pending = requestList(s).filter((r) => r.project === p.id && requestStatus(s, r) === "Onay bekliyor");
+      alerts.push({ tone: "warning", project: p.id, title: `${drafts.length} contratos en proceso de firma`, detail: drafts.map((d) => `${contractNumber(d.id)} · ${d.name}`).join(", "), amount: sum(drafts, (d) => d.price), href: "/contratos" });
+    const pending = requestList(s).filter((r) => r.project === p.id && requestStatus(s, r) === "Pendiente de aprobación");
     if (pending.length)
-      alerts.push({ tone: "info", project: p.id, title: `${pending.length} talep onay bekliyor`, detail: pending.map((r) => `${r.id} · ${r.company}`).join(", "), amount: sum(pending, (r) => r.amount), href: "/operasyon" });
-    const approved = requestList(s).filter((r) => r.project === p.id && requestStatus(s, r) === "Onaylandı");
+      alerts.push({ tone: "info", project: p.id, title: `${pending.length} solicitudes pendientes de aprobación`, detail: pending.map((r) => `${r.id} · ${r.company}`).join(", "), amount: sum(pending, (r) => r.amount), href: "/operasyon" });
+    const approved = requestList(s).filter((r) => r.project === p.id && requestStatus(s, r) === "Aprobado");
     if (approved.length)
-      alerts.push({ tone: "info", project: p.id, title: `${approved.length} onaylı ödeme bekliyor`, detail: approved.map((r) => `${r.id} · ${r.company}`).join(", "), amount: sum(approved, (r) => netPayable(s, r)), href: "/operasyon" });
+      alerts.push({ tone: "info", project: p.id, title: `${approved.length} pagos aprobados pendientes`, detail: approved.map((r) => `${r.id} · ${r.company}`).join(", "), amount: sum(approved, (r) => netPayable(s, r)), href: "/operasyon" });
     for (const b of s.barters.filter((b) => b.project === p.id)) {
       const days = daysBetween(SNAPSHOT, b.end);
       const rem = r2(b.amount - barterOffset(s, b.id));
       if (rem > 0 && days <= 90)
-        alerts.push({ tone: "warning", project: p.id, title: `${b.id} barter işi ${days} gün içinde bitmeli`, detail: `${b.company} · kalan yükümlülük`, amount: rem, href: "/barter" });
+        alerts.push({ tone: "warning", project: p.id, title: `El canje ${b.id} debe finalizar en ${days} días`, detail: `${b.company} · obligación pendiente`, amount: rem, href: "/barter" });
     }
   }
   return { rows, alerts };
@@ -390,62 +390,62 @@ export function managerReport(s: EnterpriseState, f: ReportFilter) {
 /* ------------------------------------------------------------------ */
 /* CSV satırları (dışa aktarma; dosyayı lib/export.ts üretir)           */
 /* ------------------------------------------------------------------ */
-export type ReportKind = "finans" | "satis" | "taksit" | "barter" | "taseron" | "yonetici";
+export type ReportKind = "caja" | "satis" | "cuotas" | "barter" | "taseron" | "yonetici";
 export function reportCsv(s: EnterpriseState, kind: ReportKind, f: ReportFilter): (string | number)[][] {
   syncCatalog(s);
   const head: (string | number)[][] = [
-    [`BŞ Falcon Group · ${REPORT_TITLES[kind]}`],
-    ["Kapsam", f.project === "all" ? "Tüm projeler" : pname(f.project)],
-    ["Dönem", periodLabel(f)],
-    ["Senaryo tarihi", fmt(SNAPSHOT)],
+    [`EDIFICA · ${REPORT_TITLES[kind]}`],
+    ["Alcance", f.project === "all" ? "Todos los proyectos" : pname(f.project)],
+    ["Período", periodLabel(f)],
+    ["Fecha de corte", fmt(SNAPSHOT)],
     [],
   ];
-  if (kind === "finans") {
+  if (kind === "caja") {
     const a = financialReport(s, f);
-    return [...head, ["Gösterge", "Tutar (TL)", "Kapsam"],
-      ["Toplam sözleşmeli satış", a.contracted, "Durum"], ["Toplam tahsil edilen", a.collected, "Durum"], ["Kalan alacak", a.balance, "Durum"],
-      ["Geciken alacak (taksit + ara ödeme)", a.overdueInstallments, "Durum"], ["Geciken peşinat", a.overdueDeposits, "Durum"], ["Geciken alacak toplamı", a.overdue, "Durum"],
-      ["Kasaya giren — peşinat", a.inflowDeposit, "Dönem"], ["Kasaya giren — taksit", a.inflowInstallment, "Dönem"], ["Kasaya giren — ara ödeme", a.inflowInterim, "Dönem"], ["Kasaya giren toplam", a.inflow, "Dönem"],
-      ["Kasadan çıkan (ödenen hakediş/satın alma nakit kısmı)", a.outflow, "Dönem · gerçek ödeme tarihine göre"], ["Net nakit akışı", a.net, "Dönem"],
-      ["Barter mahsubu (nakit dışı)", a.barterOffset, "Dönem"], ["Barter anlaşma değeri (nakit dışı)", a.barterValue, "Durum"], ["Barter kalan yükümlülük", a.barterRemaining, "Durum"],
-      ["Onaylı, ödenmemiş nakit borç", a.payableApproved, "Durum"]];
+    return [...head, ["Indicador", "Monto (USD)", "Kapsam"],
+      ["Total contratado", a.contracted, "Estado"], ["Total cobrado", a.collected, "Estado"], ["Saldo por cobrar", a.balance, "Estado"],
+      ["Saldo vencido (cuotas + pagos intermedios)", a.overdueInstallments, "Estado"], ["Anticipo vencido", a.overdueDeposits, "Estado"], ["Total vencido", a.overdue, "Estado"],
+      ["Ingresos de caja — anticipos", a.inflowDeposit, "Período"], ["Ingresos de caja — cuotas", a.inflowInstallment, "Período"], ["Ingresos de caja — pagos intermedios", a.inflowInterim, "Período"], ["Total de ingresos de caja", a.inflow, "Período"],
+      ["Egresos de caja (certificados y compras pagados)", a.outflow, "Período · según fecha real de pago"], ["Flujo de caja neto", a.net, "Período"],
+      ["Compensación por canje (sin efectivo)", a.barterOffset, "Período"], ["Valor de canjes (sin efectivo)", a.barterValue, "Estado"], ["Obligación de canje pendiente", a.barterRemaining, "Estado"],
+      ["Deuda aprobada no pagada", a.payableApproved, "Estado"]];
   }
   if (kind === "satis") {
     const b = salesReport(s, f);
-    return [...head, ["Proje", "Daire tipi", "Toplam", "Satılan", "İmza sürecinde", "Barter", "Rezerve", "Müsait", "Satış bedeli (TL)", "Tahsil edilen (TL)", "Tahsilat oranı %", "Ortalama satış (TL)"],
+    return [...head, ["Proyecto", "Tipología", "Total", "Vendidas", "En firma", "Canje", "Reservada", "Disponible", "Precio de venta (USD)", "Cobrado (USD)", "Cobranza %", "Venta promedio (USD)"],
       ...b.byType.map((r) => [r.name, r.type, r.total, r.sold, r.inSigning, r.barter, r.reserved, r.available, r.value, r.collected, Math.round(r.rate * 1000) / 10, r.avgPrice]),
-      [], ["Dönemde imzalanan satışlar"], ["Sözleşme", "Müşteri", "Proje", "Daire", "İmza", "Bedel (TL)", "Tahsil edilen (TL)"],
+      [], ["Ventas firmadas en el período"], ["Contrato", "Cliente", "Proyecto", "Unidad", "Firma", "Precio (USD)", "Cobrado (USD)"],
       ...b.signedInPeriod.map((r) => [r.number, r.name, pname(r.project), r.unit, fmt(r.signed), r.price, r.collected])];
   }
-  if (kind === "taksit") {
+  if (kind === "cuotas") {
     const c = installmentReport(s, f);
-    return [...head, ["Gecikme aralığı", "Ödeme sayısı", "Müşteri", "Tutar (TL)"], ...c.aging.map((a) => [a.label, a.count, a.customers, a.amount]),
-      [], ["Müşteri bazlı gecikme"], ["Sözleşme", "Müşteri", "Proje", "Daire", "Geciken ödeme", "En eski vade", "Gecikme (gün)", "Kısmi ödenen (TL)", "Geciken tutar (TL)"],
+    return [...head, ["Rango de atraso", "Cantidad de pagos", "Cliente", "Monto (USD)"], ...c.aging.map((a) => [a.label, a.count, a.customers, a.amount]),
+      [], ["Mora por cliente"], ["Contrato", "Cliente", "Proyecto", "Unidad", "Cuotas vencidas", "Vencimiento más antiguo", "Atraso (días)", "Pagado parcialmente (USD)", "Monto vencido (USD)"],
       ...c.perCustomer.map((r) => [r.number, r.name, pname(r.project), r.unit, r.count, fmt(r.oldest), r.maxDays, r.partialPaid, r.amount]),
-      [], ["Yaklaşan tahsilatlar"], ["Vade", "Sözleşme", "Müşteri", "Ödeme", "Durum", "Kalan (TL)"],
+      [], ["Cobros próximos"], ["Vencimiento", "Contrato", "Cliente", "Pago", "Estado", "Saldo (USD)"],
       ...c.upcomingRows.map((r) => [fmt(r.due), r.number, r.name, r.label, r.status, r.remaining])];
   }
   if (kind === "barter") {
     const d = barterReport(s, f);
-    return [...head, ["Barter", "Firma", "Proje", "Daire", "Liste değeri (TL)", "Anlaşma bedeli (TL)", "Mahsup edilen (TL)", "Dönem mahsubu (TL)", "Kalan yükümlülük (TL)", "İlerleme %", "Tapu devri"],
+    return [...head, ["Canje", "Empresa", "Proyecto", "Unidad", "Valor de lista (USD)", "Valor del acuerdo (USD)", "Compensado (USD)", "Compensación del período (USD)", "Obligación pendiente (USD)", "Avance %", "Transferencia"],
       ...d.rows.map((r) => [r.id, r.company, pname(r.project), r.unit, r.listValue, r.amount, r.offset, r.offsetInPeriod, r.remaining, r.progress, r.transfer])];
   }
   if (kind === "taseron") {
     const e = subcontractorReport(s, f);
-    return [...head, ["Sözleşme", "Firma", "Proje", "İş paketleri", "Sözleşme bedeli (TL)", "Hakediş (TL)", "Onaylı (TL)", "Ödenmiş (TL)", "Onay bekleyen (TL)", "Nakit ödenen (TL)", "Barter mahsubu (TL)"],
+    return [...head, ["Contrato", "Empresa", "Proyecto", "Paquetes de obra", "Precio del contrato (USD)", "Certificado (USD)", "Aprobado (USD)", "Pagado (USD)", "Pendiente de aprobación (USD)", "Pagado en efectivo (USD)", "Compensación por canje (USD)"],
       ...e.rows.map((r) => [r.id, r.company, pname(r.project), r.packages, r.value, r.hakedis, r.approved, r.paid, r.pending, r.cashPaid, r.barterOffset])];
   }
   const m = managerReport(s, f);
-  return [...head, ["Kapsam", "Sözleşmeli satış (TL)", "Tahsil edilen (TL)", "Kalan alacak (TL)", "Geciken (TL)", "Dönemde kasaya giren (TL)", "Dönemde kasadan çıkan (TL)", "Satılan / toplam daire", "Müsait daire"],
+  return [...head, ["Alcance", "Ventas contratadas (USD)", "Cobrado (USD)", "Saldo por cobrar (USD)", "Vencido (USD)", "Ingresos del período (USD)", "Egresos del período (USD)", "Vendidas / total de unidades", "Unidad disponible"],
     ...m.rows.map((r) => [r.name, r.fin.contracted, r.fin.collected, r.fin.balance, r.fin.overdue, r.fin.inflow, r.fin.outflow, `${r.sales.sold} / ${r.sales.total}`, r.sales.available]),
-    [], ["Önemli uyarılar"], ["Proje", "Uyarı", "Ayrıntı", "Tutar (TL)"], ...m.alerts.map((a) => [pname(a.project), a.title, a.detail, a.amount ?? ""])];
+    [], ["Alertas importantes"], ["Proyecto", "Alerta", "Detalle", "Monto (USD)"], ...m.alerts.map((a) => [pname(a.project), a.title, a.detail, a.amount ?? ""])];
 }
 
 export const REPORT_TITLES: Record<ReportKind, string> = {
-  finans: "Finansal genel durum",
-  satis: "Satış raporu",
-  taksit: "Taksit ve gecikme raporu",
-  barter: "Barter raporu",
-  taseron: "Taşeron ve hakediş raporu",
-  yonetici: "Yönetici raporu",
+  caja: "Situación financiera general",
+  satis: "Informe de ventas",
+  "cuotas": "Informe de cuotas y mora",
+  barter: "Informe de canjes",
+  taseron: "Informe de contratistas y certificados",
+  yonetici: "Informe gerencial",
 };

@@ -9,25 +9,24 @@ import { reportCsv, REPORT_TITLES, periodLabel, type ReportKind } from "@/lib/re
 import { csvDownload } from "@/lib/export";
 
 const KINDS: [ReportKind, string, string][] = [
-  ["finans", "Finansal durum", "Satış, tahsilat, alacak, kasa hareketi ve nakit dışı barter etkisi."],
-  ["satis", "Satış", "Projeye ve daire tipine göre satışlar, stok durumu ve tahsilat oranları."],
-  ["taksit", "Taksit ve gecikme", "Yaklaşan tahsilatlar, gecikme yaşlandırması ve müşteri bazlı gecikmeler."],
-  ["barter", "Barter", "Firma bazında anlaşmalar, verilen daireler, mahsuplar ve kalan yükümlülükler."],
-  ["taseron", "Taşeron ve hakediş", "Firma ve iş paketine göre hakediş, onay, ödeme ve mahsup tutarları."],
-  ["yonetici", "Yönetici raporu", "Şirket ve proje özeti, önemli uyarılar ve bekleyen işlemler."],
+  ["caja", "Situación financiera", "Ventas, cobranza, cuentas por cobrar y movimientos de caja."],
+  ["satis", "Ventas", "Ventas por proyecto y tipología, stock y porcentaje de cobranza."],
+  ["cuotas", "Cuotas y mora", "Cobros próximos, antigüedad de la mora y mora por cliente."],
+  ["taseron", "Contratistas y certificados", "Certificados, aprobaciones y pagos por contratista."],
+  ["yonetici", "Informe gerencial", "Resumen de la empresa y los proyectos, alertas y pendientes."],
 ];
 // Dönem kısayolları senaryo tarihine (15 Kas 2026) göre hesaplanır.
 const PRESETS: [string, string | undefined, string | undefined][] = [
-  ["Tüm dönem", undefined, undefined],
-  ["Kasım 2026", "2026-11-01", "2026-11-30"],
-  ["Son 3 ay", "2026-08-16", SNAPSHOT],
-  ["2026 yılı", "2026-01-01", "2026-12-31"],
-  ["Önümüzdeki 3 ay", SNAPSHOT, "2027-02-15"],
+  ["Todo el período", undefined, undefined],
+  ["Noviembre 2026", "2026-11-01", "2026-11-30"],
+  ["Últimos 3 meses", "2026-08-16", SNAPSHOT],
+  ["Año 2026", "2026-01-01", "2026-12-31"],
+  ["Próximos 3 meses", SNAPSHOT, "2027-02-15"],
 ];
 
 export default function ReportsView() {
   const { state, project, setProject } = useApp();
-  const [kind, setKind] = useState<ReportKind>("finans");
+  const [kind, setKind] = useState<ReportKind>("caja");
   const [from, setFrom] = useState<string | undefined>();
   const [to, setTo] = useState<string | undefined>();
   useEffect(() => {
@@ -44,17 +43,17 @@ export default function ReportsView() {
         <div>
           <h1>Raporlama</h1>
           <p>
-            Bütün raporlar kayıtlardan anlık hesaplanır; tahsilat, mahsup veya
-            sözleşme değiştiğinde raporlar da değişir.
+            Todos los informes se calculan en vivo desde los registros; cuando cambia un cobro,
+            un pago o un contrato, los informes cambian.
           </p>
         </div>
       </header>
 
-      <section className="rp-filters" aria-label="Rapor filtreleri">
+      <section className="rp-filters" aria-label="Filtros del informe">
         <label>
           Kapsam
           <select value={project} onChange={(e) => setProject(e.target.value)}>
-            <option value="all">Tüm projeler (şirket geneli)</option>
+            <option value="all">Todos los proyectos (empresa)</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -63,8 +62,8 @@ export default function ReportsView() {
           </select>
         </label>
         <div className="rp-period">
-          <span>Dönem</span>
-          <div className="rp-presets" role="group" aria-label="Dönem kısayolları">
+          <span>Período</span>
+          <div className="rp-presets" role="group" aria-label="Atajos de período">
             {PRESETS.map(([label, a, b]) => (
               <button
                 key={label}
@@ -81,17 +80,17 @@ export default function ReportsView() {
           </div>
         </div>
         <label>
-          Başlangıç
+          Desde
           <input type="date" value={from ?? ""} onChange={(e) => setFrom(e.target.value || undefined)} />
         </label>
         <label>
-          Bitiş
+          Hasta
           <input type="date" value={to ?? ""} onChange={(e) => setTo(e.target.value || undefined)} />
         </label>
       </section>
 
       <div className="panel rp-panel">
-        <nav className="e-tabs" role="tablist" aria-label="Rapor türü">
+        <nav className="e-tabs" role="tablist" aria-label="Tipo de informe">
           {KINDS.map(([id, label]) => (
             <button key={id} role="tab" aria-selected={kind === id} className={kind === id ? "active" : ""} onClick={() => setKind(id)}>
               {label}
@@ -102,7 +101,7 @@ export default function ReportsView() {
           <div>
             <h2>{REPORT_TITLES[kind]}</h2>
             <p>
-              {meta[2]} <b>{project === "all" ? "Şirket geneli" : projects.find((p) => p.id === project)?.name}</b> ·{" "}
+              {meta[2]} <b>{project === "all" ? "Toda la empresa" : projects.find((p) => p.id === project)?.name}</b> ·{" "}
               {periodLabel(f)}
             </p>
           </div>
@@ -110,30 +109,25 @@ export default function ReportsView() {
             <button
               className="btn"
               disabled={invalid}
-              onClick={() => csvDownload(reportCsv(state, kind, f), `bsfalcon-${kind}-raporu-${project}.csv`)}
+              onClick={() => csvDownload(reportCsv(state, kind, f), `edifica-${kind}-raporu-${project}.csv`)}
             >
               <Download size={15} /> CSV (Excel)
             </button>
             <a className={`btn primary ${invalid ? "disabled" : ""}`} href={`/belge/?${query}`} target="_blank" rel="noreferrer">
-              <Printer size={15} /> Yazdır / PDF
+              <Printer size={15} /> Imprimir / PDF
             </a>
           </div>
         </div>
         <div className="rp-content">
           {invalid ? (
-            <p className="callout">Başlangıç tarihi bitiş tarihinden sonra olamaz.</p>
+            <p className="callout">La fecha inicial no puede ser posterior a la final.</p>
           ) : (
             <ReportBody s={state} kind={kind} f={f} />
           )}
         </div>
       </div>
       <p className="company-note">
-        Durum göstergeleri (sözleşmeli satış, kalan ve geciken alacak) senaryo
-        tarihine göredir. Dönem filtresi: kasaya giren ve çıkan gerçek
-        tahsilat/ödeme tarihine, barter mahsubu mahsup tarihine, satışlar imza
-        tarihine, taksit ve hakediş listeleri vade tarihine göre uygulanır. Vade,
-        ödemenin yapıldığı anlamına gelmez. Barter nakit girişi veya çıkışı
-        sayılmaz. CSV dosyası Excel’de doğrudan açılır.
+        Los indicadores de estado (contratado, saldo y vencido) corresponden a la fecha de corte. El filtro de período se aplica a la fecha real de cobro o pago para la caja, a la fecha de firma para las ventas y al vencimiento para cuotas y certificados. El archivo CSV se abre directamente en Excel.
       </p>
     </div>
   );

@@ -33,13 +33,13 @@ export default function ScopePicker({
     };
   }, [open]);
   const current = projects.find((p) => p.id === scope);
-  const norm = (s: string) => s.toLocaleLowerCase("tr");
+  const norm = (s: string) => s.toLocaleLowerCase("es");
   const match = (p: (typeof projects)[number]) =>
     !q || norm(`${p.name} ${p.code} ${p.location}`).includes(norm(q));
-  const groups = (["Aktif", "Tamamlandı"] as const)
+  const groups = (["Activo", "Finalizado"] as const)
     .map((st) => ({ st, list: projects.filter((p) => p.status === st && match(p)) }))
     .filter((g) => g.list.length);
-  const archived = projects.filter((p) => p.status === "Arşiv").length;
+  const archived = projects.filter((p) => p.status === "Archivado").length;
   const pick = (id: string) => {
     setOpen(false);
     setQ("");
@@ -47,22 +47,22 @@ export default function ScopePicker({
   };
   return (
     <div className="scope-picker" ref={box}>
-      <span className="e-nav-label">Çalışma kapsamı</span>
+      <span className="e-nav-label">Alcance</span>
       <button
         className="scope-current"
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
-        <span className={`project-dot ${scope === "all" ? "company" : scope === "cengilli" ? "bronze" : ""}`} />
+        <span className={`project-dot ${scope === "all" ? "company" : scope === "alion" ? "bronze" : ""}`} />
         <span className="scope-text">
-          <b>{current ? current.name : "Tüm projeler"}</b>
-          <small>{current ? `BŞ Falcon Group · ${current.code}` : "BŞ Falcon Group · şirket geneli"}</small>
+          <b>{current ? current.name : "Todos los proyectos"}</b>
+          <small>{current ? `EDIFICA · ${current.code}` : "EDIFICA · toda la empresa"}</small>
         </span>
         <ChevronsUpDown size={15} />
       </button>
       {open && (
-        <div className="scope-menu" role="listbox" aria-label="Çalışma kapsamı">
+        <div className="scope-menu" role="listbox" aria-label="Alcance">
           {projects.length > 5 && (
             <label className="scope-search">
               <Search size={14} />
@@ -70,23 +70,23 @@ export default function ScopePicker({
                 ref={input}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Proje ara…"
-                aria-label="Proje ara"
+                placeholder="Buscar proyecto…"
+                aria-label="Buscar proyecto"
               />
             </label>
           )}
           <button role="option" aria-selected={scope === "all"} className="scope-item" onClick={() => pick("all")}>
             <span className="project-dot company" />
             <span className="scope-text">
-              <b>Tüm projeler</b>
-              <small>BŞ Falcon Group · şirket geneli</small>
+              <b>Todos los proyectos</b>
+              <small>EDIFICA · toda la empresa</small>
             </span>
             {scope === "all" && <Check size={14} />}
           </button>
           {groups.map((g) => (
             <div key={g.st} className="scope-group">
               <span className="scope-group-label">
-                {g.st === "Aktif" ? "Aktif projeler" : "Tamamlanan projeler"}
+                {g.st === "Activo" ? "Proyectos activos" : "Proyectos finalizados"}
               </span>
               {g.list.map((p) => (
                 <button
@@ -96,11 +96,11 @@ export default function ScopePicker({
                   className="scope-item"
                   onClick={() => pick(p.id)}
                 >
-                  <span className={`project-dot ${p.id === "cengilli" ? "bronze" : ""}`} />
+                  <span className={`project-dot ${p.id === "alion" ? "bronze" : ""}`} />
                   <span className="scope-text">
                     <b>{p.name}</b>
                     <small>
-                      {p.code} · {p.location || "konum yok"}
+                      {p.code} · {p.location || "sin ubicación"}
                     </small>
                   </span>
                   {scope === p.id && <Check size={14} />}
@@ -108,9 +108,9 @@ export default function ScopePicker({
               ))}
             </div>
           ))}
-          {!groups.length && q && <p className="scope-empty">“{q}” ile eşleşen proje yok.</p>}
-          <Link className="scope-footer" href="/projeler" onClick={() => setOpen(false)}>
-            Proje portföyü{archived ? ` · ${archived} arşivde` : ""} →
+          {!groups.length && q && <p className="scope-empty">“{q}”: ningún proyecto coincide.</p>}
+          <Link className="scope-footer" href="/proyectos" onClick={() => setOpen(false)}>
+            Proyectos inmobiliarios{archived ? `· ${archived} archivados` : ""} →
           </Link>
         </div>
       )}

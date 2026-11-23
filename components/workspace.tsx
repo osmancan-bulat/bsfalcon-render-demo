@@ -48,24 +48,18 @@ import {
   pname,
   paymentRows,
 } from "@/lib/enterprise";
-import FalconHome from "./falcon/FalconHome";
-import LandShareView from "./falcon/LandShareView";
-import ProcessView from "./falcon/ProcessView";
-import BudgetView from "./falcon/BudgetView";
-import ProjectFocus from "./falcon/ProjectFocus";
+import EdificaHome from "./edifica/EdificaHome";
+import ProjectFocus from "./edifica/ProjectFocus";
+import BillingView from "./edifica/BillingView";
+import ReceivablesView from "./edifica/ReceivablesView";
 import { Landmark } from "lucide-react";
 import { hubHref, isScopeValid, scopeProblem } from "@/lib/catalog";
 import ScopePicker from "./enterprise/scope-picker";
 import ReportsView from "./enterprise/reports-view";
 import AdminView from "./enterprise/admin";
 import Projects from "./views/Projects";
-import Sales from "./views/Sales";
-import SiteProgress from "./views/SiteProgress";
-import Operations from "./views/Operations";
-import Documents from "./views/Documents";
 import Finance from "./enterprise/finance";
 import CommandCenter from "./enterprise/command-center";
-import BarterView from "./enterprise/barter";
 import ArchiveView from "./enterprise/archive";
 import RemindersView from "./enterprise/reminders";
 import UnitsView from "./enterprise/units-view";
@@ -85,89 +79,36 @@ type Group = {
   tabs: [string, string][];
 };
 const GROUPS: Group[] = [
-  { id: "home", title: "Genel Bakış", icon: LayoutDashboard, tabs: [] },
+  { id: "home", title: "Resumen Ejecutivo", icon: LayoutDashboard, tabs: [] },
   {
-    id: "projeler-daireler",
-    title: "Projeler & Daireler",
+    id: "proyectos-unidades",
+    title: "Proyectos y Unidades",
     icon: Building2,
     tabs: [
-      ["daireler", "Daireler"],
-      ["projeler", "Proje portföyü"],
-      ["santiye", "Şantiye"],
-      ["butce", "Bütçe & giderler"],
+      ["proyectos", "Proyectos inmobiliarios"],
+      ["unidades", "Unidades y disponibilidad"],
     ],
   },
+  { id: "clientes", title: "Clientes", icon: UsersRound, tabs: [["clientes", "Clientes"]] },
+  { id: "contratos", title: "Contratos", icon: FileSignature, tabs: [["contratos", "Contratos y planes de pago"]] },
   {
-    id: "kat-karsiligi",
-    title: "Kat Karşılığı",
-    icon: Landmark,
-    tabs: [["kat-karsiligi", "Arsa sahibi paylaşımı"]],
-  },
-  {
-    id: "musteriler-satislar",
-    title: "Müşteriler & Satışlar",
-    icon: UsersRound,
-    tabs: [
-      ["musteriler", "Müşteriler"],
-    ],
-  },
-  {
-    id: "tahsilat-odemeler",
-    title: "Tahsilat & Ödemeler",
+    id: "cobros",
+    title: "Cobros y Cuotas",
     icon: Wallet,
     tabs: [
-      ["odemeler", "Ödemeler"],
-      ["finans", "Finans & kasa"],
+      ["cobros", "Cobros mensuales"],
+      ["cuentas-por-cobrar", "Cuentas por cobrar"],
     ],
   },
-  {
-    id: "barter-taseron",
-    title: "Barter & Taşeronlar",
-    icon: Handshake,
-    tabs: [
-      ["barter", "Barter"],
-      ["taseronlar", "Taşeronlar"],
-      ["operasyon", "Hakediş"],
-      ["satinalma", "Satın alma"],
-    ],
-  },
-  {
-    id: "sozlesme-belge",
-    title: "Sözleşmeler & Belgeler",
-    icon: FileSignature,
-    tabs: [
-      ["sozlesmeler", "Sözleşmeler"],
-      ["arsiv", "Belge arşivi"],
-      ["evrak", "Proje evrakı"],
-    ],
-  },
-  {
-    id: "surec",
-    title: "Süreç & Güvence",
-    icon: ShieldCheck,
-    tabs: [["surec", "Proje süreci ve güvence"]],
-  },
-  {
-    id: "takvim",
-    title: "Takvim & Hatırlatmalar",
-    icon: CalendarDays,
-    tabs: [["hatirlatmalar", "Takvim ve hatırlatmalar"]],
-  },
-  {
-    id: "raporlama",
-    title: "Raporlama",
-    icon: BarChart3,
-    tabs: [["raporlar", "Raporlar"]],
-  },
-  {
-    id: "yonetim",
-    title: "Yönetim & Ayarlar",
-    icon: Settings2,
-    tabs: [["yonetim", "Şirket ve sistem"]],
-  },
+  { id: "facturacion", title: "Facturación", icon: ReceiptText, tabs: [["facturacion", "Registro de facturación"]] },
+  { id: "caja", title: "Caja y Movimientos", icon: Landmark, tabs: [["caja", "Caja y movimientos"]] },
+  { id: "informes", title: "Informes Financieros", icon: BarChart3, tabs: [["informes", "Informes"]] },
+  { id: "documentos", title: "Documentos", icon: Files, tabs: [["documentos", "Documentos"]] },
+  { id: "agenda", title: "Agenda y Vencimientos", icon: CalendarDays, tabs: [["agenda", "Agenda"]] },
+  { id: "configuracion", title: "Configuración", icon: Settings2, tabs: [["configuracion", "Empresa y sistema"]] },
 ];
 // Menüde sekmesi olmayan eski adresler: içerikleri diğer ekranlarla aynı olduğu için yalnızca adres olarak korunur.
-const LEGACY: Record<string, string> = { "satis-tahsilat": "musteriler-satislar" };
+const LEGACY: Record<string, string> = {};
 const groupOf = (section: string) =>
   GROUPS.find(
     (g) => g.tabs.some(([id]) => id === section) || LEGACY[section] === g.id,
@@ -185,21 +126,23 @@ function Shell({ section }: { section: string }) {
     [overlay, setOverlay] = useState(""),
     [search, setSearch] = useState(""),
     [file, setFile] = useState<FileRef | null>(null);
-  // Yeni projelerin merkezi /proje/?id=… adresindedir (statik yayında tek sayfa, kimlik sorgudan okunur).
+  // Yeni projelerin merkezi /proyecto/?id=… adresindedir (statik yayında tek sayfa, kimlik sorgudan okunur).
   const [hubId, setHubId] = useState<string | null>(null);
   useEffect(() => {
-    if (section === "proje")
+    if (section === "proyecto")
       setHubId(new URLSearchParams(location.search).get("id") ?? "");
   }, [section]);
-  // Adresin işaret ettiği proje (proje merkezleri): yerleşik adresler veya /proje/?id=…
+  // Adresin işaret ettiği proje (proje merkezleri): yerleşik adresler veya /proyecto/?id=…
   const urlProject =
-    section === "cengilli-villa-sitesi"
-      ? "cengilli"
-      : section === "nergis-park-evleri"
-        ? "nergis"
-        : section === "agva-triplex-villa"
-          ? "agva"
-          : section === "proje"
+    section === "lofty-city-hub"
+      ? "lofty"
+      : section === "alion-residence"
+        ? "alion"
+        : section === "v-tower-del-lago"
+          ? "vtower"
+          : section === "business-one"
+          ? "business"
+          : section === "proyecto"
           ? hubId
           : null;
   // Adresteki proje geçersizse (silinmiş, arşivde, hiç olmamış) kapsam olarak kullanılmaz.
@@ -207,11 +150,11 @@ function Shell({ section }: { section: string }) {
   // Şirket genel bakışı her zaman tüm projeleri, proje merkezleri yalnızca kendi projesini kapsar.
   const scope = urlValid
     ? urlProject!
-    : section === "genel-bakis"
+    : section === "resumen"
       ? "all"
       : project;
   const pending = requestList(state).filter(
-    (r) => requestStatus(state, r) === "Onay bekliyor",
+    (r) => requestStatus(state, r) === "Pendiente de aprobación",
   );
   const scopedPending = pending.filter(
     (r) => scope === "all" || r.project === scope,
@@ -228,32 +171,32 @@ function Shell({ section }: { section: string }) {
   }, []);
   const projectHub = urlValid;
   const homeSection =
-    projectHub || section === "genel-bakis" || section === "proje";
+    projectHub || section === "resumen" || section === "proyecto";
   const router = useRouter();
   // Şirket genel bakışına veya geçerli bir proje merkezine girildiğinde kapsam bir kez eşitlenir.
   // (Sonraki proje seçimleriyle yarışmaması için `project` bağımlılık değildir.)
   useEffect(() => {
-    if (section === "genel-bakis" || urlValid) setProject(scope);
+    if (section === "resumen" || urlValid) setProject(scope);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section, scope, urlValid]);
   // Eski bağlantı veya kayıt geçersiz bir projeyi işaret ediyorsa boş ekranda kalınmaz:
   // arşivdeki proje → Proje portföyü (yeniden aktifleştirilebilir), olmayan proje → şirket genel bakışı.
-  const urlKnown = section !== "proje" || hubId !== null;
+  const urlKnown = section !== "proyecto" || hubId !== null;
   useEffect(() => {
     if (!ready || urlProject === null || !urlKnown || urlValid) return;
     const why = scopeProblem(urlProject);
     notify(
       why === "archived"
-        ? "Bu proje arşivde; Proje portföyünden yeniden aktifleştirebilirsiniz."
-        : "Bağlantıdaki proje bulunamadı; şirket genel bakışına yönlendirildiniz.",
+        ? "Este proyecto está archivado; puede reactivarlo desde Proyectos inmobiliarios."
+        : "No se encontró el proyecto del enlace; se abrió el resumen ejecutivo.",
     );
     setProject("all");
-    router.replace(why === "archived" ? "/projeler" : "/genel-bakis");
+    router.replace(why === "archived" ? "/proyectos" : "/resumen");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, urlProject, urlKnown, urlValid]);
   // Kapsam değişiminde anında geçiş için şirket ve proje merkezleri önceden yüklenir.
   useEffect(() => {
-    for (const href of ["/genel-bakis", "/cengilli-villa-sitesi", "/nergis-park-evleri", "/agva-triplex-villa", "/proje"])
+    for (const href of ["/resumen", "/lofty-city-hub", "/alion-residence", "/v-tower-del-lago", "/business-one", "/proyecto"])
       router.prefetch(href);
   }, [router]);
   const homeHref = hubHref(project);
@@ -262,7 +205,7 @@ function Shell({ section }: { section: string }) {
     paymentRows(state)
       .filter(
         (r) =>
-          r.status === "Gecikti" && (scope === "all" || r.project === scope),
+          r.status === "Vencida" && (scope === "all" || r.project === scope),
       )
       .map((r) => r.customerId),
   ).size;
@@ -276,10 +219,10 @@ function Shell({ section }: { section: string }) {
       router.push(hubHref(id));
   };
   const hakedisPending = scopedPending.filter(
-    (r) => r.type === "Hakediş",
+    (r) => r.type === "Certificado de obra",
   ).length;
   const purchasePending = scopedPending.filter(
-    (r) => r.type === "Satın alma",
+    (r) => r.type === "Compra",
   ).length;
   // Rozetler sayının neyi ifade ettiğini erişilebilir etiket ve ipucuyla açıklar.
   const pill = (n: number, label: string, cls = "") => (
@@ -288,38 +231,38 @@ function Shell({ section }: { section: string }) {
     </small>
   );
   const badge = (id: string) =>
-    id === "odemeler" && lateCount
-      ? pill(lateCount, `${lateCount} müşteride geciken ödeme`, "danger-pill")
-      : id === "sozlesmeler" && draftCount
-        ? pill(draftCount, `${draftCount} sözleşme taslak veya imza bekliyor`)
+    id === "cobros" && lateCount
+      ? pill(lateCount, `${lateCount} clientes con cuotas vencidas`, "danger-pill")
+      : id === "contratos" && draftCount
+        ? pill(draftCount, `${draftCount} contratos en borrador o pendientes de firma`)
         : id === "operasyon" && hakedisPending
-          ? pill(hakedisPending, `${hakedisPending} hakediş onay bekliyor`)
+          ? pill(hakedisPending, `${hakedisPending} certificados pendientes de aprobación`)
           : id === "satinalma" && purchasePending
-            ? pill(purchasePending, `${purchasePending} satın alma talebi onay bekliyor`)
+            ? pill(purchasePending, `${purchasePending} compras pendientes de aprobación`)
             : null;
   const groupBadge = (g: Group) =>
-    g.id === "tahsilat-odemeler"
-      ? badge("odemeler")
-      : g.id === "sozlesme-belge"
-        ? badge("sozlesmeler")
-        : g.id === "barter-taseron" && hakedisPending + purchasePending
+    g.id === "cobros"
+      ? badge("cobros")
+      : g.id === "contratos"
+        ? badge("contratos")
+        : g.id === "caja" && hakedisPending + purchasePending
           ? pill(
               hakedisPending + purchasePending,
-              `${hakedisPending} hakediş ve ${purchasePending} satın alma onay bekliyor`,
+              `${hakedisPending + purchasePending} pagos a proveedores pendientes de aprobación`,
             )
           : null;
   return (
     <div className="enterprise-app">
       <aside className={`e-sidebar ${mobile ? "open" : ""}`}>
         <Link
-          href="/genel-bakis"
+          href="/resumen"
           className="e-brand"
-          aria-label="BŞ Falcon yönetici özeti"
+          aria-label="EDIFICA · Resumen ejecutivo"
         >
           <Logo />
         </Link>
         <ScopePicker scope={scope} onChoose={choose} />
-        <nav aria-label="Ana menü">
+        <nav aria-label="Menú principal">
           {GROUPS.map((g) => (
             <Link
               key={g.id}
@@ -336,28 +279,28 @@ function Shell({ section }: { section: string }) {
         </nav>
         <div className="e-sidebar-bottom">
           <button className="e-history" onClick={() => setOverlay("audit")}>
-            <History size={16} /> İşlem geçmişi{" "}
+            <History size={16} /> Historial{" "}
             <small>{state.audit.length}</small>
           </button>
           <div className="e-profile demo">
             <div>
-              <b>Demo ortamı</b>
-              <small>Kullanıcı girişi ve yetkilendirme yok</small>
+              <b>Entorno de demostración</b>
+              <small>Sin inicio de sesión ni permisos</small>
             </div>
-            <Link href="/" aria-label="Giriş ekranına dön">
+            <Link href="/" aria-label="Volver a la pantalla de inicio">
               <LogOut size={16} />
             </Link>
           </div>
           <div className="e-powered">
-            BŞ Falcon<span> · </span>
-            <small>YÖNETİM MERKEZİ</small>
+            EDIFICA<span> · </span>
+            <small>CENTRO DE GESTIÓN</small>
           </div>
         </div>
       </aside>
       {mobile && (
         <button
           className="mobile-shade"
-          aria-label="Menüyü kapat"
+          aria-label="Cerrar menú"
           onClick={() => setMobile(false)}
         />
       )}
@@ -366,38 +309,38 @@ function Shell({ section }: { section: string }) {
           <div className="e-breadcrumb">
             <button
               className="icon-button mobile-menu"
-              aria-label="Menüyü aç"
+              aria-label="Abrir menú"
               onClick={() => setMobile(!mobile)}
             >
               <Menu size={20} />
             </button>
-            <span className="crumb-company">BŞ Falcon Group</span>
+            <span className="crumb-company">EDIFICA</span>
             <ChevronRight size={13} className="crumb-company" />
-            <span>{scope === "all" ? "Tüm projeler" : pname(scope)}</span>
+            <span>{scope === "all" ? "Todos los proyectos" : pname(scope)}</span>
             <ChevronRight size={13} />
-            <b>{group?.title ?? "Genel Bakış"}</b>
+            <b>{group?.title ?? "Resumen Ejecutivo"}</b>
           </div>
           <div className="e-header-actions">
             <button
-              aria-label="Çalışma alanında ara"
+              aria-label="Buscar en el centro de gestión"
               className="global-search"
               onClick={() => setOverlay("search")}
             >
               <Search size={15} />
-              <span>Proje, müşteri veya işlem ara</span>
+              <span>Buscar proyecto, cliente u operación</span>
               <kbd>⌘ K</kbd>
             </button>
             <button
               className="e-demo-label"
-              title="Demo kapsamı: veriler bu tarayıcıda, kayıtlar temsilî"
+              title="Alcance de la demo: datos en este navegador, registros de ejemplo"
               onClick={() => setOverlay("demo")}
             >
               <i />
-              Demo · temsili veri · 15 Kas 2026
+              Datos de demostración · 15 nov 2026
             </button>
             <button
               className="icon-button"
-              aria-label="Bildirim merkezini aç"
+              aria-label="Abrir centro de notificaciones"
               onClick={() => setOverlay("alerts")}
             >
               <Bell size={19} />
@@ -413,7 +356,7 @@ function Shell({ section }: { section: string }) {
           {group && group.tabs.length > 1 && (
             <nav
               className="section-tabs"
-              aria-label={`${group.title} bölümleri`}
+              aria-label={`Secciones de ${group.title}`}
             >
               {group.tabs.map(([id, title]) => (
                 <Link
@@ -429,48 +372,40 @@ function Shell({ section }: { section: string }) {
             </nav>
           )}
           {!ready ? (
-            <div className="e-loading">Çalışma alanı hazırlanıyor…</div>
+            <div className="e-loading">Preparando el centro de gestión…</div>
           ) : (
             <>
-              {section === "genel-bakis" && <FalconHome />}
-              {section === "kat-karsiligi" && <LandShareView />}
-              {section === "surec" && <ProcessView />}
-              {section === "butce" && <BudgetView />}
-              {section === "raporlar" && <ReportsView />}
-              {section === "yonetim" && (
+              {section === "resumen" && <EdificaHome />}
+              {section === "facturacion" && <BillingView />}
+              {section === "cuentas-por-cobrar" && <ReceivablesView />}
+              {section === "informes" && <ReportsView />}
+              {section === "configuracion" && (
                 <AdminView onReset={() => setOverlay("reset")} />
               )}
-              {section === "projeler" && <Projects />}
-              {section === "satis-tahsilat" && <Sales />}
-              {section === "finans" && <Finance />}
-              {section === "santiye" && <SiteProgress />}
-              {["operasyon", "satinalma", "taseronlar"].includes(section) && (
-                <Operations mode={section} />
-              )}{" "}
-              {section === "barter" && <BarterView />}
-              {section === "daireler" && <UnitsView />}
-              {section === "musteriler" && <CustomersPage />}
-              {section === "odemeler" && <PaymentsPage />}
-              {section === "sozlesmeler" && <ContractsPage />}
-              {section === "arsiv" && <ArchiveView />}
-              {section === "hatirlatmalar" && <RemindersView />}
-              {section === "evrak" && <Documents />}
+              {section === "proyectos" && <Projects />}
+              {section === "caja" && <Finance />}
+              {section === "unidades" && <UnitsView />}
+              {section === "clientes" && <CustomersPage />}
+              {section === "cobros" && <PaymentsPage />}
+              {section === "contratos" && <ContractsPage />}
+              {section === "documentos" && <ArchiveView />}
+              {section === "agenda" && <RemindersView />}
               {projectHub && <ProjectFocus projectId={scope} />}
               {projectHub && <CommandCenter projectId={scope} />}
-              {section === "proje" && hubId !== null && !projectHub && (
+              {section === "proyecto" && hubId !== null && !projectHub && (
                 <Empty
-                  title="Proje bulunamadı"
-                  detail="Proje silinmiş veya bağlantı hatalı olabilir. Projeler & Daireler › Proje portföyü üzerinden seçin."
+                  title="Proyecto no encontrado"
+                  detail="El proyecto pudo haber sido eliminado o el enlace es incorrecto. Selecciónelo en Proyectos y Unidades › Proyectos inmobiliarios."
                 />
               )}
             </>
           )}
           <footer className="e-footer">
             <span>
-              Bu platform, BŞ Falcon Group için örnek verilerle hazırlanmış özel bir yazılım demosudur.
+              Demostración de software preparada para EDIFICA con datos de ejemplo · Datos de demostración.
             </span>
             <button onClick={() => setOverlay("reset")}>
-              <RotateCcw size={13} /> Demoyu sıfırla
+              <RotateCcw size={13} /> Restablecer demo
             </button>
           </footer>
         </main>
@@ -480,13 +415,13 @@ function Shell({ section }: { section: string }) {
         onClose={() => setOverlay("")}
         title={
           overlay === "search"
-            ? "Çalışma alanında ara"
+            ? "Buscar en el centro de gestión"
             : overlay === "audit"
-              ? "İşlem geçmişi"
+              ? "Historial"
               : overlay === "reset"
-                ? "Demoyu sıfırla"
+                ? "Restablecer demo"
                 : overlay === "demo"
-                  ? "Bu bir ürün demosudur"
+                  ? "Esta es una demostración del producto"
                   : "Bildirim merkezi"
         }
       >
@@ -495,7 +430,7 @@ function Shell({ section }: { section: string }) {
             <SearchBox
               value={search}
               onChange={setSearch}
-              placeholder="Müşteri, daire, sözleşme no, firma…"
+              placeholder="Cliente, unidad, n.º de contrato, proveedor…"
             />
             <SearchResults
               query={search}
@@ -510,7 +445,7 @@ function Shell({ section }: { section: string }) {
         {overlay === "audit" && (
           <>
             <p className="drawer-intro">
-              Bu tarayıcıdaki değişikliklerin kaydı. Son 100 işlem saklanır.
+              Registro de cambios en este navegador. Se guardan las últimas 100 operaciones.
             </p>
             <AuditTrail items={state.audit} />
           </>
@@ -527,65 +462,46 @@ function Shell({ section }: { section: string }) {
         {overlay === "demo" && (
           <section className="acct-section demo-scope">
             <p className="drawer-intro">
-              Bu yönetim merkezi, BŞ Falcon Group için hazırlanmış bir ürün demosudur.
-              Ekrandaki tüm kişi, firma, sözleşme ve tutarlar kurgusaldır.
+              Este centro de gestión es una demostración preparada para EDIFICA. Todas las personas, empresas, contratos y montos en pantalla son ejemplos.
             </p>
             <ul className="confirm-list">
               <li>
-                <b>Kişi ve firma adları kurgusaldır.</b> Selin Yılmaz, Kuzey
-                Cephe Sistemleri gibi adlar örnek senaryo için uydurulmuştur;
-                gerçek BŞ Falcon müşterileri, çalışanları veya yüklenicileri
-                değildir. Telefon, e-posta ve kimlik bilgisi içermez.
+                <b>Datos verificados en fuentes públicas:</b> nombre, ciudad, inicio de operaciones (2024) y portafolio de EDIFICA; nombres, ubicaciones, tipologías, superficies, plazos de entrega, participantes y planes de pago publicados de Lofty City Hub, ALION Residence, V Tower del Lago y Business One; imágenes oficiales. Cada proyecto indica sus fuentes.
               </li>
               <li>
-                <b>Senaryo tarihi sabittir: 15 Kasım 2026.</b> Vade, gecikme ve
-                hatırlatmalar bu tarihe göre hesaplanır; sistem saatini
-                kullanmaz.
+                <b>Datos de demostración:</b> clientes, precios de lista y de venta, contratos, cuotas, cobros, facturas, proveedores, caja y avance de obra son ejemplos. La muestra de unidades de Lofty City Hub y V Tower del Lago es de ejemplo. No reflejan registros reales de EDIFICA.
               </li>
               <li>
-                <b>Resmî kaynaktan (bsfalcongroup.com) doğrulanan bilgiler:</b> şirket
-                bilgileri (2010'dan beri, 2022'de kurulan BŞ Falcon İnşaat ve Dış Ticaret Ltd. Şti.,
-                300'ü aşkın daire), 12 projelik portföy, Ağva ve Çengilli'nin konum, villa/akıllı ev
-                konsepti ve teslim hedefleri, Nergis Park Evleri'nin zemin + 7 kat, 35 daire + 3 dükkân
-                kurgusu, proje süreci adımları ve proje görselleri.
+                <b>Los nombres de personas y empresas son ficticios.</b> No contienen documentos de identidad, teléfonos ni correos reales.
               </li>
               <li>
-                <b>Bunların dışındaki her şey temsilidir.</b> Çengilli villa adedi, metrekareler,
-                liste ve satış fiyatları, satış/rezerve adetleri, tahsilatlar, kasa, bütçe, hakediş,
-                barter tutarları, arsa sahibi paylaşımı ve güvence belgeleri demo varsayımıdır.
-                Nergis Park Evleri'nin durumu resmî kaynakta belirtilmediğinden kat karşılığı demo
-                senaryosu olarak kullanılır.
+                <b>La fecha de corte del escenario es fija: 15 de noviembre de 2026.</b> Vencimientos, mora y recordatorios se calculan con esa fecha, no con el reloj del sistema.
               </li>
               <li>
-                <b>Veriler yalnızca bu tarayıcıda saklanır.</b> Sunucu
-                veritabanı yoktur; başka cihaz veya kullanıcı aynı kayıtları
-                görmez. Tarayıcı verisi silinirse kayıtlar kaybolur.
+                <b>Moneda:</b> los montos se registran en USD. La vista en guaraníes usa solo el tipo de cambio de referencia definido en Configuración; no hay conversión automática.
               </li>
               <li>
-                <b>Kullanıcı girişi ve yetkilendirme yoktur.</b> Giriş ekranı
-                şifresizdir; onaylar tek bir demo yöneticisi adına kaydedilir.
+                <b>Facturación:</b> registro interno del estado de cada comprobante. No emite facturas electrónicas ni se conecta con SIFEN/SET.
               </li>
               <li>
-                <b>Belge arşivi demo amaçlıdır.</b> Yüklenen dosyalar yalnızca
-                bu tarayıcıda tutulur; kurumsal arşiv, yedekleme veya paylaşım
-                yoktur. Sistem belgeleri kayıtlardan anlık üretilir ve hukuki
-                metin değildir.
+                <b>Los datos se guardan solo en este navegador.</b> No hay base de datos en servidor; otro dispositivo o usuario no ve los mismos registros.
               </li>
               <li>
-                <b>Dış gönderim yoktur.</b> SMS, e-posta, banka veya muhasebe
-                entegrasyonu bulunmaz.
+                <b>No hay inicio de sesión ni permisos de usuario.</b> Las aprobaciones se registran a nombre de un único usuario de demostración.
+              </li>
+              <li>
+                <b>No hay envíos externos.</b> No hay integración con SMS, correo, WhatsApp, bancos, contabilidad, CRM ni facturación electrónica.
               </li>
             </ul>
             <p className="muted">
-              Gerçek kullanım için sunucu veritabanı, kullanıcı/rol yönetimi,
-              denetim izi ve yedekleme ayrıca kurulmalıdır.
+              Para uso real se requiere instalar base de datos en servidor, gestión de usuarios y roles, auditoría y respaldos.
             </p>
             <div className="form-actions">
               <button className="btn" onClick={() => setOverlay("reset")}>
-                Demoyu sıfırla
+                Restablecer demo
               </button>
               <button className="btn primary" onClick={() => setOverlay("")}>
-                Anladım
+                Entendido
               </button>
             </div>
           </section>
@@ -593,12 +509,11 @@ function Shell({ section }: { section: string }) {
         {overlay === "reset" && (
           <>
             <p className="drawer-intro">
-              Kaydettiğiniz tahsilatlar, ödeme işlemleri, notlar ve düzenlemeler
-              kaldırılarak başlangıç verisine dönülür.
+              Se eliminan los cobros, pagos, facturas, notas y cambios registrados y se vuelve a los datos iniciales.
             </p>
             <div className="form-actions">
               <button className="btn" onClick={() => setOverlay("")}>
-                Vazgeç
+                Cancelar
               </button>
               <button
                 className="btn primary"
@@ -607,7 +522,7 @@ function Shell({ section }: { section: string }) {
                   setOverlay("");
                 }}
               >
-                Başlangıca dön
+                Volver al inicio
               </button>
             </div>
           </>

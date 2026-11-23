@@ -34,18 +34,18 @@ import {
 import { money, date } from "@/lib/data";
 
 const TABS = [
-  "Ödeme planı",
+  "Plan de pagos",
   "Tahsilatlar",
-  "Sözleşme",
+  "Contrato",
   "Belgeler",
-  "İşlem geçmişi",
+  "Historial",
 ] as const;
 const TONE: Record<string, string> = {
-  Gecikti: "red",
-  Yaklaşıyor: "amber",
-  "Kısmen ödendi": "info",
-  "Gelecek dönem": "neutral",
-  Ödendi: "green",
+  "Vencida": "red",
+  "Próxima": "amber",
+  "Pago parcial": "info",
+  "Futura": "neutral",
+  "Pagada": "green",
 };
 
 export default function CustomerPanel({
@@ -60,7 +60,7 @@ export default function CustomerPanel({
 }) {
   const { state, act } = useApp();
   const c = customerList(state).find((c) => c.id === id);
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Ödeme planı");
+  const [tab, setTab] = useState<(typeof TABS)[number]>("Plan de pagos");
   const [paying, setPaying] = useState<string>(focus ?? "");
   const [justPaid, setJustPaid] = useState<{
     amount: number;
@@ -77,21 +77,21 @@ export default function CustomerPanel({
   const rows = paymentRows(state).filter((r) => r.customerId === c.id);
   const open = rows.filter((r) => r.remaining > 0);
   // Ödeme planı: varsayılan görünümde gecikenler + sıradaki 3 açık ödeme; işlem yalnızca gecikenlerde ve sıradaki ödemede
-  const upcomingOpen = open.filter((r) => r.status !== "Gecikti");
+  const upcomingOpen = open.filter((r) => r.status !== "Vencida");
   const actionable = new Set([
-    ...open.filter((r) => r.status === "Gecikti").map((r) => r.id),
+    ...open.filter((r) => r.status === "Vencida").map((r) => r.id),
     ...(upcomingOpen[0] ? [upcomingOpen[0].id] : []),
   ]);
   const focusedIds = new Set([
-    ...open.filter((r) => r.status === "Gecikti").map((r) => r.id),
+    ...open.filter((r) => r.status === "Vencida").map((r) => r.id),
     ...upcomingOpen.slice(0, 3).map((r) => r.id),
   ]);
   const paidCount = rows.filter((r) => r.remaining === 0).length;
-  const late = open.filter((r) => r.status === "Gecikti");
+  const late = open.filter((r) => r.status === "Vencida");
   const nextOpen = late[0] ?? open[0];
   const resolve = (key: string): PaymentRow | undefined =>
     key === "deposit"
-      ? rows.find((r) => r.kind === "Peşinat" && r.remaining > 0)
+      ? rows.find((r) => r.kind === "Anticipo" && r.remaining > 0)
       : key === "next"
         ? nextOpen
         : rows.find((r) => r.id === key);
@@ -112,7 +112,7 @@ export default function CustomerPanel({
     reference: string,
   ) {
     const ok =
-      row.kind === "Peşinat"
+      row.kind === "Anticipo"
         ? act({ type: "deposit-receipt", id: c!.id, amount })
         : act({
             type: "receipt",
@@ -125,7 +125,7 @@ export default function CustomerPanel({
       // Makbuz no, applyAction ile aynı kuralla: THS-<sıra>
       setJustPaid({
         amount,
-        receipt: row.kind === "Peşinat" ? undefined : nextReceiptId(state),
+        receipt: row.kind === "Anticipo" ? undefined : nextReceiptId(state),
       });
       setPaying("");
     }
@@ -141,58 +141,58 @@ export default function CustomerPanel({
     >
       <dl className="file-summary">
         <div>
-          <dt>Müşteri</dt>
+          <dt>Cliente</dt>
           <dd>
             {c.name}
             <small>{contract.number}</small>
           </dd>
         </div>
         <div>
-          <dt>Daire</dt>
+          <dt>Unidad</dt>
           <dd>
             {u ? unitShort(c.id) : c.unit} · {u?.type}
             <small>
-              {u?.floorLabel} · brüt {u?.gross} m² · {u?.facade} · kod {c.unit}
+              {u?.floorLabel} · {u?.gross} m² · {u?.facade} · código {c.unit}
             </small>
           </dd>
         </div>
         <div>
-          <dt>Satış durumu</dt>
+          <dt>Estado de la venta</dt>
           <dd>
             <Badge
               tone={
                 late.length
                   ? "red"
-                  : contract.status === "Tamamlandı"
+                  : contract.status === "Finalizado"
                     ? "info"
                     : "green"
               }
             >
               {late.length
-                ? "Ödemesi gecikmiş"
-                : contract.status === "Tamamlandı"
-                  ? "Tamamlandı"
-                  : "Aktif sözleşme"}
+                ? "Con cuotas vencidas"
+                : contract.status === "Finalizado"
+                  ? "Finalizado"
+                  : "Contrato activo"}
             </Badge>
           </dd>
         </div>
         <div>
-          <dt>Toplam bedel</dt>
+          <dt>Precio total</dt>
           <dd className="num">{money(c.price)}</dd>
         </div>
         <div>
-          <dt>Ödenen</dt>
+          <dt>Pagado</dt>
           <dd className="num">
             {money(acc.collected)}
             <Progress value={ratio} />
           </dd>
         </div>
         <div>
-          <dt>Kalan</dt>
+          <dt>Saldo</dt>
           <dd className="num">{money(acc.balance)}</dd>
         </div>
         <div className={late.length ? "alert" : ""}>
-          <dt>{late.length ? "Geciken" : "Sonraki ödeme"}</dt>
+          <dt>{late.length ? "Vencido" : "Próximo pago"}</dt>
           <dd className="num">
             {late.length
               ? money(lateTotal)
@@ -201,10 +201,10 @@ export default function CustomerPanel({
                 : "—"}
             <small>
               {late.length
-                ? `${late.length} ödeme · en eski ${date(late[0].due)}`
+                ? `${late.length} pagos · el más antiguo ${date(late[0].due)}`
                 : nextOpen
                   ? `${nextOpen.label} · ${date(nextOpen.due)}`
-                  : "Açık ödeme yok"}
+                  : "Sin pagos pendientes"}
             </small>
           </dd>
         </div>
@@ -214,7 +214,7 @@ export default function CustomerPanel({
               className="btn primary"
               onClick={() => setPaying(paying ? "" : "next")}
             >
-              <Wallet size={15} /> Tahsilat kaydet
+              <Wallet size={15} /> Registrar cobro
             </button>
           )}
         </div>
@@ -224,9 +224,9 @@ export default function CustomerPanel({
         <div className="receipt-done" role="status">
           <CircleCheck size={18} />
           <div>
-            <b>{money(justPaid.amount)} tahsil edildi</b>
+            <b>{money(justPaid.amount)} cobrado</b>
             <small>
-              Kalan bakiye {money(acc.balance)} · proje kasasına{" "}
+              Saldo pendiente {money(acc.balance)} · ingresaron a caja{" "}
               {money(justPaid.amount)} girdi
             </small>
           </div>
@@ -236,7 +236,7 @@ export default function CustomerPanel({
               href={`/belge/?tur=makbuz&id=${justPaid.receipt}`}
               target="_blank"
             >
-              <Printer size={14} /> Makbuz
+              <Printer size={14} /> Recibo
             </Link>
           )}
         </div>
@@ -244,10 +244,10 @@ export default function CustomerPanel({
       {target && (
         <ReceiptForm
           key={target.id}
-          label={`${target.label} · vade ${date(target.due)}`}
+          label={`${target.label} · vence ${date(target.due)}`}
           remaining={target.remaining}
           balance={acc.balance}
-          simple={target.kind === "Peşinat"}
+          simple={target.kind === "Anticipo"}
           onCancel={() => setPaying("")}
           onSubmit={(amount, method, reference) =>
             collect(target, amount, method, reference)
@@ -269,23 +269,23 @@ export default function CustomerPanel({
         ))}
       </div>
 
-      {tab === "Ödeme planı" && (
+      {tab === "Plan de pagos" && (
         <section className="acct-section">
           {priorPaid > 0 && (
             <p className="muted">
-              Önceki dönemde ödenen: peşinat ve ilk {c.paidMonths} taksit ·{" "}
+              Pagado antes de la implementación: anticipo y primeras {c.paidMonths} cuotas ·{" "}
               {money(priorPaid)}
             </p>
           )}
           <div className="plan-head">
             <span>
               {fullPlan
-                ? `Tüm plan · ${rows.length} ödeme`
+                ? `Plan completo · ${rows.length} pagos`
                 : late.length
-                  ? `${late.length} geciken ve sıradaki ödemeler`
-                  : "Sıradaki ödemeler"}
+                  ? `${late.length} vencidos y próximos pagos`
+                  : "Próximos pagos"}
               <small>
-                {paidCount} ödeme kapandı · {open.length} açık ödeme · kalan{" "}
+                {paidCount} pagos cancelados · {open.length} pagos pendientes · saldo{" "}
                 {money(acc.balance)}
               </small>
             </span>
@@ -294,20 +294,20 @@ export default function CustomerPanel({
               onClick={() => setFullPlan(!fullPlan)}
             >
               {fullPlan
-                ? "Yalnızca sıradakiler"
-                : `Tüm planı göster (${rows.length})`}
+                ? "Solo los próximos"
+                : `Ver plan completo (${rows.length})`}
             </button>
           </div>
           <div className="e-table-wrap drawer-table">
             <table>
               <thead>
                 <tr>
-                  <th>Ödeme</th>
-                  <th>Vade</th>
-                  <th className="numeric">Tutar</th>
-                  <th className="numeric">Kalan</th>
-                  <th>Durum</th>
-                  <th aria-label="İşlem" />
+                  <th>Pago</th>
+                  <th>Vencimiento</th>
+                  <th className="numeric">Monto</th>
+                  <th className="numeric">Saldo</th>
+                  <th>Estado</th>
+                  <th aria-label="Acción" />
                 </tr>
               </thead>
               <tbody>
@@ -317,7 +317,7 @@ export default function CustomerPanel({
                 ).map((r) => (
                   <tr
                     key={r.id}
-                    className={`${r.kind !== "Taksit" ? "acct-interim" : ""} ${r.remaining === 0 ? "row-paid" : ""}`}
+                    className={`${r.kind !== "Cuota" ? "acct-interim" : ""} ${r.remaining === 0 ? "row-paid" : ""}`}
                   >
                     <td>
                       <b>{r.label}</b>
@@ -338,7 +338,7 @@ export default function CustomerPanel({
                           }}
                         >
                           <input
-                            aria-label="Yeni vade"
+                            aria-label="Nuevo vencimiento"
                             name="date"
                             type="date"
                             min={SNAPSHOT}
@@ -346,7 +346,7 @@ export default function CustomerPanel({
                             required
                           />
                           <button className="btn compact" type="submit">
-                            Kaydet
+                            Guardar
                           </button>
                         </form>
                       )}
@@ -368,19 +368,19 @@ export default function CustomerPanel({
                               setPaying(
                                 r.id === "deposit"
                                   ? "deposit"
-                                  : r.kind === "Peşinat"
+                                  : r.kind === "Anticipo"
                                     ? "deposit"
                                     : r.id,
                               )
                             }
                           >
-                            Tahsil et
+                            Cobrar
                           </button>
                           {r.installmentId && (
                             <button
                               className="icon-button"
-                              aria-label={`${r.label} vadesini değiştir`}
-                              title="Vadeyi değiştir"
+                              aria-label={`Cambiar vencimiento de ${r.label}`}
+                              title="Cambiar vencimiento"
                               onClick={() =>
                                 setReschedule(reschedule === r.id ? "" : r.id)
                               }
@@ -403,7 +403,7 @@ export default function CustomerPanel({
         <section className="acct-section">
           <div className="file-actions">
             <span className="muted">
-              Sözleşme borcu ve tüm tahsilatlar tek ekstrede; son satır kalan
+              Cargo del contrato y todos los cobros en un solo estado de cuenta; la última línea es el saldo
               bakiyedir.
             </span>
             <span className="spacer" />
@@ -412,18 +412,18 @@ export default function CustomerPanel({
               href={`/belge/?tur=ekstre&id=${c.id}`}
               target="_blank"
             >
-              <Printer size={14} /> Cari ekstre
+              <Printer size={14} /> Estado de cuenta
             </Link>
           </div>
           <div className="e-table-wrap drawer-table">
             <table>
               <thead>
                 <tr>
-                  <th>Tarih</th>
+                  <th>Fecha</th>
                   <th>Hareket</th>
-                  <th className="numeric">Tutar</th>
-                  <th className="numeric">Bakiye</th>
-                  <th aria-label="Makbuz" />
+                  <th className="numeric">Monto</th>
+                  <th className="numeric">Saldo</th>
+                  <th aria-label="Recibo" />
                 </tr>
               </thead>
               <tbody>
@@ -438,7 +438,7 @@ export default function CustomerPanel({
                       {e.debit ? (
                         money(e.debit)
                       ) : e.credit < 0 ? (
-                        <span className="negative">+{money(-e.credit)} iptal</span>
+                        <span className="negative">+{money(-e.credit)} anulado</span>
                       ) : (
                         <span className="positive">−{money(e.credit)}</span>
                       )}
@@ -453,7 +453,7 @@ export default function CustomerPanel({
                           href={`/belge/?tur=makbuz&id=${e.ref}`}
                           target="_blank"
                           aria-label={`${e.ref} makbuzu`}
-                          title="Makbuz"
+                          title="Recibo"
                         >
                           <Printer size={14} />
                         </Link>
@@ -463,14 +463,14 @@ export default function CustomerPanel({
                           className="text-button"
                           onClick={() =>
                             setReversing({
-                              kind: e.kind === "Peşinat" ? "deposit" : "receipt",
+                              kind: e.kind === "Anticipo" ? "deposit" : "receipt",
                               id: e.sourceId!,
                               ref: e.ref,
                             })
                           }
-                          title="Hatalı tahsilatı iptal et (kayıt silinmez)"
+                          title="Anular cobro erróneo (el registro no se elimina)"
                         >
-                          İptal et
+                          Anular
                         </button>
                       )}
                     </td>
@@ -495,54 +495,52 @@ export default function CustomerPanel({
                   setReversing(null);
               }}
             >
-              <h3>{reversing.ref} tahsilatını iptal et</h3>
+              <h3>{reversing.ref} anular cobro</h3>
               <p className="muted">
-                Kayıt silinmez: tahsilat “iptal edildi” olarak işaretlenir, tutar bakiyeye geri
-                eklenir, cari ekstrede ve işlem geçmişinde iptal satırı görünür. Doğru tutar
-                ardından yeni tahsilat olarak girilir.
+                El registro no se elimina: el cobro se marca como “anulado”, el monto vuelve al saldo y la anulación figura en el estado de cuenta y en el historial. Luego se registra el cobro correcto.
               </p>
               <label className="form-label">
-                İptal gerekçesi
-                <input name="reason" required minLength={5} maxLength={140} placeholder="Ör. Yanlış taksite işlendi" />
+                Motivo de la anulación
+                <input name="reason" required minLength={5} maxLength={140} placeholder="Ej.: imputado a otra cuota" />
               </label>
               <div className="form-actions">
                 <button type="button" className="btn" onClick={() => setReversing(null)}>
-                  Vazgeç
+                  Cancelar
                 </button>
-                <button className="btn danger">Tahsilatı iptal et</button>
+                <button className="btn danger">Anular cobro</button>
               </div>
             </form>
           )}
         </section>
       )}
 
-      {tab === "Sözleşme" && (
+      {tab === "Contrato" && (
         <section className="acct-section">
           <dl className="file-summary cols-3">
             <div>
-              <dt>Sözleşme no</dt>
+              <dt>N.º de contrato</dt>
               <dd>{contract.number}</dd>
             </div>
             <div>
-              <dt>İmza tarihi</dt>
+              <dt>Fecha de firma</dt>
               <dd>{contract.signedAt ? date(contract.signedAt) : "—"}</dd>
             </div>
             <div>
-              <dt>Ödeme planı</dt>
+              <dt>Plan de pagos</dt>
               <dd>{contract.planLabel}</dd>
             </div>
             <div>
-              <dt>Bedel</dt>
+              <dt>Precio</dt>
               <dd className="num">{money(c.price)}</dd>
             </div>
             <div>
-              <dt>Liste fiyatı (temsili)</dt>
+              <dt>Precio de lista (ejemplo)</dt>
               <dd className="num">
                 {contract.listPrice ? money(contract.listPrice) : "—"}
               </dd>
             </div>
             <div>
-              <dt>İndirim</dt>
+              <dt>Descuento</dt>
               <dd className="num">
                 {contract.discount > 0 ? money(contract.discount) : "—"}
               </dd>
@@ -554,27 +552,27 @@ export default function CustomerPanel({
               href={`/belge/?tur=sozlesme&id=${c.id}`}
               target="_blank"
             >
-              <Printer size={14} /> Sözleşme özeti
+              <Printer size={14} /> Resumen del contrato
             </Link>
             <Link
               className="btn compact"
               href={`/belge/?tur=plan&id=${c.id}`}
               target="_blank"
             >
-              <Printer size={14} /> Ödeme planı
+              <Printer size={14} /> Plan de pagos
             </Link>
             <span className="spacer" />
             <button
               className="btn compact ghost"
               onClick={() => setPanel(panel === "edit" ? "" : "edit")}
             >
-              <PenLine size={14} /> Müşteri bilgileri
+              <PenLine size={14} /> Datos del cliente
             </button>
             <button
               className="btn compact ghost"
               onClick={() => setPanel(panel === "transfer" ? "" : "transfer")}
             >
-              <ArrowRightLeft size={14} /> Devir
+              <ArrowRightLeft size={14} /> Cesión
             </button>
           </div>
           {panel === "transfer" && (
@@ -594,10 +592,9 @@ export default function CustomerPanel({
                   setPanel("");
               }}
             >
-              <h3>Sözleşme devri</h3>
+              <h3>Cesión del contrato</h3>
               <p className="muted">
-                Bakiye ve ödeme planı aynen devralana geçer. Yalnızca kurgusal
-                ad kullanın.
+                El saldo y el plan de pagos pasan al cesionario sin cambios. Use solo nombres ficticios.
               </p>
               <div className="form-grid">
                 <label>
@@ -606,15 +603,15 @@ export default function CustomerPanel({
                     name="name"
                     required
                     maxLength={80}
-                    placeholder="Yeni malikin adı soyadı"
+                    placeholder="Nombre y apellido del cesionario"
                   />
                 </label>
                 <label>
-                  Not
+                  Nota
                   <input
                     name="note"
                     maxLength={120}
-                    placeholder="Örn. noter devir protokolü"
+                    placeholder="Ej.: escritura de cesión"
                   />
                 </label>
               </div>
@@ -624,10 +621,10 @@ export default function CustomerPanel({
                   className="btn"
                   onClick={() => setPanel("")}
                 >
-                  Vazgeç
+                  Cancelar
                 </button>
                 <button className="btn primary" type="submit">
-                  Devri kaydet
+                  Registrar cesión
                 </button>
               </div>
             </form>
@@ -655,8 +652,8 @@ export default function CustomerPanel({
                   setPanel("");
               }}
             >
-              <h3>Müşteri bilgileri</h3>
-              <p className="muted">Yalnızca kurgusal bilgi girin.</p>
+              <h3>Datos del cliente</h3>
+              <p className="muted">Ingrese solo datos ficticios.</p>
               <div className="form-grid">
                 <label>
                   Ad soyad
@@ -668,25 +665,25 @@ export default function CustomerPanel({
                   />
                 </label>
                 <label>
-                  Satış sorumlusu
-                  <select name="owner" defaultValue={c.owner ?? "Satış ekibi"}>
-                    <option>Satış ekibi</option>
+                  Asesor comercial
+                  <select name="owner" defaultValue={c.owner ?? "Equipo comercial"}>
+                    <option>Equipo comercial</option>
                     {ADVISORS.map((a) => (
                       <option key={a}>{a}</option>
                     ))}
                   </select>
                 </label>
                 <label>
-                  Telefon
+                  Teléfono
                   <input
                     name="phone"
                     defaultValue={c.phone ?? ""}
-                    placeholder="Temsili telefon"
+                    placeholder="Teléfono de ejemplo"
                     maxLength={30}
                   />
                 </label>
                 <label>
-                  E-posta
+                  Correo electrónico
                   <input
                     name="email"
                     type="email"
@@ -695,7 +692,7 @@ export default function CustomerPanel({
                   />
                 </label>
                 <label className="full">
-                  Not
+                  Nota
                   <textarea
                     name="note"
                     defaultValue={c.note ?? ""}
@@ -709,15 +706,15 @@ export default function CustomerPanel({
                   className="btn"
                   onClick={() => setPanel("")}
                 >
-                  Vazgeç
+                  Cancelar
                 </button>
                 <button className="btn primary" type="submit">
-                  <Check size={15} /> Kaydet
+                  <Check size={15} /> Guardar
                 </button>
               </div>
             </form>
           )}
-          <h3 className="subheading">Sözleşme geçmişi</h3>
+          <h3 className="subheading">Historial del contrato</h3>
           <ol className="acct-history">
             {contract.history.map((h, n) => (
               <li key={n}>
@@ -738,17 +735,17 @@ export default function CustomerPanel({
         <RecordDocuments
           records={[c.id, `unit:${c.id}`]}
           project={c.project}
-          uploadHref={`/arsiv?record=${c.id}&project=${c.project}`}
+          uploadHref={`/documentos?record=${c.id}&project=${c.project}`}
         />
       )}
 
-      {tab === "İşlem geçmişi" && (
+      {tab === "Historial" && (
         <section className="acct-section">
           <ol className="file-history">
             {fileHistory(state, c.id).map((h, n) => (
               <li
                 key={n}
-                className={`k-${h.kind === "Sözleşme" ? "contract" : h.kind === "Değişiklik" ? "change" : "pay"}`}
+                className={`k-${h.kind === "Contrato" ? "contract" : h.kind === "Cambio" ? "change" : "pay"}`}
               >
                 <span className="fh-date">{date(h.date)}</span>
                 <span className="fh-dot" />
@@ -786,7 +783,7 @@ function ReceiptForm({
   onSubmit: (amount: number, method: string, reference: string) => void;
 }) {
   const [amount, setAmount] = useState(String(remaining));
-  const [method, setMethod] = useState("Banka havalesi");
+  const [method, setMethod] = useState("Transferencia bancaria");
   const [reference, setReference] = useState("");
   // Çift tıklama koruması: form bir kez gönderildikten sonra kilitlenir.
   const sent = useRef(false);
@@ -811,14 +808,14 @@ function ReceiptForm({
       }}
     >
       <div className="flex-between">
-        <h3>Tahsilat · {label}</h3>
+        <h3>Cobro · {label}</h3>
         <button type="button" className="text-button" onClick={onCancel}>
-          Vazgeç
+          Cancelar
         </button>
       </div>
       <div className="form-grid">
         <label>
-          Tahsil edilen tutar (TL)
+          Monto cobrado (USD)
           <input
             type="number"
             min="0.01"
@@ -832,21 +829,21 @@ function ReceiptForm({
         </label>
         {!simple && (
           <label>
-            Ödeme yöntemi
+            Medio de pago
             <select value={method} onChange={(e) => setMethod(e.target.value)}>
-              <option>Banka havalesi</option>
-              <option>Nakit</option>
-              <option>Kredi kartı</option>
+              <option>Transferencia bancaria</option>
+              <option>Efectivo</option>
+              <option>Tarjeta de crédito</option>
             </select>
           </label>
         )}
         {!simple && (
           <label className="full">
-            Dekont / açıklama
+            Comprobante / referencia
             <input
               value={reference}
               onChange={(e) => setReference(e.target.value)}
-              placeholder="Örn. HVL-261115-043 · Kasım taksiti"
+              placeholder="Ej.: TRF-261115-043 · cuota de noviembre"
               required
               maxLength={120}
             />
@@ -855,31 +852,30 @@ function ReceiptForm({
       </div>
       <dl className="receipt-effect" aria-live="polite">
         <div>
-          <dt>Bu ödemede kalan</dt>
+          <dt>Saldo de esta cuota</dt>
           <dd className="num">{valid ? money(r2(remaining - n)) : "—"}</dd>
         </div>
         <div>
-          <dt>Müşteri bakiyesi</dt>
+          <dt>Saldo del cliente</dt>
           <dd className="num">
             {valid ? `${money(balance)} → ${money(r2(balance - n))}` : "—"}
           </dd>
         </div>
         <div>
-          <dt>Kasa etkisi</dt>
+          <dt>Impacto en caja</dt>
           <dd className="num positive">{valid ? `+${money(n)}` : "—"}</dd>
         </div>
       </dl>
       {!valid && amount !== "" && (
         <p className="form-error">
-          Tutar 0’dan büyük ve kalan {money(remaining)} tutarından küçük ya da
-          eşit olmalı.
+          El monto debe ser mayor que 0 y menor o igual al saldo de {money(remaining)} .
         </p>
       )}
       <div className="form-actions">
         <small className="muted">
           {valid && n < remaining
-            ? "Kısmi tahsilat: kalan tutar aynı vadede açık kalır."
-            : "Ödeme tamamen kapanır."}
+            ? "Cobro parcial: el saldo queda pendiente en el mismo vencimiento."
+            : "La cuota queda cancelada."}
         </small>
         <button
           className="btn primary"
@@ -887,7 +883,7 @@ function ReceiptForm({
           disabled={!valid || (!simple && !reference.trim())}
         >
           <Check size={15} />{" "}
-          {valid ? `${money(n)} tahsilatı kaydet` : "Tahsilatı kaydet"}
+          {valid ? `Registrar cobro de ${money(n)}` : "Registrar cobro"}
         </button>
       </div>
     </form>

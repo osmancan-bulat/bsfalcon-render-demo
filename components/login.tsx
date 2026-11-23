@@ -4,13 +4,13 @@ import { ArrowRight, Info } from "lucide-react";
 import { Logo } from "./enterprise/shared";
 import { useApp } from "./enterprise/context";
 import { projects } from "@/lib/enterprise";
+import { COMPANY } from "@/lib/company";
 
-// Tek giriş: BŞ Falcon Yönetim Merkezi → şirket genel bakışı. Proje seçimi içeride yapılır.
-// Demo ortamında kimlik doğrulama yoktur; kullanıcı adı/şifre alanı veya sahte oturum gösterilmez.
-// Proje listesi katalogdan gelir: yeni projeler burada da otomatik görünür.
+// Entrada única: Centro de Gestión EDIFICA → resumen ejecutivo. El proyecto se elige adentro.
+// La demo no tiene autenticación: no se muestran campos de usuario/contraseña ni sesiones simuladas.
 export default function Login() {
-  useApp(); // katalog bu tarayıcıdaki kayıtlarla eşitlenir
-  const active = projects.filter((p) => p.status === "Aktif");
+  useApp(); // sincroniza el catálogo con los registros de este navegador
+  const active = projects.filter((p) => p.status === "Activo");
   return (
     <main className="login-v3">
       <section className="lv-visual">
@@ -18,80 +18,74 @@ export default function Login() {
           <Logo />
         </div>
         <div className="lv-story">
-          <span className="eyebrow">BŞ FALCON GROUP · YÖNETİM MERKEZİ</span>
+          <span className="eyebrow">EDIFICA · CENTRO DE GESTIÓN</span>
           <h1>
-            Güçlü temeller, yüksek yapılar;
+            Contratos, cuotas y cobranza
             <br />
-            her projenin finansı tek merkezde.
+            de cada proyecto, en un solo lugar.
           </h1>
           <p>
-            Satış ve tahsilattan kat karşılığı paylaşımına, şantiye giderinden
-            hakediş ve rapora; BŞ Falcon Group projeleri tek merkezde.
+            Gestión posventa para desarrolladoras: planes de pago, cobros mensuales, saldos pendientes, facturación e
+            informes financieros de {COMPANY.name}, {COMPANY.city}.
           </p>
           <ul className="lv-facts">
             <li>
-              <b>2010</b>
-              <span>İstanbul'da sektör deneyimi</span>
+              <b>{COMPANY.projects}</b>
+              <span>Proyectos en desarrollo</span>
             </li>
             <li>
-              <b>300+</b>
-              <span>İmza atılan daire</span>
+              <b>{COMPANY.since}</b>
+              <span>Inicio de operaciones</span>
             </li>
             <li>
-              <b>{active.length}</b>
-              <span>Devam eden proje</span>
+              <b>US$ · ₲</b>
+              <span>Dólares y guaraníes</span>
             </li>
           </ul>
         </div>
-        <ol className="lv-projects" aria-label="Devam eden projeler">
+        <ol className="lv-projects" aria-label="Proyectos">
           {active.slice(0, 4).map((p) => (
             <li key={p.id}>
-              <i className={p.id === "cengilli" ? "bronze" : ""} />
+              <i className={p.id === "alion" ? "bronze" : ""} />
               {p.name} {p.location && <small>{p.location}</small>}
             </li>
           ))}
-          {active.length > 4 && <li>+{active.length - 4} proje</li>}
+          {active.length > 4 && <li>+{active.length - 4} proyectos</li>}
         </ol>
       </section>
 
       <section className="lv-form">
         <div className="lv-form-inner">
           <div className="product-logo">
-            BŞ Falcon<span>·</span>Yönetim Merkezi
+            EDIFICA<span>·</span>Centro de Gestión
           </div>
-          <h2>BŞ Falcon Yönetim Merkezi</h2>
+          <h2>Centro de Gestión EDIFICA</h2>
           <p className="lv-lead">
-            Şirket genel bakışıyla başlayın; projelere içeriden, çalışma
-            kapsamı seçicisiyle geçin.
+            Comience por el resumen ejecutivo y cambie de proyecto con el selector de alcance.
           </p>
-          <Link href="/genel-bakis" className="lv-enter">
-            Yönetim merkezine gir <ArrowRight size={18} />
+          <Link href="/resumen" className="lv-enter">
+            Ingresar al Centro de Gestión <ArrowRight size={18} />
           </Link>
           <dl className="lv-scope">
             <div>
-              <dt>Şirket</dt>
-              <dd>BŞ Falcon Group</dd>
+              <dt>Empresa</dt>
+              <dd>EDIFICA Desarrollos Inmobiliarios</dd>
             </div>
             <div>
-              <dt>Projeler</dt>
-              <dd>
-                {active.length} aktif
-                {projects.length > active.length
-                  ? ` · ${projects.length - active.length} tamamlanan / arşiv`
-                  : ""}
-              </dd>
+              <dt>Proyectos</dt>
+              <dd>{projects.map((p) => p.name).join(" · ")}</dd>
             </div>
           </dl>
           <p className="lv-disclaimer">
             <Info size={15} />
             <span>
-              Bu platform, BŞ Falcon Group için örnek verilerle hazırlanmış özel bir yazılım demosudur. Kullanıcı girişi ve yetkilendirme bu sürümde yoktur;
-              kişi ve firma adları örnektir; satış, tahsilat, kat karşılığı paylaşımı ve finans tutarları TEMSİLİ DEMO
-              VERİSİDİR. Kayıtlar yalnızca bu tarayıcıda saklanır.
+              Demostración de software preparada para EDIFICA con <b>datos de demostración</b>. No hay inicio de sesión ni
+              permisos de usuario en esta versión. Clientes, precios, contratos, cobros y facturas son ejemplos; los
+              registros se guardan solo en este navegador. No reemplaza al CRM de ventas: se enfoca en la gestión posterior a la venta.
             </span>
           </p>
         </div>
-        <footer>BŞ Falcon Group için hazırlanmış özel yazılım demosu · Kartal / İstanbul</footer>
+        <footer>Demostración preparada para EDIFICA · Ciudad del Este, Paraguay</footer>
       </section>
     </main>
   );

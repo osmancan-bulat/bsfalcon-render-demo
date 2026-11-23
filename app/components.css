@@ -66,7 +66,7 @@
   padding: 8px 10px;
   border-radius: var(--radius-md);
   background: #fbfaf6;
-  box-shadow: inset 0 0 0 1px rgb(168 131 79 / 0.25);
+  box-shadow: inset 0 0 0 1px rgb(198 164 69 / 0.25);
 }
 .e-brand .official-logo {
   display: block;
@@ -110,11 +110,11 @@
   height: 8px;
   border-radius: 50%;
   background: var(--bronze-500);
-  box-shadow: 0 0 0 3px rgb(168 131 79 / 0.2);
+  box-shadow: 0 0 0 3px rgb(198 164 69 / 0.2);
 }
 .e-nav-label {
   margin: 16px 10px 6px;
-  color: rgb(157 181 170 / 0.7);
+  color: rgb(198 164 69 / 0.7);
   font-size: var(--fs-micro);
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -129,7 +129,7 @@
   min-height: 34px;
   padding: 7px 10px;
   border-radius: var(--radius-sm);
-  color: #c9d6cf;
+  color: #d6d6d1;
   font-size: var(--fs-sm);
   font-weight: 500;
 }
@@ -215,7 +215,7 @@
   width: 100%;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
-  color: #c9d6cf;
+  color: #d6d6d1;
   font-size: var(--fs-sm);
 }
 .e-history:hover {
@@ -284,7 +284,7 @@
 }
 .e-powered {
   padding: 8px 10px 0;
-  color: rgb(157 181 170 / 0.55);
+  color: rgb(198 164 69 / 0.55);
   font-size: var(--fs-micro);
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -777,7 +777,7 @@
 }
 .e-search:focus-within {
   border-color: var(--forest-500);
-  box-shadow: 0 0 0 3px rgb(74 117 100 / 0.14);
+  box-shadow: 0 0 0 3px rgb(77 77 77 / 0.14);
 }
 .e-search input {
   flex: 1;
@@ -979,7 +979,7 @@
   width: min(880px, 100vw);
 }
 .e-drawer::backdrop {
-  background: rgb(15 38 32 / 0.32);
+  background: rgb(8 8 8 / 0.32);
   backdrop-filter: blur(2px);
 }
 @keyframes drawer-in {
@@ -1094,7 +1094,7 @@
 .enterprise-app textarea:focus {
   border-color: var(--forest-500);
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(74 117 100 / 0.14);
+  box-shadow: 0 0 0 3px rgb(77 77 77 / 0.14);
 }
 .enterprise-app input[type="checkbox"],
 .enterprise-app input[type="radio"] {
@@ -1248,7 +1248,7 @@
     inset: 0;
     z-index: 55;
     border: 0;
-    background: rgb(15 38 32 / 0.4);
+    background: rgb(8 8 8 / 0.4);
   }
   .e-topbar {
     padding: 0 12px;

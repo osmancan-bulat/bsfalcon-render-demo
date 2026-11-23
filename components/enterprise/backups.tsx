@@ -9,14 +9,14 @@ import { Panel, Badge } from "./shared";
 import { migrateSaved, customerList } from "@/lib/enterprise";
 import { syncCatalog } from "@/lib/catalog";
 
-const MAIN = "bsfalcon-enterprise-v1";
-const PREFIX = "bsfalcon-enterprise-v1-yedek";
-const MANUAL = "bsfalcon-yedek-manuel-";
+const MAIN = "edifica-enterprise-v1";
+const PREFIX = "edifica-enterprise-v1-yedek";
+const MANUAL = "edifica-respaldo-manual-";
 const LABELS: Record<string, string> = {
-  "bsfalcon-enterprise-v1-yedek-v1": "Sürüm geçişi öncesi (v3.1)",
-  "bsfalcon-enterprise-v1-yedek-onarim": "Onarım öncesi kayıt",
-  "bsfalcon-enterprise-v1-yedek-okunamayan": "Okunamayan kayıt",
-  "bsfalcon-enterprise-v1-yedek-geri-yukleme-oncesi": "Son geri yükleme öncesi durum",
+  "edifica-enterprise-v1-yedek-v1": "Antes de la migración de versión",
+  "edifica-enterprise-v1-yedek-onarim": "Registro previo a la reparación",
+  "edifica-enterprise-v1-yedek-okunamayan": "Registro ilegible",
+  "edifica-enterprise-v1-yedek-geri-yukleme-oncesi": "Estado previo a la última restauración",
 };
 
 type Item = {
@@ -32,7 +32,7 @@ type Item = {
 
 function inspect(key: string, raw: string): Item {
   const out = migrateSaved(raw);
-  const label = LABELS[key] ?? (key.startsWith(MANUAL) ? `Elle alınan yedek · ${new Date(key.slice(MANUAL.length)).toLocaleString("tr-TR")}` : key);
+  const label = LABELS[key] ?? (key.startsWith(MANUAL) ? `Respaldo manual · ${new Date(key.slice(MANUAL.length)).toLocaleString("es-PY")}` : key);
   if (!out) return { key, label, size: raw.length, valid: false, repaired: 0, fields: [] };
   return {
     key,
@@ -60,7 +60,7 @@ export default function Backups() {
         if (k.startsWith(PREFIX) || k.startsWith(MANUAL)) list.push(inspect(k, localStorage.getItem(k) ?? ""));
       }
       setItems(list.sort((a, b) => b.key.localeCompare(a.key)));
-      const r = localStorage.getItem("bsfalcon-onarim-raporu");
+      const r = localStorage.getItem("edifica-onarim-raporu");
       setReport(r ? JSON.parse(r) : null);
     } catch {
       setItems([]);
@@ -76,16 +76,16 @@ export default function Backups() {
       // En fazla 5 elle alınan yedek tutulur (tarayıcı depolama sınırı)
       while (manual.length >= 5) localStorage.removeItem(manual.shift()!);
       localStorage.setItem(MANUAL + new Date().toISOString(), JSON.stringify(state));
-      notify("Mevcut kayıtların yedeği alındı (bu tarayıcıda).");
+      notify("Se respaldaron los registros actuales (en este navegador).");
       refresh();
     } catch {
-      notify("Yedek alınamadı: tarayıcı depolaması dolu veya kapalı.");
+      notify("No se pudo respaldar: almacenamiento del navegador lleno o deshabilitado.");
     }
   }
   function restore(raw: string) {
     const out = migrateSaved(raw);
     if (!out) {
-      notify("Bu yedek geçerli değil; geri yüklenmedi.");
+      notify("Este respaldo no es válido; no se restauró.");
       return;
     }
     try {
@@ -94,19 +94,19 @@ export default function Backups() {
       localStorage.setItem(MAIN, raw);
       location.reload();
     } catch {
-      notify("Geri yükleme yapılamadı: tarayıcı depolaması kullanılamıyor.");
+      notify("No se pudo restaurar: almacenamiento del navegador no disponible.");
     }
   }
   async function fromFile(f: File) {
     const raw = await f.text();
     if (raw.length > 4_000_000) {
-      notify("Dosya çok büyük (4 MB sınırı).");
+      notify("El archivo es demasiado grande (límite 4 MB).");
       return;
     }
     const ok = !!migrateSaved(raw);
     syncCatalog(state);
     if (!ok) {
-      notify("Dosya geçerli bir BŞ Falcon demo yedeği değil; geri yüklenmedi.");
+      notify("El archivo no es un respaldo válido de esta demo; no se restauró.");
       return;
     }
     setConfirm({ label: f.name, raw });
@@ -114,22 +114,21 @@ export default function Backups() {
   return (
     <Panel
       title="Yedekler"
-      subtitle="Bu tarayıcıdaki demo kayıtları için yedek alma ve geri yükleme. Merkezî veya bulut yedeklemesi değildir."
+      subtitle="Respaldo y restauración de los registros de este navegador. No es un respaldo central ni en la nube."
     >
       <div className="bk-body">
         {report && report.repaired > 0 && (
           <p className="callout">
-            Son onarım ({new Date(report.at).toLocaleString("tr-TR")}): {report.repaired} bozuk kayıt
-            atlandı ({report.fields.join(", ")}). O andaki veri “Onarım öncesi kayıt” yedeğindedir;
-            gerekirse inceleyip geri yükleyebilirsiniz.
+            Última reparación ({new Date(report.at).toLocaleString("es-PY")}): {report.repaired} registros dañados omitidos ({report.fields.join(", ")}). Los datos de ese momento están en el respaldo “Registro previo a la reparación”;
+            puede revisarlos y restaurarlos si es necesario.
           </p>
         )}
         <div className="form-actions bk-actions">
           <button className="btn" onClick={backupNow}>
-            <ShieldCheck size={15} /> Şimdi yedek al
+            <ShieldCheck size={15} /> Respaldar ahora
           </button>
           <button className="btn" onClick={() => file.current?.click()}>
-            <Upload size={15} /> JSON dosyasından geri yükle
+            <Upload size={15} /> Restaurar desde JSON
           </button>
           <input
             ref={file}
@@ -152,27 +151,27 @@ export default function Backups() {
                   <small>
                     {Math.max(1, Math.round(b.size / 1024))} KB
                     {b.valid
-                      ? ` · ${b.contracts} satış sözleşmesi · ${b.receipts} tahsilat${b.repaired ? ` · ${b.repaired} kayıt onarılarak yüklenir` : ""}`
-                      : " · okunamıyor"}
+                      ? ` · ${b.contracts} contratos · ${b.receipts} cobros${b.repaired ? ` · ${b.repaired} registros se reparan al cargar` : ""}`
+                      : "· ilegible"}
                   </small>
                 </div>
                 {b.valid ? (
-                  <Badge tone={b.repaired ? "amber" : "green"}>{b.repaired ? "Onarılabilir" : "Geçerli"}</Badge>
+                  <Badge tone={b.repaired ? "amber" : "green"}>{b.repaired ? "Reparable" : "Vigente"}</Badge>
                 ) : (
-                  <Badge tone="red">Geçersiz</Badge>
+                  <Badge tone="red">Inválido</Badge>
                 )}
                 <div className="bk-row-actions">
                   <button
                     className="btn compact"
                     disabled={!b.valid}
-                    title={b.valid ? "Önce mevcut durum yedeklenir" : "Geçersiz yedek geri yüklenemez"}
+                    title={b.valid ? "Primero se respalda el estado actual" : "Un respaldo inválido no se puede restaurar"}
                     onClick={() => setConfirm({ label: b.label, raw: localStorage.getItem(b.key) ?? "" })}
                   >
-                    <RotateCcw size={14} /> Geri yükle
+                    <RotateCcw size={14} /> Restaurar
                   </button>
                   <button
                     className="icon-button"
-                    aria-label={`${b.label} yedeğini indir`}
+                    aria-label={`Descargar respaldo ${b.label}`}
                     onClick={() => {
                       const url = URL.createObjectURL(new Blob([localStorage.getItem(b.key) ?? ""], { type: "application/json" }));
                       const a = document.createElement("a");
@@ -189,21 +188,20 @@ export default function Backups() {
             ))}
           </ul>
         ) : (
-          <p className="muted">Bu tarayıcıda yedek yok. “Şimdi yedek al” ile mevcut kayıtların yedeğini alabilirsiniz.</p>
+          <p className="muted">No hay respaldos en este navegador. Use “Respaldar ahora” para respaldar los registros actuales.</p>
         )}
         {confirm && (
           <div className="inline-form">
-            <h3>“{confirm.label}” geri yüklensin mi?</h3>
+            <h3>“{confirm.label}”: ¿restaurar?</h3>
             <p className="muted">
-              Mevcut kayıtlar önce “Son geri yükleme öncesi durum” olarak yedeklenir, ardından bu yedek yüklenir ve
-              sayfa yenilenir. Kayıt kimlikleri ve finansal geçmiş yedekteki haliyle gelir.
+              Los registros actuales se respaldan como “Estado previo a la última restauración”; luego se carga este respaldo y la página se recarga.
             </p>
             <div className="form-actions">
               <button className="btn" onClick={() => setConfirm(null)}>
-                Vazgeç
+                Cancelar
               </button>
               <button className="btn primary" onClick={() => restore(confirm.raw)}>
-                Mevcut durumu yedekle ve geri yükle
+                Respaldar el estado actual y restaurar
               </button>
             </div>
           </div>

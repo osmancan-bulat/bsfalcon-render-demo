@@ -24,23 +24,23 @@ import { money } from "@/lib/data";
 export type UnitState =
   "sold" | "late" | "draft" | "barter" | "reserved" | "available";
 export const UNIT_STATE_LABEL: Record<UnitState, string> = {
-  sold: "Satıldı",
-  late: "Ödemesi geciken",
-  draft: "İmza bekliyor",
-  barter: "Barter",
-  reserved: "Rezerve",
-  available: "Müsait",
+  sold: "Vendida",
+  late: "Con cuotas vencidas",
+  draft: "Pendiente de firma",
+  barter: "Canje",
+  reserved: "Reservada",
+  available: "Disponible",
 };
 
 export function useUnitStates(projectId: string) {
   const { state } = useApp();
   return useMemo(() => {
     const contracts = contractList(state).filter(
-      (c) => c.project === projectId && c.status !== "İptal",
+      (c) => c.project === projectId && c.status !== "Anulado",
     );
     const late = new Set(
       paymentRows(state)
-        .filter((r) => r.project === projectId && r.status === "Gecikti")
+        .filter((r) => r.project === projectId && r.status === "Vencida")
         .map((r) => r.customerId),
     );
     const reserved = reservedUnits(state, projectId);
@@ -69,7 +69,7 @@ export default function UnitsView() {
   // Şirket genelinde arşivdeki projeler listelenmez; arşivdeki proje seçiliyse yalnızca o gösterilir.
   const ids =
     project === "all"
-      ? projects.filter((p) => p.status !== "Arşiv").map((p) => p.id)
+      ? projects.filter((p) => p.status !== "Archivado").map((p) => p.id)
       : projects.some((p) => p.id === project)
         ? [project]
         : [];
@@ -77,11 +77,9 @@ export default function UnitsView() {
     <>
       <header className="page-head">
         <div>
-          <h1>Daireler</h1>
+          <h1>Unidades y disponibilidad</h1>
           <p>
-            Daireye tıklayın: müşteri, sözleşme, ödeme planı ve belgeler tek
-            dosyada açılır. Yeni satış veya barter için müsait (beyaz) bir
-            daire seçin.
+            Haga clic en una unidad: cliente, contrato, plan de pagos y documentos se abren en una ficha. Para una venta nueva, elija una unidad disponible (blanca).
           </p>
         </div>
       </header>
@@ -125,14 +123,14 @@ function ProjectUnits({ projectId }: { projectId: string }) {
         <div>
           <h2>{p.name}</h2>
           <p>
-            {sold} / {p.total} satıldı
-            {blocks.length > 0 && ` · ${blocks.length} blok (${blocks.join(", ")})`}
-            {p.status !== "Aktif" && ` · ${p.status}`}
+            {sold} / {p.total} vendidas
+            {blocks.length > 0 && `· ${blocks.length} torres (${blocks.join(", ")})`}
+            {p.status !== "Activo" && ` · ${p.status}`}
           </p>
         </div>
-        {p.status !== "Arşiv" && (
+        {p.status !== "Archivado" && (
           <button className="btn compact" onClick={() => setAdding(true)}>
-            <Plus size={14} /> Blok ekle
+            <Plus size={14} /> Agregar torre
           </button>
         )}
         <ul className="unit-legend">
@@ -155,14 +153,14 @@ function ProjectUnits({ projectId }: { projectId: string }) {
       </div>
       {map.length === 0 && (
         <div className="units-empty">
-          <b>Bu projede henüz daire yok.</b>
+          <b>Este proyecto aún no tiene unidades.</b>
           <p>
-            Blok ekleyerek başlayın: blok adı, kat sayısı ve kattaki daire sayısını girin;
-            daireler otomatik numaralanır. Satış, sözleşme ve tahsilat bu dairelerle çalışır.
+            Comience agregando una torre: indique nombre, cantidad de pisos y unidades por piso;
+            las unidades se numeran automáticamente y quedan listas para ventas, contratos y cobros.
           </p>
-          {p.status !== "Arşiv" && (
+          {p.status !== "Archivado" && (
             <button className="btn primary" onClick={() => setAdding(true)}>
-              <Plus size={15} /> İlk bloğu ekle
+              <Plus size={15} /> Agregar la primera torre
             </button>
           )}
         </div>
@@ -171,7 +169,7 @@ function ProjectUnits({ projectId }: { projectId: string }) {
         {floors.map((f) => (
           <div key={f} className="cc-floor">
             <span className="cc-floor-label">
-              {f === 0 ? "Zemin" : f < 0 ? `B${-f}` : `${f}. kat`}
+              {f === 0 ? "Zemin" : f < 0 ? `B${-f}` : `Piso ${f}`}
             </span>
             <div
               className="cc-floor-units"
@@ -262,7 +260,7 @@ export function UnitDrawer({
   const projectStatus = u ? projects.find((p) => p.id === u.project)?.status : undefined;
   if (editing && u)
     return (
-      <Drawer open onClose={() => setEditing(false)} title={`${unitShort(u.id)} · daire bilgileri`} eyebrow={pname(u.project)}>
+      <Drawer open onClose={() => setEditing(false)} title={`${unitShort(u.id)} · datos de la unidad`} eyebrow={pname(u.project)}>
         <form
           className="e-form"
           onSubmit={(e) => {
@@ -284,34 +282,34 @@ export function UnitDrawer({
           }}
         >
           <p className="drawer-intro">
-            Yalnızca satılmamış daire düzenlenebilir. Liste fiyatı değişikliği mevcut sözleşme
-            bedellerini değiştirmez; yalnızca yeni satışlarda öneri fiyatı olur.
+            Solo se editan unidades no vendidas. Un cambio de precio de lista no modifica
+            contratos existentes; solo se usa como precio sugerido en ventas nuevas.
           </p>
           <div className="form-row">
             <label>
-              Tip
+              Tipología
               <input name="type" required defaultValue={u.type} maxLength={12} />
             </label>
             <label>
-              Brüt m²
+              Superficie m²
               <input name="gross" type="number" min={10} max={2000} required defaultValue={u.gross} />
             </label>
           </div>
           <div className="form-row">
             <label>
-              Liste fiyatı (TL)
+              Precio de lista (USD)
               <input name="listPrice" type="number" min={1} step="0.01" required defaultValue={u.listPrice} />
             </label>
             <label>
-              Cephe
+              Orientación
               <input name="facade" defaultValue={u.facade} maxLength={20} />
             </label>
           </div>
           <div className="form-actions">
             <button type="button" className="btn" onClick={() => setEditing(false)}>
-              Vazgeç
+              Cancelar
             </button>
-            <button className="btn primary">Kaydet</button>
+            <button className="btn primary">Guardar</button>
           </div>
         </form>
       </Drawer>
@@ -321,7 +319,7 @@ export function UnitDrawer({
       <Drawer
         open
         onClose={() => setSelling(false)}
-        title={`Daire ${u.label} · satış sözleşmesi`}
+        title={`Unidad ${u.label} · contrato de compraventa`}
         eyebrow={pname(u.project)}
         wide
       >
@@ -338,7 +336,7 @@ export function UnitDrawer({
     <Drawer
       open={!!u}
       onClose={onClose}
-      title={u ? unitShort(u.id) : "Daire"}
+      title={u ? unitShort(u.id) : "Unidad"}
       eyebrow={
         u ? `${pname(u.project)} · ${st ? UNIT_STATE_LABEL[st] : ""}` : ""
       }
@@ -349,43 +347,40 @@ export function UnitDrawer({
             <div>
               <dt>Konum</dt>
               <dd>
-                {u.block} blok · {u.floorLabel} · kod {u.label}
+                {u.block} torre · {u.floorLabel} · código {u.label}
               </dd>
             </div>
             <div>
-              <dt>Tip</dt>
+              <dt>Tipología</dt>
               <dd>
                 {u.type} · {u.gross}/{u.net} m²
               </dd>
             </div>
             <div>
-              <dt>Cephe</dt>
+              <dt>Orientación</dt>
               <dd>
                 {u.facade}
-                {u.corner ? " · köşe" : ""}
+                {u.corner ? "· esquina" : ""}
               </dd>
             </div>
             <div className="wide">
-              <dt>Liste fiyatı (temsili)</dt>
+              <dt>Precio de lista (ejemplo)</dt>
               <dd className="num big">{money(u.listPrice)}</dd>
             </div>
           </dl>
-          {projectStatus === "Aktif" ? (
+          {projectStatus === "Activo" ? (
             <div className="form-actions">
               <button className="btn" onClick={() => setEditing(true)}>
-                <Pencil size={15} /> Düzenle
+                <Pencil size={15} /> Editar
               </button>
-              <Link className="btn" href={`/barter?unit=${u.id}`}>
-                <Handshake size={15} /> Barter anlaşması
-              </Link>
               <button className="btn primary" onClick={() => setSelling(true)}>
-                <Plus size={15} /> Satış sözleşmesi
+                <Plus size={15} /> Contrato de compraventa
               </button>
             </div>
           ) : (
             <p className="callout">
-              Proje “{projectStatus}” durumunda; yeni satış yapılamaz. Proje portföyünden yeniden
-              aktifleştirilebilir.
+              El proyecto está en estado “{projectStatus}”; no admite ventas nuevas. Puede reactivarse
+              desde Proyectos inmobiliarios.
             </p>
           )}
         </>
@@ -413,13 +408,13 @@ function BlockDrawer({
     unitType: "2+1",
     gross: 115,
     listPrice: 3500000,
-    facade: "Güney",
+    facade: "Frente",
   });
   const total = v.floors * v.perFloor;
   const set = (k: keyof typeof v, num = false) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setV({ ...v, [k]: num ? Number(e.target.value) : e.target.value });
   return (
-    <Drawer open onClose={onClose} title="Blok ekle" eyebrow={pname(projectId)}>
+    <Drawer open onClose={onClose} title="Agregar torre" eyebrow={pname(projectId)}>
       <form
         className="e-form"
         onSubmit={(e) => {
@@ -429,54 +424,53 @@ function BlockDrawer({
       >
         <div className="form-row">
           <label>
-            Blok adı
+            Nombre de la torre
             <input value={v.block} onChange={set("block")} required maxLength={3} />
           </label>
           <label>
-            Kat sayısı
+            Cantidad de pisos
             <input type="number" min={1} max={40} value={v.floors} onChange={set("floors", true)} required />
           </label>
           <label>
-            Kattaki daire
+            Unidades por piso
             <input type="number" min={1} max={20} value={v.perFloor} onChange={set("perFloor", true)} required />
           </label>
           <label>
-            İlk kat
+            Primer piso
             <input type="number" min={-3} max={40} value={v.startFloor} onChange={set("startFloor", true)} required />
             <small className="muted">0 = zemin, −1 = bodrum</small>
           </label>
         </div>
         <div className="form-row">
           <label>
-            Daire tipi
+            Tipología
             <input value={v.unitType} onChange={set("unitType")} required maxLength={12} />
           </label>
           <label>
-            Brüt m²
+            Superficie m²
             <input type="number" min={10} max={2000} value={v.gross} onChange={set("gross", true)} required />
           </label>
           <label>
-            Liste fiyatı (TL)
+            Precio de lista (USD)
             <input type="number" min={1} step="0.01" value={v.listPrice} onChange={set("listPrice", true)} required />
           </label>
           <label>
-            Cephe
+            Orientación
             <input value={v.facade} onChange={set("facade")} maxLength={20} />
           </label>
         </div>
         <p className="form-preview">
-          {v.block.toLocaleUpperCase("tr") || "?"} blok · {v.floors} kat × {v.perFloor} daire ={" "}
-          <b>{total} daire</b> · {floorLabel(v.startFloor)} ile{" "}
-          {floorLabel(v.startFloor + v.floors - 1)} arası. Tip ve fiyat daire bazında sonradan
-          düzenlenebilir.
+          Torre {v.block.toLocaleUpperCase("es") || "?"} · {v.floors} pisos × {v.perFloor} unidades ={" "}
+          <b>{total} unidades</b> · {floorLabel(v.startFloor)} y{" "}
+          {floorLabel(v.startFloor + v.floors - 1)} . Tipología y precio se pueden editar luego por unidad.
           {existingBlocks.length > 0 && ` Mevcut bloklar: ${existingBlocks.join(", ")}.`}
         </p>
         <div className="form-actions">
           <button type="button" className="btn" onClick={onClose}>
-            Vazgeç
+            Cancelar
           </button>
           <button className="btn primary" disabled={total < 1 || total > 400}>
-            {total} daireyi ekle
+            {total} unidades: agregar
           </button>
         </div>
       </form>

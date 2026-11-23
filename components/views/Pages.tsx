@@ -56,14 +56,12 @@ export function PaymentsPage() {
   return (
     <>
       <PageHead
-        title="Ödemeler"
-        text="Peşinat, taksit ve ara ödemeler. Bir satıra tıklayın; tahsilat formu müşteri dosyasında açılır."
+        title="Cobros mensuales"
+        text="Anticipos, cuotas y pagos intermedios de todos los planes de pago. Haga clic en una fila para registrar el cobro en la ficha del cliente."
       />
       <p className="scope-note">
-        Toplam tahsilat <b>{money(cb.total)}</b> = sisteme geçişten önce tahsil
-        edilen <b>{money(cb.prior)}</b> + bu ödeme planları üzerinden tahsil
-        edilen <b>{money(cb.inPlan)}</b>. Aşağıdaki “Ödendi” yalnızca ikinci
-        kısmı gösterir.
+        Cobranza total <b>{money(cb.total)}</b> = cobrado antes de la implementación
+        <b>{money(cb.prior)}</b> + cobrado en estos planes de pago <b>{money(cb.inPlan)}</b>. La columna “Pagada” muestra solo la segunda parte.
       </p>
       <Panel>
         {ready && <PaymentsTab key={status ?? "all"} initialStatus={status} />}
@@ -72,43 +70,43 @@ export function PaymentsPage() {
   );
 }
 
-const KINDS = ["Satış", "Barter", "İş (taşeron)"] as const;
+const KINDS = ["Ventas", "Canje", "Obra"] as const;
 
 export function ContractsPage() {
   const { state, project } = useApp();
-  const [kind, setKind] = useState<(typeof KINDS)[number]>("Satış");
+  const [kind, setKind] = useState<(typeof KINDS)[number]>("Ventas");
   const [customer, setCustomer] = useState<string | null>(null);
   const [barter, setBarter] = useState<string | null>(null);
   useEffect(() => {
     const t = new URLSearchParams(location.search).get("tur");
-    if (t === "barter") setKind("Barter");
-    if (t === "is") setKind("İş (taşeron)");
+    if (t === "barter") setKind("Canje");
+    if (t === "is") setKind("Obra");
   }, []);
   const barters = state.barters.filter(
     (b) => project === "all" || b.project === project,
   );
   const works = workContracts(state, project);
   const sales = contractList(state).filter(
-    (c) => c.status !== "İptal" && (project === "all" || c.project === project),
+    (c) => c.status !== "Anulado" && (project === "all" || c.project === project),
   ).length;
   const counts: Record<(typeof KINDS)[number], number> = {
-    Satış: sales,
-    Barter: barters.length,
-    "İş (taşeron)": works.length,
+    "Ventas": sales,
+    "Canje": barters.length,
+    "Obra": works.length,
   };
   return (
     <>
       <PageHead
-        title="Sözleşmeler"
-        text="Satış, barter ve iş sözleşmeleri tek yerde. Her sözleşme görüntülenebilir ve yazdırılabilir."
+        title="Contratos"
+        text="Contratos de compraventa con su plan de pagos. Cada contrato puede verse e imprimirse."
         action={
-          <Link className="btn primary" href="/daireler">
-            <Plus size={15} /> Yeni satış sözleşmesi
+          <Link className="btn primary" href="/unidades">
+            <Plus size={15} /> Nuevo contrato de compraventa
           </Link>
         }
       />
       <Panel>
-        <div className="e-tabs" role="tablist" aria-label="Sözleşme türü">
+        <div className="e-tabs" role="tablist" aria-label="Tipo de contrato">
           {KINDS.map((k) => (
             <button
               key={k}
@@ -121,21 +119,21 @@ export function ContractsPage() {
             </button>
           ))}
         </div>
-        {kind === "Satış" && (
+        {kind === "Ventas" && (
           <ContractsTab project={project} onOpen={setCustomer} />
         )}
-        {kind === "Barter" &&
+        {kind === "Canje" &&
           (barters.length ? (
             <div className="e-table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Sözleşme / firma</th>
-                    <th>Verilen daire</th>
-                    <th>Karşılığında iş</th>
-                    <th className="numeric">Bedel</th>
-                    <th className="numeric">Kalan yükümlülük</th>
-                    <th aria-label="İşlem" />
+                    <th>Contrato / empresa</th>
+                    <th>Unidades entregadas</th>
+                    <th>Trabajo a cambio</th>
+                    <th className="numeric">Precio</th>
+                    <th className="numeric">Obligación pendiente</th>
+                    <th aria-label="Acción" />
                   </tr>
                 </thead>
                 <tbody>
@@ -172,7 +170,7 @@ export function ContractsPage() {
                           target="_blank"
                           rel="noreferrer"
                         >
-                          <Printer size={14} /> Görüntüle
+                          <Printer size={14} /> Ver
                         </a>
                       </td>
                     </tr>
@@ -181,21 +179,21 @@ export function ContractsPage() {
               </table>
             </div>
           ) : (
-            <Empty title="Bu projede barter sözleşmesi yok" />
+            <Empty title="No hay canjes en este proyecto" />
           ))}
-        {kind === "İş (taşeron)" &&
+        {kind === "Obra" &&
           (works.length ? (
             <div className="e-table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Sözleşme / firma</th>
-                    <th>İş kapsamı</th>
-                    <th className="numeric">Sözleşme bedeli</th>
-                    <th className="numeric">Toplam hakediş</th>
-                    <th className="numeric">Ödenen / mahsup</th>
-                    <th>Barter</th>
-                    <th aria-label="İşlem" />
+                    <th>Contrato / empresa</th>
+                    <th>Alcance</th>
+                    <th className="numeric">Precio del contrato</th>
+                    <th className="numeric">Total certificado</th>
+                    <th className="numeric">Pagado / compensado</th>
+                    <th>Canje</th>
+                    <th aria-label="Acción" />
                   </tr>
                 </thead>
                 <tbody>
@@ -221,14 +219,14 @@ export function ContractsPage() {
                         {w.hakedisTotal ? money(w.hakedisTotal) : "—"}
                         {w.hakedisTotal > 0 && (
                           <small>
-                            Bedele oranı %{Math.round((w.hakedisTotal / w.value) * 100)}
+                            % del valor{Math.round((w.hakedisTotal / w.value) * 100)}
                           </small>
                         )}
                       </td>
                       <td className="numeric">
                         {money(w.paid)}
                         {w.offset > 0 && (
-                          <small>Barter mahsubu {money(w.offset)}</small>
+                          <small>Compensación por canje {money(w.offset)}</small>
                         )}
                       </td>
                       <td>
@@ -250,7 +248,7 @@ export function ContractsPage() {
                           target="_blank"
                           rel="noreferrer"
                         >
-                          <Printer size={14} /> Görüntüle
+                          <Printer size={14} /> Ver
                         </a>
                       </td>
                     </tr>
@@ -259,7 +257,7 @@ export function ContractsPage() {
               </table>
             </div>
           ) : (
-            <Empty title="Bu projede iş sözleşmesi yok" />
+            <Empty title="No hay contratos de obra en este proyecto" />
           ))}
       </Panel>
       {customer && (
@@ -274,24 +272,24 @@ export function ContractsPage() {
   );
 }
 
-const FILTERS = ["Tümü", "Ödemesi geciken", "Düzenli", "Tamamlanan"] as const;
+const FILTERS = ["Todos", "Con cuotas vencidas", "Al día", "Finalizado"] as const;
 
 const SORTS = {
-  late: "Gecikme tutarı ↓",
-  balance: "Kalan borç ↓",
-  next: "Sonraki ödeme ↑",
-  name: "Müşteri adı A–Z",
+  late: "Monto vencido ↓",
+  balance: "Saldo ↓",
+  next: "Próximo pago ↑",
+  name: "Nombre A–Z",
 } as const;
 
 export function CustomersPage() {
   const { state, project } = useApp();
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("Tümü");
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("Todos");
   const [sort, setSort] = useState<keyof typeof SORTS>("late");
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState<{ id: string; focus?: string } | null>(null);
   const lateBy = new Map<string, { total: number; focus: string }>();
-  for (const r of paymentRows(state).filter((r) => r.status === "Gecikti")) {
+  for (const r of paymentRows(state).filter((r) => r.status === "Vencida")) {
     const cur = lateBy.get(r.customerId);
     if (!cur)
       lateBy.set(r.customerId, {
@@ -307,15 +305,15 @@ export function CustomersPage() {
   const rows = all
     .filter(
       (c) =>
-        (filter === "Tümü" ||
-          (filter === "Ödemesi geciken"
+        (filter === "Todos" ||
+          (filter === "Con cuotas vencidas"
             ? lateBy.has(c.id)
-            : filter === "Tamamlanan"
-              ? c.status === "Tamamlandı"
-              : !lateBy.has(c.id) && c.status !== "Tamamlandı")) &&
+            : filter === "Finalizado"
+              ? c.status === "Finalizado"
+              : !lateBy.has(c.id) && c.status !== "Finalizado")) &&
         `${c.name} ${c.unitLabel} ${c.number}`
-          .toLocaleLowerCase("tr")
-          .includes(q.toLocaleLowerCase("tr")),
+          .toLocaleLowerCase("es")
+          .includes(q.toLocaleLowerCase("es")),
     )
     .sort((a, b) =>
       sort === "late"
@@ -326,7 +324,7 @@ export function CustomersPage() {
             ? (a.account!.next?.due ?? "9999").localeCompare(
                 b.account!.next?.due ?? "9999",
               )
-            : a.name.localeCompare(b.name, "tr"),
+            : a.name.localeCompare(b.name, "es"),
     );
   const totalBalance = all.reduce((a, c) => a + c.account!.balance, 0);
   const totalLate = all.reduce((a, c) => a + lateOf(c.id), 0);
@@ -336,14 +334,14 @@ export function CustomersPage() {
   return (
     <>
       <PageHead
-        title="Müşteriler"
-        text="Her müşteri tek dosyada: daire, sözleşme, ödeme planı, tahsilatlar, belgeler ve geçmiş."
+        title="Clientes"
+        text="Cada cliente en una ficha: unidad, contrato, plan de pagos, cobros, documentos e historial."
       />
       <p className="scope-note">
-        <b>{all.length}</b> müşteri · toplam kalan borç{" "}
-        <b>{money(totalBalance)}</b> · gecikmiş{" "}
+        <b>{all.length}</b> clientes · saldo total{" "}
+        <b>{money(totalBalance)}</b> · vencido{" "}
         <b className={totalLate ? "danger" : ""}>{money(totalLate)}</b> (
-        {lateBy.size && all.filter((c) => lateBy.has(c.id)).length} müşteri)
+        {lateBy.size && all.filter((c) => lateBy.has(c.id)).length} clientes)
       </p>
       <Panel>
         <div className="e-toolbar">
@@ -353,9 +351,9 @@ export function CustomersPage() {
               setQ(v);
               setPage(0);
             }}
-            placeholder="Müşteri, daire veya sözleşme no…"
+            placeholder="Cliente, unidad o n.º de contrato…"
           />
-          <div className="seg" role="tablist" aria-label="Müşteri durumu">
+          <div className="seg" role="tablist" aria-label="Estado del cliente">
             {FILTERS.map((f) => (
               <button
                 key={f}
@@ -372,7 +370,7 @@ export function CustomersPage() {
             ))}
           </div>
           <select
-            aria-label="Sıralama"
+            aria-label="Orden"
             value={sort}
             onChange={(e) => setSort(e.target.value as keyof typeof SORTS)}
           >
@@ -388,13 +386,13 @@ export function CustomersPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Müşteri</th>
-                  <th>Daire</th>
-                  <th>Ödenen</th>
-                  <th className="numeric">Kalan borç</th>
-                  <th className="numeric">Gecikmiş</th>
-                  <th>Sonraki ödeme</th>
-                  <th aria-label="İşlem" />
+                  <th>Cliente</th>
+                  <th>Unidad</th>
+                  <th>Pagado</th>
+                  <th className="numeric">Saldo</th>
+                  <th className="numeric">Vencida</th>
+                  <th>Próximo pago</th>
+                  <th aria-label="Acción" />
                 </tr>
               </thead>
               <tbody>
@@ -435,8 +433,8 @@ export function CustomersPage() {
                       <td>
                         {a.next
                           ? `${date(a.next.due)} · ${money(a.next.remaining)}`
-                          : c.status === "Tamamlandı"
-                            ? "Tamamlandı"
+                          : c.status === "Finalizado"
+                            ? "Finalizado"
                             : "—"}
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
@@ -447,15 +445,15 @@ export function CustomersPage() {
                               setOpen({ id: c.id, focus: late.focus })
                             }
                           >
-                            Tahsil et
+                            Cobrar
                           </button>
                         ) : (
                           <Badge
-                            tone={c.status === "Tamamlandı" ? "info" : "green"}
+                            tone={c.status === "Finalizado" ? "info" : "green"}
                           >
-                            {c.status === "Tamamlandı"
-                              ? "Tamamlandı"
-                              : "Düzenli"}
+                            {c.status === "Finalizado"
+                              ? "Finalizado"
+                              : "Al día"}
                           </Badge>
                         )}
                       </td>
@@ -466,24 +464,24 @@ export function CustomersPage() {
             </table>
           </div>
         ) : (
-          <Empty title="Bu filtrede müşteri yok" />
+          <Empty title="No hay clientes con este filtro" />
         )}
         <div className="e-pagination">
           <span>
             {rows.length
-              ? `${pg * PAGE + 1}–${Math.min(rows.length, (pg + 1) * PAGE)} / ${rows.length} müşteri`
-              : "Kayıt yok"}
+              ? `${pg * PAGE + 1}–${Math.min(rows.length, (pg + 1) * PAGE)} de ${rows.length} clientes`
+              : "Sin registros"}
           </span>
           <div>
             <button
-              aria-label="Önceki sayfa"
+              aria-label="Página anterior"
               disabled={pg === 0}
               onClick={() => setPage(pg - 1)}
             >
               ‹
             </button>
             <button
-              aria-label="Sonraki sayfa"
+              aria-label="Página siguiente"
               disabled={pg >= max}
               onClick={() => setPage(pg + 1)}
             >

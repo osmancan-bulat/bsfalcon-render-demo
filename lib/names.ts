@@ -1,55 +1,51 @@
-// Kurgusal kimlik kataloğu. Kişi ve firma adlarının tamamı uydurmadır; gerçek BŞ Falcon
-// müşterileri, çalışanları veya yüklenicileriyle ilişkisi yoktur.
-// Ad, kayıt numarasından deterministik üretilir: aynı numara her ekranda aynı kişiyi verir.
+// Catálogo de identidades de EJEMPLO. Todos los nombres de personas y empresas son inventados y no
+// corresponden a clientes, empleados ni proveedores reales de EDIFICA.
+// El nombre se genera de forma determinista a partir del número de registro: el mismo número da la
+// misma persona en todas las pantallas.
 const FIRST = [
-  "Selin", "Mert", "Zeynep", "Burak", "Elif", "Emre", "Derya", "Can", "Deniz",
-  "Kerem", "Ece", "Onur", "Merve", "Serkan", "Gizem", "Hakan", "Aslı", "Tolga",
-  "Pınar", "Barış", "Nazlı", "Murat", "Esra", "Cem", "İrem",
+  "María", "José", "Ana", "Carlos", "Laura", "Diego", "Sofía", "Juan", "Camila",
+  "Luis", "Valeria", "Jorge", "Paula", "Miguel", "Lucía", "Andrés", "Natalia", "Fernando",
+  "Gabriela", "Ricardo", "Carolina", "Hugo", "Silvia", "Marcos", "Rocío",
 ];
 const LAST = [
-  "Yılmaz", "Demir", "Arslan", "Kaya", "Çelik", "Şahin", "Aydın", "Öztürk",
-  "Koç", "Kurt", "Özdemir", "Polat", "Erdem", "Aksoy", "Tekin", "Korkmaz",
-  "Güneş", "Doğan", "Yıldız", "Bulut", "Karaca", "Uysal", "Ateş", "Ekinci",
+  "Benítez", "Martínez", "Giménez", "Ortiz", "Duarte", "Vera", "Ramírez", "Rojas",
+  "Báez", "Cáceres", "Villalba", "Acosta", "Ayala", "Franco", "Romero", "Fernández",
+  "Sosa", "Núñez", "Cabrera", "Aquino", "Valdez", "Insfrán", "Ledesma", "Morínigo",
 ];
 
 /**
- * n. kurgusal müşterinin adı. 25 ad × 24 soyad, Çin kalan teoremi gereği n < 600 için
- * benzersizdir (ad n mod 25, soyad 7n mod 24 ile belirlenir; 7 ile 24 aralarında asal).
+ * Nombre del n-ésimo cliente de ejemplo. 25 nombres × 24 apellidos: único para n < 600
+ * (nombre por n mod 25, apellido por 7n mod 24; 7 y 24 son coprimos).
  */
 export const personName = (n: number) =>
   `${FIRST[(n + 19) % 25]} ${LAST[(n * 7 + 9) % 24]}`;
 
-/** Kurgusal yüklenici ve tedarikçi firmalar. */
+/** Proveedores y contratistas de ejemplo. */
 export const FIRM = {
-  yapi: "Karataş Yapı Taahhüt",
-  teknik: "Atlas Mekanik Elektrik",
-  cephe: "Kuzey Cephe Sistemleri",
-  demir: "Bozkır Demir Çelik",
-  aluminyum: "Lale Alüminyum Doğrama",
+  yapi: "Constructora Ejemplo del Este",
+  teknik: "Instalaciones Ejemplo S.A.",
+  cephe: "Fachadas Ejemplo S.R.L.",
+  demir: "Aceros Ejemplo S.A.",
+  aluminyum: "Aberturas Ejemplo S.R.L.",
 } as const;
 
-/** Kurgusal satış danışmanları (müşteri sorumlusu seçimi). */
-export const ADVISORS = ["Nazlı Kurt · Satış", "Onur Tekin · Satış"];
+/** Asesores de ejemplo (responsable del cliente). */
+export const ADVISORS = ["Asesora 1 · Comercial", "Asesor 2 · Comercial"];
 
-/** Önceki demo sürümünün jenerik adları → kurgusal kimlikler. */
+/** Nombres genéricos de versiones anteriores → identidades de ejemplo (compatibilidad de datos guardados). */
 const LEGACY_FIRMS: [string, string][] = [
-  ["Örnek Yapı", FIRM.yapi],
-  ["Örnek Teknik", FIRM.teknik],
-  ["Örnek Cephe", FIRM.cephe],
-  ["Örnek Demir", FIRM.demir],
-  ["Örnek Alüminyum", FIRM.aluminyum],
-  ["Demo danışman 1", ADVISORS[0]],
-  ["Demo danışman 2", ADVISORS[1]],
+  ["Constructora demo", FIRM.yapi],
+  ["Instalaciones demo", FIRM.teknik],
+  ["Fachadas demo", FIRM.cephe],
+  ["Aceros demo", FIRM.demir],
+  ["Aberturas demo", FIRM.aluminyum],
+  ["Asesor demo 1", ADVISORS[0]],
+  ["Asesor demo 2", ADVISORS[1]],
 ];
 
-/**
- * Önceki sürümün metnindeki "Demo Müşteri 081" ve "Örnek Yapı" gibi adları aynı kayıt
- * numarasına karşılık gelen kurgusal kimlikle değiştirir. Kimlikler (ID) değişmez.
- */
+/** Reemplaza nombres genéricos antiguos por la identidad de ejemplo equivalente. Los ids no cambian. */
 export function renameLegacy(text: string): string {
-  let out = text.replace(/Demo Müşteri (\d{1,3})/g, (_, n) =>
-    personName(Number(n)),
-  );
+  let out = text.replace(/Cliente demo (\d{1,3})/g, (_, n) => personName(Number(n)));
   for (const [from, to] of LEGACY_FIRMS) out = out.split(from).join(to);
   return out;
 }

@@ -43,31 +43,31 @@ const test = (name, fn) => {
 const seed = () => structuredClone(seedState);
 const r2 = (n) => Math.round(n * 100) / 100;
 const ALL = { project: "all" };
-const C = { project: "cengilli" };
-const P = { project: "nergis" };
-const B = { project: "agva" };
+const C = { project: "vtower" };
+const P = { project: "alion" };
+const B = { project: "business" };
+const L = { project: "lofty" };
+const PROJECTS = [L, P, C, B];
 
-test("Company totals are exactly the sum of the three projects in every report", () => {
+test("Company totals are exactly the sum of the four projects in every report", () => {
   const s = seed();
-  const add = (a, b, keys, c) => keys.forEach((k) => assert.equal(r2(a[k] + b[k] + c[k]), ALLV[k], k));
-  let ALLV = financialReport(s, ALL);
-  add(financialReport(s, C), financialReport(s, P), ["contracted", "collected", "balance", "overdue", "inflow", "outflow", "barterOffset", "barterValue", "barterRemaining", "payableApproved"], financialReport(s, B));
-  ALLV = salesReport(s, ALL).total;
-  add(salesReport(s, C).total, salesReport(s, P).total, ["total", "sold", "inSigning", "barter", "reserved", "available", "value", "collected"], salesReport(s, B).total);
-  ALLV = installmentReport(s, ALL);
-  add(installmentReport(s, C), installmentReport(s, P), ["overdueTotal", "overdueCount", "upcomingTotal", "upcomingCount"], installmentReport(s, B));
-  ALLV = barterReport(s, ALL).totals;
-  add(barterReport(s, C).totals, barterReport(s, P).totals, ["count", "amount", "offset", "remaining"], barterReport(s, B).totals);
-  ALLV = subcontractorReport(s, ALL).totals;
-  add(subcontractorReport(s, C).totals, subcontractorReport(s, P).totals, ["value", "hakedis", "approved", "paid", "pending", "barterOffset"], subcontractorReport(s, B).totals);
-  // Stok: her daire tam bir durumda
+  const add = (fn, keys) => {
+    const all = fn(ALL);
+    keys.forEach((k) => assert.equal(r2(PROJECTS.reduce((x, f) => x + fn(f)[k], 0)), all[k], k));
+  };
+  add((f) => financialReport(s, f), ["contracted", "collected", "balance", "overdue", "inflow", "outflow", "barterOffset", "barterValue", "barterRemaining", "payableApproved"]);
+  add((f) => salesReport(s, f).total, ["total", "sold", "inSigning", "barter", "reserved", "available", "value", "collected"]);
+  add((f) => installmentReport(s, f), ["overdueTotal", "overdueCount", "upcomingTotal", "upcomingCount"]);
+  add((f) => barterReport(s, f).totals, ["count", "amount", "offset", "remaining"]);
+  add((f) => subcontractorReport(s, f).totals, ["value", "hakedis", "approved", "paid", "pending", "barterOffset"]);
+  // Stock: cada unidad en exactamente un estado
   const t = salesReport(s, ALL).total;
   assert.equal(t.sold + t.inSigning + t.barter + t.reserved + t.landowner + t.available, units.length);
 });
 
 test("Project-scoped reports never contain another project's records", () => {
   const s = seed();
-  for (const [f, other] of [[C, "nergis"], [P, "cengilli"], [B, "cengilli"]]) {
+  for (const [f, other] of [[L, "alion"], [C, "alion"], [P, "vtower"], [B, "vtower"]]) {
     assert(installmentReport(s, f).perCustomer.every((r) => r.project === f.project));
     assert(installmentReport(s, f).upcomingRows.every((r) => r.project === f.project));
     assert(barterReport(s, f).rows.every((r) => r.project === f.project));
@@ -76,13 +76,13 @@ test("Project-scoped reports never contain another project's records", () => {
     assert(salesReport(s, f).signedInPeriod.every((r) => r.project === f.project));
     assert(financialReport(s, f).outflowRows.every((r) => r.project === f.project));
     assert(managerReport(s, f).alerts.every((a) => a.project === f.project));
-    assert(!JSON.stringify(reportCsv(s, "taksit", f)).includes(other === "cengilli" ? "SZL-CV-" : "SZL-NP-"));
+    assert(!JSON.stringify(reportCsv(s, "cuotas", f)).includes(other === "vtower" ? "CTR-VTL-" : "CTR-ALN-"));
   }
 });
 
 test("Reports reconcile one-to-one with financial records", () => {
   const s = seed();
-  for (const f of [ALL, C, P]) {
+  for (const f of [ALL, L, C, P, B]) {
     const a = financialReport(s, f);
     const sm = summary(s, f.project);
     assert.equal(a.contracted, sm.revenue);
@@ -112,9 +112,9 @@ test("Reports reconcile one-to-one with financial records", () => {
 
 test("A full installment receipt flows into every report of its project only", () => {
   const s0 = seed();
-  const row = paymentRows(s0).find((r) => r.project === "nergis" && r.status === "Gecikti" && r.kind === "Taksit" && r.paid === 0);
-  const s1 = applyAction(s0, { type: "receipt", installmentId: row.installmentId, amount: row.remaining, method: "Banka havalesi", reference: "HVL-RAPOR" });
-  const nov = { project: "nergis", from: "2026-11-01", to: "2026-11-30" };
+  const row = paymentRows(s0).find((r) => r.project === "alion" && r.status === "Vencida" && r.kind === "Cuota" && r.paid === 0);
+  const s1 = applyAction(s0, { type: "receipt", installmentId: row.installmentId, amount: row.remaining, method: "Transferencia bancaria", reference: "HVL-RAPOR" });
+  const nov = { project: "alion", from: "2026-11-01", to: "2026-11-30" };
   const [a0, a1] = [financialReport(s0, nov), financialReport(s1, nov)];
   assert.equal(a1.collected, r2(a0.collected + row.remaining));
   assert.equal(a1.balance, r2(a0.balance - row.remaining));
@@ -132,44 +132,45 @@ test("A full installment receipt flows into every report of its project only", (
   assert.deepEqual(financialReport(s1, C), financialReport(s0, C));
   assert.deepEqual(installmentReport(s1, C), installmentReport(s0, C));
   // Ekim dönemi değişmez (tahsilat 15 Kasım tarihli)
-  const oct = { project: "nergis", from: "2026-10-01", to: "2026-10-31" };
+  const oct = { project: "alion", from: "2026-10-01", to: "2026-10-31" };
   assert.equal(financialReport(s1, oct).inflow, financialReport(s0, oct).inflow);
 });
 
 test("A partial receipt reduces the aging bucket by the paid part only", () => {
   const s0 = seed();
-  const row = paymentRows(s0).find((r) => r.status === "Gecikti" && r.kind === "Taksit" && r.paid === 0);
-  const s1 = applyAction(s0, { type: "receipt", installmentId: row.installmentId, amount: 10000, method: "Banka havalesi", reference: "HVL-KISMI" });
+  const row = paymentRows(s0).find((r) => r.status === "Vencida" && r.kind === "Cuota" && r.paid === 0);
+  const s1 = applyAction(s0, { type: "receipt", installmentId: row.installmentId, amount: 100, method: "Transferencia bancaria", reference: "TRF-PARCIAL" });
   const f = { project: row.project };
   const [c0, c1] = [installmentReport(s0, f), installmentReport(s1, f)];
-  assert.equal(c1.overdueTotal, r2(c0.overdueTotal - 10000));
+  assert.equal(c1.overdueTotal, r2(c0.overdueTotal - 100));
   assert.equal(c1.overdueCount, c0.overdueCount);
   const who = c1.perCustomer.find((x) => x.id === row.customerId);
-  assert.equal(who.partialPaid, r2((c0.perCustomer.find((x) => x.id === row.customerId).partialPaid) + 10000));
+  assert.equal(who.partialPaid, r2((c0.perCustomer.find((x) => x.id === row.customerId).partialPaid) + 100));
 });
 
 test("A barter offset changes only barter and progress-payment figures, never cash or receivables", () => {
   let s0 = seed();
-  // HAK-025 (Nergis Park · cephe) seed durumunda onaylı; aynı firmanın barteri BRT-NP-01
+  // HAK-025 (ALION · fachada) está aprobado en el escenario; se registra un canje de prueba con el mismo proveedor
   const hak = requestList(s0).find((r) => r.id === "HAK-025");
-  assert.equal(requestStatus(s0, hak), "Onaylandı");
+  s0 = applyAction(s0, { type: "barter", record: { id: "BRT-T", project: "alion", unitId: "alion-40", company: hak.company, work: "Fachada", amount: 15000, start: "2026-11-01", end: "2027-03-01", progress: 20, transfer: "Pendiente" } });
+  assert.equal(requestStatus(s0, hak), "Aprobado");
   const b = s0.barters.find((x) => x.company === hak.company && x.project === hak.project);
-  const s1 = applyAction(s0, { type: "barter-offset", barterId: b.id, requestId: "HAK-025", amount: 300000 });
+  const s1 = applyAction(s0, { type: "barter-offset", barterId: b.id, requestId: "HAK-025", amount: 5000 });
   const [a0, a1] = [financialReport(s0, P), financialReport(s1, P)];
   for (const k of ["contracted", "collected", "balance", "overdue", "inflow", "outflow"]) assert.equal(a1[k], a0[k], k);
-  assert.equal(a1.barterOffset, r2(a0.barterOffset + 300000));
-  assert.equal(a1.barterRemaining, r2(a0.barterRemaining - 300000));
-  assert.equal(a1.payableApproved, r2(a0.payableApproved - 300000));
+  assert.equal(a1.barterOffset, r2(a0.barterOffset + 5000));
+  assert.equal(a1.barterRemaining, r2(a0.barterRemaining - 5000));
+  assert.equal(a1.payableApproved, r2(a0.payableApproved - 5000));
   const [d0, d1] = [barterReport(s0, P), barterReport(s1, P)];
-  assert.equal(d1.rows.find((x) => x.id === b.id).remaining, r2(d0.rows.find((x) => x.id === b.id).remaining - 300000));
+  assert.equal(d1.rows.find((x) => x.id === b.id).remaining, r2(d0.rows.find((x) => x.id === b.id).remaining - 5000));
   for (const other of d1.rows.filter((x) => x.id !== b.id)) assert.deepEqual(other, d0.rows.find((x) => x.id === other.id));
   const [e0, e1] = [subcontractorReport(s0, P), subcontractorReport(s1, P)];
   const w0 = e0.rows.find((x) => x.company === hak.company), w1 = e1.rows.find((x) => x.company === hak.company);
-  assert.equal(w1.barterOffset, r2(w0.barterOffset + 300000));
-  assert.equal(w1.cashDue, r2(w0.cashDue - 300000));
+  assert.equal(w1.barterOffset, r2(w0.barterOffset + 5000));
+  assert.equal(w1.cashDue, r2(w0.cashDue - 5000));
   assert.equal(w1.hakedis, w0.hakedis);
   assert.deepEqual(financialReport(s1, C), financialReport(s0, C));
-  assert.equal(netPayable(s1, requestList(s1).find((r) => r.id === "HAK-025")), r2(netPayable(s0, requestList(s0).find((r) => r.id === "HAK-025")) - 300000));
+  assert.equal(netPayable(s1, requestList(s1).find((r) => r.id === "HAK-025")), r2(netPayable(s0, requestList(s0).find((r) => r.id === "HAK-025")) - 5000));
 });
 
 test("Date filters work: inflow by period equals ledger credits in that period", () => {
@@ -194,7 +195,7 @@ test("Date filters work: inflow by period equals ledger credits in that period",
   assert(win.upcomingRows.length > 0 && win.upcomingRows.every((r) => r.due.startsWith("2026-12")));
   assert.equal(win.overdueTotal, 0);
   // Aging buckets cover every overdue day count exactly once
-  for (const row of paymentRows(s).filter((r) => r.status === "Gecikti")) {
+  for (const row of paymentRows(s).filter((r) => r.status === "Vencida")) {
     const d = -row.days;
     assert.equal(AGING.filter((b) => d >= b.min && d <= b.max).length, 1, `${row.id} ${d}`);
   }
@@ -203,13 +204,13 @@ test("Date filters work: inflow by period equals ledger credits in that period",
 
 test("CSV export produces a real Excel-compatible file for every report", () => {
   const s = seed();
-  for (const kind of ["finans", "satis", "taksit", "barter", "taseron", "yonetici"]) {
-    for (const f of [ALL, C, { project: "nergis", from: "2026-11-01", to: "2026-11-30" }]) {
+  for (const kind of ["caja", "satis", "cuotas", "taseron", "yonetici"]) {
+    for (const f of [ALL, C, { project: "alion", from: "2026-11-01", to: "2026-11-30" }]) {
       const rows = reportCsv(s, kind, f);
       assert(rows.length > 6, kind);
       const csv = toCsv(rows);
       assert(csv.startsWith("﻿"));
-      assert(csv.includes("TEMSİLİ DEMO VERİSİ"));
+      assert(csv.includes("DATOS DE DEMOSTRACIÓN"));
       const lines = csv.split("\r\n");
       assert.equal(lines.length, rows.length + 1);
       for (const l of lines.slice(1)) if (l) assert(/^"/.test(l), l);
@@ -217,8 +218,8 @@ test("CSV export produces a real Excel-compatible file for every report", () => 
     }
   }
   // Rakamlar sayı olarak, ayırıcı noktalı virgül; formül enjeksiyonu engellenir
-  const fin = reportCsv(s, "finans", ALL);
-  assert.equal(fin.find((r) => r[0] === "Toplam sözleşmeli satış")[1], financialReport(s, ALL).contracted);
+  const fin = reportCsv(s, "caja", ALL);
+  assert.equal(fin.find((r) => r[0] === "Total contratado")[1], financialReport(s, ALL).contracted);
   assert.equal(toCsv([["=1+1", 'a"b', 5, 3550000.75]]).split("\r\n")[1], `"'=1+1";"a""b";"5";"3550000,75"`);
 });
 
@@ -227,28 +228,28 @@ test("Cash outflow uses the recorded payment date, never the due date; undated p
   // Seed: HAK-026 vadesi 8 Kasım, ödeme 8 Kasım olarak kayıtlı
   assert.equal(paidDate(s, "HAK-026"), "2026-11-08");
   // Vadesi Aralık olan onaylı talep 15 Kasım'da ödenir → Kasım dönemi çıkışıdır, Aralık değil
-  s = applyAction(s, { type: "request", record: { id: "HAK-900", project: "cengilli", company: "Karataş Yapı Taahhüt", name: "Test hakedişi", type: "Hakediş", amount: 100000, due: "2026-12-20", status: "Onay bekliyor" } });
+  s = applyAction(s, { type: "request", record: { id: "HAK-900", project: "vtower", company: "Karataş Yapı Taahhüt", name: "Test hakedişi", type: "Certificado de obra", amount: 100000, due: "2026-12-20", status: "Pendiente de aprobación" } });
   const id = s.requests.find((r) => r.name === "Test hakedişi").id;
   s = applyAction(s, { type: "approve", id });
   s = applyAction(s, { type: "pay-order", id });
   assert.equal(paidDate(s, id), SNAPSHOT);
-  const nov = financialReport(s, { project: "cengilli", from: "2026-11-01", to: "2026-11-30" });
-  const dec = financialReport(s, { project: "cengilli", from: "2026-12-01", to: "2026-12-31" });
+  const nov = financialReport(s, { project: "vtower", from: "2026-11-01", to: "2026-11-30" });
+  const dec = financialReport(s, { project: "vtower", from: "2026-12-01", to: "2026-12-31" });
   assert(nov.outflowRows.some((r) => r.id === id && r.paidAt === SNAPSHOT && r.due === "2026-12-20"));
   assert(!dec.outflowRows.some((r) => r.id === id));
-  assert.equal(nov.outflow, r2(560000 + 100000));
+  assert.equal(nov.outflow, r2(4800 + 100000));
   // Ödeme tarihi kaydı olmayan (önceki sürüm) ödeme: dönemlere dağıtılmaz, tüm dönem toplamında kalır
   const legacy = structuredClone(s);
   delete legacy.paidDates[id];
-  const all = financialReport(legacy, { project: "cengilli" });
-  const novL = financialReport(legacy, { project: "cengilli", from: "2026-11-01", to: "2026-11-30" });
-  assert.equal(all.outflow, r2(660000));
-  assert.equal(novL.outflow, 560000);
+  const all = financialReport(legacy, { project: "vtower" });
+  const novL = financialReport(legacy, { project: "vtower", from: "2026-11-01", to: "2026-11-30" });
+  assert.equal(all.outflow, r2(104800));
+  assert.equal(novL.outflow, 4800);
   assert.equal(all.undatedPaidCount, 1);
   assert.equal(all.undatedPaidAmount, 100000);
   assert(all.outflowRows.some((r) => r.id === id && !r.paidAt));
   // Tüm dönem çıkışı, kasa hesabındaki ödenen tutarla aynıdır
-  assert.equal(all.outflow, summary(legacy, "cengilli").paid);
+  assert.equal(all.outflow, summary(legacy, "vtower").paid);
   // Önceki sürümden aktarılan veride seed ödeme tarihi korunur
   const raw = JSON.stringify({ ...seed(), paidDates: undefined, dataset: undefined, basePricing: undefined });
   assert.equal(paidDate(migrateSaved(raw).state, "HAK-026"), "2026-11-08");
@@ -256,15 +257,15 @@ test("Cash outflow uses the recorded payment date, never the due date; undated p
 
 test("Available units equal units that are neither sold, in signing, bartered nor reserved", () => {
   const s = seed();
-  for (const p of ["cengilli", "nergis", "agva"]) {
+  for (const p of ["lofty", "alion", "vtower", "business"]) {
     const res = new Set(reservedUnits(s, p));
     const free = units.filter((u) => u.project === p && !unitTaken(s, u.id) && !res.has(u.id)).length;
     assert.equal(salesReport(s, { project: p }).total.available, free, p);
   }
   // Taslak sözleşme daireyi müsait listesinden çıkarır
-  // Nergis Park: 38 − 12 satış − 1 imza sürecinde − 1 barter − 2 rezerve − 17 arsa sahibi payı = 5
-  assert.equal(salesReport(s, P).total.available, 5);
-  assert.equal(salesReport(s, P).total.landowner, 17);
+  // ALION: 64 − 22 vendidas − 1 en firma − 2 reservadas = 39 (sin propietarios de terreno)
+  assert.equal(salesReport(s, P).total.available, 39);
+  assert.equal(salesReport(s, P).total.landowner, 0);
 });
 
 console.log(`${checks} reporting & multi-project suites passed.`);

@@ -28,7 +28,7 @@ import {
 import { money, date } from "@/lib/data";
 import { readArchive, type ArchiveFile } from "@/lib/archive";
 /** Hatırlatma sorumlusu: kurgusal kişi ve ekip etiketleri (kullanıcı hesabı değildir). */
-const OWNERS = ["Genel müdür", ...ADVISORS, "Finans ve tahsilat", "Şantiye ve hakediş"];
+const OWNERS = ["Gerencia general", ...ADVISORS, "Finanzas y cobranza", "Obra y certificados"];
 type Entry = {
   id: string;
   project: string;
@@ -56,7 +56,7 @@ export default function RemindersView() {
       .then(setFiles)
       .catch(() =>
         setArchiveError(
-          "Yerel arşiv okunamadığı için belge bitiş hatırlatmaları gösterilemiyor.",
+          "No se pudo leer el archivo local; no se muestran vencimientos de documentos.",
         ),
       );
   }, []);
@@ -68,10 +68,10 @@ export default function RemindersView() {
         id: i.id,
         project: i.project,
         title: `${cs.find((c) => c.id === i.customerId)?.name} · ${unitShort(i.customerId)}`,
-        kind: "Taksit",
+        kind: "Cuota",
         due: i.due,
         amount: outstanding(state, i),
-        href: `/satis-tahsilat?q=${encodeURIComponent(cs.find((c) => c.id === i.customerId)?.name ?? "")}`,
+        href: `/cobros?q=${encodeURIComponent(cs.find((c) => c.id === i.customerId)?.name ?? "")}`,
       })),
     ...state.contracts
       .filter((c) => (c.depositExpected ?? c.deposit) > c.deposit)
@@ -82,14 +82,14 @@ export default function RemindersView() {
           customerId: c.id,
           project: c.project,
           title: c.name,
-          kind: "Peşinat",
+          kind: "Anticipo",
           due: next?.due ?? c.depositDue ?? SNAPSHOT,
           amount: (c.depositExpected ?? c.deposit) - c.deposit,
         };
       }),
     ...requestList(state)
       .filter(
-        (r) => !["Ödendi", "İade edildi"].includes(requestStatus(state, r)),
+        (r) => !["Pagada", "Devuelto"].includes(requestStatus(state, r)),
       )
       .map((r) => ({
         id: r.id,
@@ -98,7 +98,7 @@ export default function RemindersView() {
         kind: r.type,
         due: r.due,
         amount: r.amount,
-        href: r.type === "Hakediş" ? "/operasyon" : "/satinalma",
+        href: r.type === "Certificado de obra" ? "/operasyon" : "/satinalma",
       })),
     ...state.barters
       .filter((b) => b.progress < 100)
@@ -106,7 +106,7 @@ export default function RemindersView() {
         id: b.id,
         project: b.project,
         title: `${b.company} · ${b.work}`,
-        kind: "Barter bitişi",
+        kind: "Fin de canje",
         due: b.end,
         href: "/barter",
       })),
@@ -116,13 +116,13 @@ export default function RemindersView() {
         id: f.id,
         project: f.project,
         title: f.name,
-        kind: "Sözleşme bitişi",
+        kind: "Vencimiento de contrato",
         due: f.expiry,
-        href: `/arsiv?record=${encodeURIComponent(f.record)}&project=${f.project}`,
+        href: `/documentos?record=${encodeURIComponent(f.record)}&project=${f.project}`,
       })),
     ...state.reminders.map((r) => ({
       ...r,
-      kind: "Özel hatırlatma",
+      kind: "Recordatorio",
       custom: true,
     })),
   ].filter((r) => project === "all" || r.project === project);
@@ -131,7 +131,7 @@ export default function RemindersView() {
     rows = entries
       .filter(
         (r) =>
-          r.title.toLocaleLowerCase("tr").includes(q.toLocaleLowerCase("tr")) &&
+          r.title.toLocaleLowerCase("es").includes(q.toLocaleLowerCase("es")) &&
           (kind === "all" || r.kind === kind) &&
           (period === "all" || period === "late"
             ? !r.done && (period === "all" || r.due < SNAPSHOT)
@@ -143,50 +143,48 @@ export default function RemindersView() {
   return (
     <>
       <SectionTitle
-        title="Hatırlatmalar"
-        description="Taksit, peşinat, iş ve sözleşme tarihlerinin ortak takip ekranı."
+        title="Recordatorios"
+        description="Seguimiento unificado de cuotas, anticipos, pagos y vencimientos de contratos."
         actions={
           <button className="btn primary" onClick={() => setCreate(true)}>
             <Plus size={16} />
-            Özel hatırlatma
+            Recordatorio
           </button>
         }
       />
       <p className="callout">
-        Uygulama içi takip · Demo tarihi: 15 Kasım 2026. SMS, e-posta ve
-        WhatsApp gönderimi bağlı değildir. Hatırlatmalar uygulama açıldığında
-        hesaplanır.
+        Seguimiento dentro de la aplicación · Fecha de la demo: 15 de noviembre de 2026. No hay envío por SMS, correo ni WhatsApp. Los recordatorios se calculan al abrir la aplicación.
       </p>
       {archiveError && <p role="alert">{archiveError}</p>}
       <div className="e-kpis three">
         <Kpi
-          label="Geciken kayıt"
+          label="Vencidos"
           value={String(open.filter((r) => r.due < SNAPSHOT).length)}
-          sub="Ödenmemiş / tamamlanmamış"
+          sub="Sin pagar / sin completar"
           icon={<BellRing size={20} />}
         />
         <Kpi
-          label="Ay sonuna kadar"
+          label="Hasta fin de mes"
           value={String(
             open.filter((r) => r.due >= SNAPSHOT && r.due <= cutoff).length,
           )}
-          sub="Yaklaşan ödeme ve iş tarihleri"
+          sub="Próximos vencimientos"
           icon={<Clock size={20} />}
         />
         <Kpi
-          label="Bekleyen peşinat"
+          label="Anticipo pendiente"
           value={money(
             open
-              .filter((r) => r.kind === "Peşinat")
+              .filter((r) => r.kind === "Anticipo")
               .reduce((a, r) => a + (r.amount ?? 0), 0),
           )}
-          sub="Kısmi peşinat tahsilatı desteklenir"
+          sub="Admite cobro parcial de anticipos"
           icon={<BellRing size={20} />}
         />
       </div>
       <Panel
         title="Takip listesi"
-        subtitle="Kaynak kayıtlar değiştikçe otomatik güncellenir"
+        subtitle="Se actualiza automáticamente con los registros"
       >
         <div className="e-toolbar">
           <SearchBox
@@ -195,41 +193,41 @@ export default function RemindersView() {
               setQ(v);
               setPage(0);
             }}
-            placeholder="Müşteri, firma veya hatırlatma ara…"
+            placeholder="Buscar cliente, empresa o recordatorio…"
           />
           <select
-            aria-label="Hatırlatma türü"
+            aria-label="Tipo de recordatorio"
             value={kind}
             onChange={(e) => {
               setKind(e.target.value);
               setPage(0);
             }}
           >
-            <option value="all">Tüm türler</option>
+            <option value="all">Todos los tipos</option>
             {[
-              "Taksit",
-              "Peşinat",
-              "Hakediş",
-              "Satın alma",
-              "Barter bitişi",
-              "Sözleşme bitişi",
-              "Özel hatırlatma",
+              "Cuota",
+              "Anticipo",
+              "Certificado de obra",
+              "Compra",
+              "Fin de canje",
+              "Vencimiento de contrato",
+              "Recordatorio",
             ].map((k) => (
               <option key={k}>{k}</option>
             ))}
           </select>
           <select
-            aria-label="Hatırlatma dönemi"
+            aria-label="Período"
             value={period}
             onChange={(e) => {
               setPeriod(e.target.value);
               setPage(0);
             }}
           >
-            <option value="upcoming">Bu ay ve gecikenler</option>
+            <option value="upcoming">Este mes y vencidos</option>
             <option value="late">Gecikenler</option>
-            <option value="all">Tüm açık kayıtlar</option>
-            <option value="done">Tamamlanan özel notlar</option>
+            <option value="all">Todos los pendientes</option>
+            <option value="done">Recordatorios completados</option>
           </select>
         </div>
         {rows.length ? (
@@ -237,11 +235,11 @@ export default function RemindersView() {
             <table>
               <thead>
                 <tr>
-                  <th>Konu / proje</th>
-                  <th>Tür</th>
-                  <th>Tarih</th>
-                  <th className="numeric">Tutar</th>
-                  <th>Durum / işlem</th>
+                  <th>Asunto / proyecto</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th className="numeric">Monto</th>
+                  <th>Estado / acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -264,7 +262,7 @@ export default function RemindersView() {
                         <b>{r.title}</b>
                         <small>
                           {pname(r.project)}
-                          {"owner" in r && r.owner ? ` · Sorumlu: ${r.owner}` : ""}
+                          {"owner" in r && r.owner ? `· Responsable: ${r.owner}` : ""}
                         </small>
                       </td>
                       <td>{r.kind}</td>
@@ -283,10 +281,10 @@ export default function RemindersView() {
                           }
                         >
                           {r.done
-                            ? "Tamamlandı"
+                            ? "Finalizado"
                             : r.due < SNAPSHOT
-                              ? "Gecikmiş"
-                              : "Yaklaşıyor"}
+                              ? "Vencida"
+                              : "Próxima"}
                         </Badge>
                         {r.custom ? (
                           <button
@@ -295,21 +293,21 @@ export default function RemindersView() {
                               act({ type: "reminder-done", id: r.id })
                             }
                           >
-                            {r.done ? "Yeniden aç" : "Tamamla"}
+                            {r.done ? "Reabrir" : "Tamamla"}
                           </button>
                         ) : r.customerId ? (
                           <button
                             className="btn compact"
                             onClick={() => setDeposit(r)}
                           >
-                            Peşinat tahsil et
+                            Cobrar anticipo
                           </button>
                         ) : (
                           <Link
                             className="btn compact"
-                            href={r.href ?? "/evrak"}
+                            href={r.href ?? "/documentos"}
                           >
-                            Kaydı aç
+                            Abrir registro
                           </Link>
                         )}
                       </td>
@@ -325,18 +323,18 @@ export default function RemindersView() {
                     rows.length,
                     (Math.min(page, Math.ceil(rows.length / 15) - 1) + 1) * 15,
                   )}{" "}
-                  / {rows.length} kayıt
+                  / {rows.length} registros
                 </span>
                 <div>
                   <button
-                    aria-label="Önceki sayfa"
+                    aria-label="Página anterior"
                     disabled={page === 0}
                     onClick={() => setPage(Math.max(0, page - 1))}
                   >
                     ‹
                   </button>
                   <button
-                    aria-label="Sonraki sayfa"
+                    aria-label="Página siguiente"
                     disabled={(page + 1) * 15 >= rows.length}
                     onClick={() => setPage(page + 1)}
                   >
@@ -347,12 +345,12 @@ export default function RemindersView() {
             )}
           </div>
         ) : (
-          <Empty title="Bu filtrede hatırlatma yok" />
+          <Empty title="No hay recordatorios con este filtro" />
         )}
       </Panel>
       <Drawer
         open={create}
-        title="Yeni hatırlatma"
+        title="Nuevo recordatorio"
         onClose={() => setCreate(false)}
       >
         <form
@@ -377,17 +375,17 @@ export default function RemindersView() {
         >
           <div className="form-grid">
             <label className="full">
-              Hatırlatma konusu
+              Asunto
               <input name="title" required maxLength={200} />
             </label>
             <label>
-              Proje
+              Proyecto
               <select name="project" defaultValue={project}>
                 {[
                   <option key="all" value="all">
-                    Tüm projeler
+                    Todos los proyectos
                   </option>,
-                  ...projects.filter((p) => p.status !== "Arşiv").map((p) => (
+                  ...projects.filter((p) => p.status !== "Archivado").map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
                     </option>
@@ -396,11 +394,11 @@ export default function RemindersView() {
               </select>
             </label>
             <label>
-              Hatırlatma tarihi
+              Fecha
               <input type="date" name="due" required defaultValue={SNAPSHOT} />
             </label>
             <label className="full">
-              Sorumlu
+              Responsable
               <select name="owner" defaultValue="">
                 <option value="">Belirtilmedi</option>
                 {OWNERS.map((o) => (
@@ -408,17 +406,17 @@ export default function RemindersView() {
                 ))}
               </select>
               <small className="muted">
-                Demo: sorumlu yalnızca etiket olarak kaydedilir; bildirim gönderilmez, kullanıcı
-                hesabı yoktur.
+                Demo: el responsable se guarda solo como etiqueta; no se envían notificaciones y no hay
+                cuentas de usuario.
               </small>
             </label>
           </div>
-          <button className="btn primary">Hatırlatmayı kaydet</button>
+          <button className="btn primary">Guardar recordatorio</button>
         </form>
       </Drawer>
       <Drawer
         open={!!deposit}
-        title="Peşinat tahsilatı"
+        title="Cobro de anticipo"
         onClose={() => setDeposit(null)}
       >
         {deposit && (
@@ -436,10 +434,10 @@ export default function RemindersView() {
             }}
           >
             <p>
-              {deposit.title} · Kalan {money(deposit.amount ?? 0)}
+              {deposit.title} · Saldo {money(deposit.amount ?? 0)}
             </p>
             <label className="form-label">
-              Tahsil edilen peşinat (TL)
+              Anticipo cobrado (USD)
               <input
                 name="amount"
                 type="number"
@@ -450,7 +448,7 @@ export default function RemindersView() {
                 defaultValue={deposit.amount}
               />
             </label>
-            <button className="btn primary">Peşinatı kaydet</button>
+            <button className="btn primary">Registrar anticipo</button>
           </form>
         )}
       </Drawer>

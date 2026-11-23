@@ -51,7 +51,7 @@ type Hit = {
   file?: FileRef;
   href?: string;
 };
-const norm = (s: string) => s.toLocaleLowerCase("tr").replace(/\s+/g, "");
+const norm = (s: string) => s.toLocaleLowerCase("es").replace(/\s+/g, "");
 
 /** Müşteri, daire etiketi, sözleşme no, firma, barter ve hakediş üzerinden arama. */
 export function useSearch(query: string): Hit[] {
@@ -67,7 +67,7 @@ export function useSearch(query: string): Hit[] {
         icon: <UsersRound size={18} />,
         title: c.name,
         detail: `${pname(c.project)} · ${unitShort(c.id)} · ${contractNumber(c.id)}`,
-        tag: "Müşteri dosyası",
+        tag: "Ficha del cliente",
         file: { type: "customer", id: c.id },
       });
   for (const d of state.drafts)
@@ -76,8 +76,8 @@ export function useSearch(query: string): Hit[] {
         key: `d-${d.id}`,
         icon: <FileSignature size={18} />,
         title: d.name,
-        detail: `${pname(d.project)} · ${unitShort(d.id)} · ${contractNumber(d.id)} · ${state.contractMeta[d.id]?.status ?? "Taslak"}`,
-        tag: "İmza süreci",
+        detail: `${pname(d.project)} · ${unitShort(d.id)} · ${contractNumber(d.id)} · ${state.contractMeta[d.id]?.status ?? "Borrador"}`,
+        tag: "Proceso de firma",
         file: { type: "draft", id: d.id },
       });
   for (const b of state.barters) {
@@ -87,8 +87,8 @@ export function useSearch(query: string): Hit[] {
         key: b.id,
         icon: <Handshake size={18} />,
         title: `${b.company} · ${unitShort(b.unitId)}`,
-        detail: `${pname(b.project)} · ${b.id} · barter`,
-        tag: "Barter dosyası",
+        detail: `${pname(b.project)} · ${b.id} · canje`,
+        tag: "Canje",
         file: { type: "barter", id: b.id },
       });
   }
@@ -107,9 +107,9 @@ export function useSearch(query: string): Hit[] {
       hits.push({
         key: `u-${u.id}`,
         icon: <Building2 size={18} />,
-        title: `${unitShort(u.id)} · müsait`,
+        title: `${unitShort(u.id)} · disponible`,
         detail: `${pname(u.project)} · ${u.type} · ${u.gross} m² · ${money(u.listPrice)}`,
-        tag: "Müsait daire",
+        tag: "Unidad disponible",
         file: { type: "unit", id: u.id },
       });
   for (const w of workContracts(state))
@@ -117,10 +117,10 @@ export function useSearch(query: string): Hit[] {
       hits.push({
         key: w.id,
         icon: <FileSignature size={18} />,
-        title: `${w.company} · iş sözleşmesi`,
-        detail: `${pname(w.project)} · ${w.id} · ${w.packages.length} iş paketi`,
-        tag: "İş sözleşmesi",
-        href: "/sozlesmeler?tur=is",
+        title: `${w.company} · contrato de obra`,
+        detail: `${pname(w.project)} · ${w.id} · ${w.packages.length} paquetes de obra`,
+        tag: "Contrato de obra",
+        href: "/contratos?tur=is",
       });
   for (const p of projects)
     if (has(p.name))
@@ -128,8 +128,8 @@ export function useSearch(query: string): Hit[] {
         key: p.id,
         icon: <Building2 size={18} />,
         title: p.name,
-        detail: "Proje genel bakışı",
-        tag: "Proje",
+        detail: "Resumen del proyecto",
+        tag: "Proyecto",
         href: hubHref(p.id),
       });
   return hits.slice(0, 12);
@@ -146,15 +146,14 @@ export function SearchResults({
   if (norm(query).length < 2)
     return (
       <p className="muted">
-        Müşteri adı, daire (ör. A-67), sözleşme no (ör. SZL-CV-052), firma veya
-        hakediş no yazın.
+        Escriba nombre del cliente, unidad (ej.: 503F), n.º de contrato (ej.: CTR-ALN-025), proveedor o n.º de certificado.
       </p>
     );
   if (!hits.length)
     return (
       <Empty
-        title="Sonuç bulunamadı"
-        detail="Daire etiketi, sözleşme no veya firma adıyla deneyin."
+        title="Sin resultados"
+        detail="Pruebe con el código de unidad, el n.º de contrato o el proveedor."
       />
     );
   return (
@@ -200,7 +199,7 @@ export function Notifications({
     { total: number; oldest: string; focus: string }
   >();
   for (const r of paymentRows(state).filter(
-    (r) => r.status === "Gecikti" && inScope(r.project),
+    (r) => r.status === "Vencida" && inScope(r.project),
   )) {
     const cur = late.get(r.customerId);
     if (!cur)
@@ -213,18 +212,18 @@ export function Notifications({
   }
   const drafts = state.drafts.filter((d) => inScope(d.project));
   const pending = requestList(state).filter(
-    (r) => inScope(r.project) && requestStatus(state, r) === "Onay bekliyor",
+    (r) => inScope(r.project) && requestStatus(state, r) === "Pendiente de aprobación",
   );
   const empty = !late.size && !drafts.length && !pending.length;
   return (
     <div className="notify">
       <p className="drawer-intro">
-        {scope === "all" ? "Tüm projeler" : pname(scope)} için bekleyen işler.
-        Satıra tıklayın; ilgili dosya açılır.
+        Pendientes de {scope === "all" ? "todos los proyectos" : pname(scope)}.
+        Haga clic en una fila para abrir la ficha.
       </p>
       {late.size > 0 && (
         <section>
-          <h3 className="subheading">Geciken ödemeler · {late.size}</h3>
+          <h3 className="subheading">Pagos vencidos · {late.size}</h3>
           {[...late.entries()].map(([id, v]) => (
             <button
               key={id}
@@ -238,7 +237,7 @@ export function Notifications({
                 <b>
                   {names.get(id)?.name} · {unitShort(id)}
                 </b>
-                <small>En eski vade {date(v.oldest)}</small>
+                <small>Vencimiento más antiguo {date(v.oldest)}</small>
               </span>
               <span className="cc-amount danger num">{money(v.total)}</span>
             </button>
@@ -248,7 +247,7 @@ export function Notifications({
       {drafts.length > 0 && (
         <section>
           <h3 className="subheading">
-            İmza bekleyen sözleşmeler · {drafts.length}
+            Contratos pendientes de firma · {drafts.length}
           </h3>
           {drafts.map((d) => (
             <button
@@ -265,7 +264,7 @@ export function Notifications({
                 </b>
                 <small>
                   {contractNumber(d.id)} ·{" "}
-                  {state.contractMeta[d.id]?.status ?? "Taslak"}
+                  {state.contractMeta[d.id]?.status ?? "Borrador"}
                 </small>
               </span>
               <span className="cc-amount num">{money(d.price)}</span>
@@ -276,7 +275,7 @@ export function Notifications({
       {pending.length > 0 && (
         <section>
           <h3 className="subheading">
-            Onay bekleyen işlemler · {pending.length}
+            Operaciones pendientes de aprobación · {pending.length}
           </h3>
           {pending.map((r) => (
             <button
@@ -300,21 +299,21 @@ export function Notifications({
           ))}
         </section>
       )}
-      {empty && <Empty title="Bekleyen iş yok" />}
+      {empty && <Empty title="Sin pendientes" />}
       <div className="form-actions">
         <Link
           className="btn"
-          href="/hatirlatmalar"
+          href="/agenda"
           onClick={() => onPick(null)}
         >
-          Hatırlatmalar
+          Recordatorios
         </Link>
         <Link
           className="btn primary"
-          href="/odemeler?durum=Gecikti"
+          href="/cobros?durum=Vencida"
           onClick={() => onPick(null)}
         >
-          <Wallet size={15} /> Geciken ödemeler
+          <Wallet size={15} /> Pagos vencidos
           <ChevronRight size={14} />
         </Link>
       </div>

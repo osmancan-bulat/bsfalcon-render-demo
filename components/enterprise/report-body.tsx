@@ -14,9 +14,9 @@ import {
 } from "@/lib/reports";
 import { money, date } from "@/lib/data";
 
-const pct = (n: number) => `%${(Math.round(n * 1000) / 10).toLocaleString("tr-TR")}`;
+const pct = (n: number) => `%${(Math.round(n * 1000) / 10).toLocaleString("es-PY")}`;
 const monthName = (m: string) =>
-  new Date(m + "-15T12:00:00").toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+  new Date(m + "-15T12:00:00").toLocaleDateString("es-PY", { month: "long", year: "numeric" });
 
 function Figures({ title, note, items }: { title: string; note?: string; items: [string, string, string?, string?][] }) {
   return (
@@ -45,7 +45,7 @@ function Table({
   rows,
   foot,
   numeric = [],
-  empty = "Bu kapsamda kayıt yok.",
+  empty = "Sin registros en este alcance.",
 }: {
   title?: string;
   note?: string;
@@ -114,47 +114,47 @@ const Bar = ({ value, max, tone = "" }: { value: number; max: number; tone?: str
 
 export default function ReportBody({ s, kind, f }: { s: EnterpriseState; kind: ReportKind; f: ReportFilter }) {
   const period = periodLabel(f);
-  if (kind === "finans") {
+  if (kind === "caja") {
     const a = financialReport(s, f);
     return (
       <>
         <Figures
-          title="Alacak durumu"
-          note="15 Kas 2026 itibarıyla · tarih filtresinden bağımsız"
+          title="Cuentas por cobrar"
+          note="Al 15 nov 2026 · independiente del filtro de fechas"
           items={[
-            ["Toplam sözleşmeli satış", money(a.contracted)],
-            ["Toplam tahsil edilen", money(a.collected), `Tahsilat oranı ${pct(a.collectionRate)}`],
-            ["Kalan alacak", money(a.balance)],
-            ["Geciken alacak", money(a.overdue), `Taksit ${money(a.overdueInstallments)} · peşinat ${money(a.overdueDeposits)}`, a.overdue > 0 ? "danger" : ""],
+            ["Total contratado", money(a.contracted)],
+            ["Total cobrado", money(a.collected), `Cobranza ${pct(a.collectionRate)}`],
+            ["Saldo por cobrar", money(a.balance)],
+            ["Saldo vencido", money(a.overdue), `Cuotas ${money(a.overdueInstallments)} · anticipos ${money(a.overdueDeposits)}`, a.overdue > 0 ? "danger" : ""],
           ]}
         />
         <Figures
-          title="Nakit hareketi"
-          note={`Dönem: ${period}`}
+          title="Movimiento de caja"
+          note={`Período: ${period}`}
           items={[
-            ["Kasaya giren", money(a.inflow), `Peşinat ${money(a.inflowDeposit)} · taksit ${money(a.inflowInstallment)} · ara ödeme ${money(a.inflowInterim)}`],
-            ["Kasadan çıkan", money(a.outflow), "Ödenen hakediş ve satın almaların nakit kısmı · gerçek ödeme tarihine göre"],
-            ["Net nakit akışı", money(a.net)],
-            ["Onaylı, ödenmemiş", money(a.payableApproved), "Ödeme bekleyen nakit borç (durum)"],
+            ["Ingresos", money(a.inflow), `Anticipos ${money(a.inflowDeposit)} · cuotas ${money(a.inflowInstallment)} · pagos intermedios ${money(a.inflowInterim)}`],
+            ["Egresos de caja", money(a.outflow), "Certificados y compras pagados · según fecha real de pago"],
+            ["Flujo de caja neto", money(a.net)],
+            ["Aprobado, no pagado", money(a.payableApproved), "Deuda pendiente de pago (estado)"],
           ]}
         />
         <Figures
-          title="Nakit dışı barter etkisi"
-          note="Kasaya giriş veya çıkış oluşturmaz"
+          title="Efecto de canjes (sin efectivo)"
+          note="No genera ingresos ni egresos de caja"
           items={[
-            ["Barter anlaşma değeri", money(a.barterValue), "Daire karşılığı alınan işler (durum)"],
-            ["Dönemde mahsup edilen", money(a.barterOffset), `${a.barterOffsetCount} hakediş mahsubu · ${period}`],
-            ["Kalan barter yükümlülüğü", money(a.barterRemaining), "Firmalara karşı yapılacak iş (durum)"],
+            ["Valor de canjes", money(a.barterValue), "Trabajos recibidos a cambio de unidades"],
+            ["Compensado en el período", money(a.barterOffset), `${a.barterOffsetCount} compensaciones · ${period}`],
+            ["Obligación de canje pendiente", money(a.barterRemaining), "Trabajo pendiente con empresas"],
           ]}
         />
         <Table
-          title="Kasadan çıkan ödemeler"
-          note={`Dönem ödemenin kaydedildiği güne göre belirlenir; hakediş vadesi bilgi içindir ve nakit çıkışı anlamına gelmez.${a.undatedPaidCount ? ` Ödeme tarihi kaydı olmayan ${a.undatedPaidCount} ödeme (${money(a.undatedPaidAmount)}) yalnızca “Tüm dönem” toplamında yer alır.` : ""}`}
-          head={["Ödeme tarihi", "Hakediş vadesi", "Talep", "Firma", "Proje", "Tür", "Nakit (TL)"]}
+          title="Pagos de caja"
+          note={`El período se determina por la fecha de pago registrada; el vencimiento es informativo y no implica egreso de caja.${a.undatedPaidCount ? ` ${a.undatedPaidCount} pagos sin fecha registrada (${money(a.undatedPaidAmount)}) solo figuran en “Todo el período”.` : ""}`}
+          head={["Fecha de pago", "Vencimiento", "Solicitud", "Empresa", "Proyecto", "Tipo", "Pagado (USD)"]}
           numeric={[6]}
-          rows={a.outflowRows.map((r) => [r.paidAt ? date(r.paidAt) : "Kayıt yok", date(r.due), r.id, r.company, pname(r.project), r.type, money(r.amount)])}
-          foot={["Toplam", "", "", "", "", "", money(a.outflow)]}
-          empty="Bu dönemde ödenmiş hakediş veya satın alma yok."
+          rows={a.outflowRows.map((r) => [r.paidAt ? date(r.paidAt) : "Sin registros", date(r.due), r.id, r.company, pname(r.project), r.type, money(r.amount)])}
+          foot={["Total", "", "", "", "", "", money(a.outflow)]}
+          empty="No hay pagos a proveedores en este período."
         />
       </>
     );
@@ -164,16 +164,16 @@ export default function ReportBody({ s, kind, f }: { s: EnterpriseState; kind: R
     return (
       <>
         <Table
-          title="Projeye göre satışlar"
-          note="Daire stoku ve satış bedelleri 15 Kas 2026 itibarıyla"
-          head={["Proje", "Toplam", "Satılan", "İmza sürecinde", "Barter", "Rezerve", "Müsait", "Satış bedeli", "Tahsil edilen", "Tahsilat oranı"]}
+          title="Ventas por proyecto"
+          note="Stock de unidades y precios al 15 nov 2026"
+          head={["Proyecto", "Total", "Vendidas", "En firma", "Canje", "Reservada", "Disponible", "Precio de venta", "Cobrado", "Cobranza"]}
           numeric={[1, 2, 3, 4, 5, 6, 7, 8, 9]}
           rows={b.byProject.map((r) => [r.name, r.total, r.sold, r.inSigning, r.barter, r.reserved, r.available, money(r.value), money(r.collected), pct(r.rate)])}
-          foot={b.byProject.length > 1 ? ["Toplam", b.total.total, b.total.sold, b.total.inSigning, b.total.barter, b.total.reserved, b.total.available, money(b.total.value), money(b.total.collected), pct(b.total.rate)] : undefined}
+          foot={b.byProject.length > 1 ? ["Total", b.total.total, b.total.sold, b.total.inSigning, b.total.barter, b.total.reserved, b.total.available, money(b.total.value), money(b.total.collected), pct(b.total.rate)] : undefined}
         />
         <Table
-          title="Daire tiplerine göre"
-          head={["Proje", "Tip", "Stok", "Satılan", "Müsait", "Doluluk", "Satış bedeli", "Ortalama satış", "Tahsilat oranı"]}
+          title="Por tipología"
+          head={["Proyecto", "Tipología", "Stok", "Vendidas", "Disponible", "Doluluk", "Precio de venta", "Venta promedio", "Cobranza"]}
           numeric={[2, 3, 4, 6, 7, 8]}
           rows={b.byType.map((r) => [
             r.name,
@@ -190,52 +190,52 @@ export default function ReportBody({ s, kind, f }: { s: EnterpriseState; kind: R
           ])}
         />
         <Table
-          title="Dönemde imzalanan satış sözleşmeleri"
-          note={`İmza tarihine göre · ${period} · ${b.signedInPeriod.length} sözleşme`}
-          head={["İmza", "Sözleşme", "Müşteri", "Proje", "Daire", "Tip", "Bedel", "Tahsil edilen"]}
+          title="Contratos firmados en el período"
+          note={`Por fecha de firma · ${period} · ${b.signedInPeriod.length} contratos`}
+          head={["Firma", "Contrato", "Cliente", "Proyecto", "Unidad", "Tipología", "Precio", "Cobrado"]}
           numeric={[6, 7]}
           rows={b.signedInPeriod.slice(0, 40).map((r) => [date(r.signed), r.number, r.name, pname(r.project), r.unit, r.type, money(r.price), money(r.collected)])}
-          foot={b.signedInPeriod.length > 40 ? [`+${b.signedInPeriod.length - 40} sözleşme daha (CSV dosyasında tam liste)`, "", "", "", "", "", "", ""] : undefined}
-          empty="Bu dönemde imzalanan satış sözleşmesi yok."
+          foot={b.signedInPeriod.length > 40 ? [`+${b.signedInPeriod.length - 40} contratos más (lista completa en el CSV)`, "", "", "", "", "", "", ""] : undefined}
+          empty="No hay contratos firmados en este período."
         />
       </>
     );
   }
-  if (kind === "taksit") {
+  if (kind === "cuotas") {
     const c = installmentReport(s, f);
     const max = Math.max(...c.aging.map((a) => a.amount), 1);
     return (
       <>
         <Figures
-          title="Özet"
-          note={f.from || f.to ? `Vade tarihi: ${period}` : "Geciken: 15 Kas 2026 itibarıyla · yaklaşan: önümüzdeki 90 gün"}
+          title="Resumen"
+          note={f.from || f.to ? `Vencimiento: ${period}` : "Vencido: al 15 nov 2026 · próximos: siguientes 90 días"}
           items={[
-            ["Geciken alacak", money(c.overdueTotal), `${c.overdueCount} ödeme satırı · ${c.perCustomer.length} müşteri`, c.overdueTotal > 0 ? "danger" : ""],
-            ["Yaklaşan tahsilat", money(c.upcomingTotal), `${c.upcomingCount} ödeme satırı`],
+            ["Saldo vencido", money(c.overdueTotal), `${c.overdueCount} cuotas · ${c.perCustomer.length} clientes`, c.overdueTotal > 0 ? "danger" : ""],
+            ["Cobranza próxima", money(c.upcomingTotal), `${c.upcomingCount} vencimientos`],
           ]}
         />
         <Table
-          title="Gecikme yaşlandırması"
-          note="Kısmi ödenen satırlarda yalnızca kalan tutar sayılır"
-          head={["Gecikme", "Ödeme", "Müşteri", "Tutar", ""]}
+          title="Antigüedad de la mora"
+          note="En pagos parciales solo se cuenta el saldo"
+          head={["Atraso", "Pago", "Cliente", "Monto", ""]}
           numeric={[1, 2, 3]}
           rows={c.aging.map((a) => [a.label, a.count, a.customers, money(a.amount), <Bar key="b" value={a.amount} max={max} tone="danger" />])}
-          foot={["Toplam", c.overdueCount, c.perCustomer.length, money(c.overdueTotal), ""]}
+          foot={["Total", c.overdueCount, c.perCustomer.length, money(c.overdueTotal), ""]}
         />
         <Table
-          title="Müşteri bazlı gecikme"
-          head={["Müşteri", "Sözleşme", "Proje · daire", "Geciken ödeme", "En eski vade", "Gecikme", "Kısmi ödenen", "Geciken tutar"]}
+          title="Mora por cliente"
+          head={["Cliente", "Contrato", "Proyecto · unidad", "Cuotas vencidas", "Vencimiento más antiguo", "Atraso", "Pagado parcialmente", "Monto vencido"]}
           numeric={[3, 5, 6, 7]}
-          rows={c.perCustomer.map((r) => [r.name, r.number, `${pname(r.project)} · ${r.unit}`, `${r.count} · ${r.kinds}`, date(r.oldest), `${r.maxDays} gün`, r.partialPaid ? money(r.partialPaid) : "—", money(r.amount)])}
-          empty="Geciken ödeme yok."
+          rows={c.perCustomer.map((r) => [r.name, r.number, `${pname(r.project)} · ${r.unit}`, `${r.count} · ${r.kinds}`, date(r.oldest), `${r.maxDays} días`, r.partialPaid ? money(r.partialPaid) : "—", money(r.amount)])}
+          empty="Sin cuotas vencidas."
         />
         <Table
-          title="Yaklaşan tahsilatlar (aylık)"
-          head={["Ay", "Ödeme", "Kısmi ödenmiş", "Beklenen tutar"]}
+          title="Cobros próximos (por mes)"
+          head={["Mes", "Pago", "Con pago parcial", "Monto esperado"]}
           numeric={[1, 2, 3]}
           rows={c.byMonth.map((m) => [monthName(m.month), m.count, m.partial || "—", money(m.amount)])}
-          foot={["Toplam", c.upcomingCount, "", money(c.upcomingTotal)]}
-          empty="Bu aralıkta vadesi gelen ödeme yok."
+          foot={["Total", c.upcomingCount, "", money(c.upcomingTotal)]}
+          empty="Sin vencimientos en este rango."
         />
       </>
     );
@@ -245,25 +245,25 @@ export default function ReportBody({ s, kind, f }: { s: EnterpriseState; kind: R
     return (
       <>
         <Figures
-          title="Barter özeti"
-          note="Barter nakit değildir; tutarlar kasa hesaplarına dahil edilmez"
+          title="Resumen de canjes"
+          note="Los canjes no son efectivo; no se incluyen en caja"
           items={[
-            ["Verilen daire", `${d.totals.count}`, `Liste değeri ${money(d.totals.listValue)}`],
-            ["Anlaşma bedeli", money(d.totals.amount)],
-            ["Mahsup edilen hakediş", money(d.totals.offset), `Dönemde ${money(d.totals.offsetInPeriod)}`],
-            ["Kalan yükümlülük", money(d.totals.remaining)],
+            ["Unidades entregadas", `${d.totals.count}`, `Valor de lista ${money(d.totals.listValue)}`],
+            ["Valor del acuerdo", money(d.totals.amount)],
+            ["Certificados compensados", money(d.totals.offset), `En el período ${money(d.totals.offsetInPeriod)}`],
+            ["Obligación pendiente", money(d.totals.remaining)],
           ]}
         />
         <Table
-          title="Firma bazında"
-          head={["Firma", "Anlaşma", "Verilen daireler", "Liste değeri", "Anlaşma bedeli", "Mahsup", "Kalan yükümlülük"]}
+          title="Por empresa"
+          head={["Empresa", "Acuerdo", "Unidades entregadas", "Valor de lista", "Valor del acuerdo", "Compensación", "Obligación pendiente"]}
           numeric={[1, 3, 4, 5, 6]}
           rows={d.firms.map((r) => [r.company, r.count, r.units, money(r.listValue), money(r.amount), money(r.offset), money(r.remaining)])}
-          foot={["Toplam", d.totals.count, "", money(d.totals.listValue), money(d.totals.amount), money(d.totals.offset), money(d.totals.remaining)]}
+          foot={["Total", d.totals.count, "", money(d.totals.listValue), money(d.totals.amount), money(d.totals.offset), money(d.totals.remaining)]}
         />
         <Table
-          title="Anlaşmalar ve mahsup edilen hakedişler"
-          head={["Barter", "Firma · iş", "Proje · daire", "Bedel", "Mahsuplar", "Kalan", "İlerleme · devir"]}
+          title="Acuerdos y compensaciones"
+          head={["Canje", "Empresa · trabajo", "Proyecto · unidad", "Precio", "Compensaciones", "Saldo", "Avance · transferencia"]}
           numeric={[3, 5]}
           rows={d.rows.map((r) => [
             r.id,
@@ -283,31 +283,31 @@ export default function ReportBody({ s, kind, f }: { s: EnterpriseState; kind: R
     return (
       <>
         <Figures
-          title="Hakediş özeti"
-          note={f.from || f.to ? `Hakediş vadesi: ${period}` : "Tüm hakedişler"}
+          title="Resumen de certificados"
+          note={f.from || f.to ? `Vencimiento de certificados: ${period}` : "Todos los certificados"}
           items={[
-            ["Sözleşme bedeli", money(e.totals.value), "İş sözleşmeleri toplamı"],
-            ["Hakediş toplamı", money(e.totals.hakedis)],
-            ["Onay bekleyen", money(e.totals.pending)],
-            ["Onaylı (ödenmemiş)", money(e.totals.approved), `Nakit ödenecek ${money(e.totals.cashDue)}`],
-            ["Ödenmiş", money(e.totals.paid), `Nakit ${money(e.totals.cashPaid)}`],
-            ["Barter mahsubu", money(e.totals.barterOffset), "Nakit dışı kapatma"],
+            ["Precio del contrato", money(e.totals.value), "Total de contratos de obra"],
+            ["Total certificado", money(e.totals.hakedis)],
+            ["Pendiente de aprobación", money(e.totals.pending)],
+            ["Aprobado (no pagado)", money(e.totals.approved), `A pagar ${money(e.totals.cashDue)}`],
+            ["Pagado", money(e.totals.paid), `Pagado ${money(e.totals.cashPaid)}`],
+            ["Compensación por canje", money(e.totals.barterOffset), "Cancelado sin efectivo"],
           ]}
         />
         <Table
-          title="Firma ve iş paketi"
-          head={["Sözleşme", "Firma", "İş paketleri", "Bedel", "Hakediş", "Onay bekleyen", "Onaylı", "Ödenmiş", "Nakit ödenen", "Barter mahsubu"]}
+          title="Empresa y paquete"
+          head={["Contrato", "Empresa", "Paquetes de obra", "Precio", "Certificado de obra", "Pendiente de aprobación", "Aprobado", "Pagado", "Pagado", "Compensación por canje"]}
           numeric={[3, 4, 5, 6, 7, 8, 9]}
           rows={e.rows.map((r) => [r.id, `${r.company} · ${pname(r.project)}`, r.packages, money(r.value), money(r.hakedis), money(r.pending), money(r.approved), money(r.paid), money(r.cashPaid), money(r.barterOffset)])}
-          foot={["Toplam", "", "", money(e.totals.value), money(e.totals.hakedis), money(e.totals.pending), money(e.totals.approved), money(e.totals.paid), money(e.totals.cashPaid), money(e.totals.barterOffset)]}
+          foot={["Total", "", "", money(e.totals.value), money(e.totals.hakedis), money(e.totals.pending), money(e.totals.approved), money(e.totals.paid), money(e.totals.cashPaid), money(e.totals.barterOffset)]}
         />
         <Table
-          title="Hakediş kayıtları"
-          note="Vade, hakedişin ödenmesi planlanan tarihtir; gerçek nakit çıkışı ödeme tarihinde olur."
-          head={["Hakediş", "Firma", "Hakediş vadesi", "Ödeme tarihi", "Tutar", "Durum", "Barter mahsubu", "Nakit"]}
+          title="Certificados registrados"
+          note="El vencimiento es la fecha prevista de pago; el egreso real ocurre en la fecha de pago."
+          head={["Certificado de obra", "Empresa", "Vencimiento", "Fecha de pago", "Monto", "Estado", "Compensación por canje", "Efectivo"]}
           numeric={[4, 6, 7]}
-          rows={e.rows.flatMap((r) => r.requests.map((q) => [`${q.id} · ${q.name}`, r.company, date(q.due), q.status === "Ödendi" ? (q.paidAt ? date(q.paidAt) : "Kayıt yok") : "—", money(q.amount), q.status, q.offset ? money(q.offset) : "—", money(q.cash)]))}
-          empty="Bu aralıkta hakediş yok."
+          rows={e.rows.flatMap((r) => r.requests.map((q) => [`${q.id} · ${q.name}`, r.company, date(q.due), q.status === "Pagada" ? (q.paidAt ? date(q.paidAt) : "Sin registros") : "—", money(q.amount), q.status, q.offset ? money(q.offset) : "—", money(q.cash)]))}
+          empty="Sin certificados en este rango."
         />
       </>
     );
@@ -316,9 +316,9 @@ export default function ReportBody({ s, kind, f }: { s: EnterpriseState; kind: R
   return (
     <>
       <Table
-        title="Şirket ve proje özeti"
-        note={`Alacaklar 15 Kas 2026 itibarıyla · nakit hareketi ${period}`}
-        head={["Kapsam", "Satılan / stok", "Sözleşmeli satış", "Tahsil edilen", "Kalan alacak", "Geciken", "Kasaya giren", "Kasadan çıkan", "Barter kalan"]}
+        title="Resumen de la empresa y los proyectos"
+        note={`Cuentas por cobrar al 15 nov 2026 · caja ${period}`}
+        head={["Alcance", "Vendidas / stock", "Monto contratado", "Cobrado", "Saldo por cobrar", "Vencido", "Ingresos", "Egresos de caja", "Canje pendiente"]}
         numeric={[1, 2, 3, 4, 5, 6, 7, 8]}
         rows={m.rows.map((r) => [
           r.project === "all" ? <b key="t">{r.name}</b> : r.name,
@@ -337,7 +337,7 @@ export default function ReportBody({ s, kind, f }: { s: EnterpriseState; kind: R
       />
       <section className="rp-block">
         <h3>
-          Önemli uyarılar ve bekleyen işlemler<small>{m.alerts.length} konu</small>
+          Alertas y pendientes<small>{m.alerts.length} konu</small>
         </h3>
         {m.alerts.length ? (
           <ul className="rp-alerts">
@@ -352,7 +352,7 @@ export default function ReportBody({ s, kind, f }: { s: EnterpriseState; kind: R
             ))}
           </ul>
         ) : (
-          <p className="rp-empty">Uyarı yok.</p>
+          <p className="rp-empty">Sin alertas.</p>
         )}
       </section>
     </>

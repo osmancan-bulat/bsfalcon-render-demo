@@ -11,12 +11,12 @@ import { contractList, pname, type ContractView } from "@/lib/enterprise";
 import { money } from "@/lib/data";
 
 const STATUSES = [
-  "Tümü",
-  "Aktif",
+  "Todos",
+  "Activo",
   "Gecikmeli",
-  "Taslak / imza",
-  "Tamamlandı",
-  "İptal",
+  "Borrador / firma",
+  "Finalizado",
+  "Anulado",
 ] as const;
 
 export default function ContractsTab({
@@ -30,29 +30,29 @@ export default function ContractsTab({
 }) {
   const { state } = useApp();
   const [q, setQ] = useState(initialQuery);
-  const [status, setStatus] = useState<(typeof STATUSES)[number]>("Tümü");
+  const [status, setStatus] = useState<(typeof STATUSES)[number]>("Todos");
   const [page, setPage] = useState(0);
   const [draft, setDraft] = useState<string | null>(null);
   const all = contractList(state).filter(
     (c) => project === "all" || c.project === project,
   );
   const drafts = all.filter(
-    (c) => c.status === "Taslak" || c.status === "İmza bekliyor",
+    (c) => c.status === "Borrador" || c.status === "Pendiente de firma",
   );
   const match = (c: ContractView) =>
-    status === "Tümü"
-      ? c.status !== "İptal" && !drafts.some((d) => d.id === c.id) // taslaklar üstteki imza şeridinde
+    status === "Todos"
+      ? c.status !== "Anulado" && !drafts.some((d) => d.id === c.id) // taslaklar üstteki imza şeridinde
       : status === "Gecikmeli"
         ? (c.account?.overdue ?? 0) > 0
-        : status === "Taslak / imza"
-          ? c.status === "Taslak" || c.status === "İmza bekliyor"
+        : status === "Borrador / firma"
+          ? c.status === "Borrador" || c.status === "Pendiente de firma"
           : c.status === status;
   const rows = all.filter(
     (c) =>
       match(c) &&
       `${c.name} ${c.number} ${c.unitLabel} ${pname(c.project)}`
-        .toLocaleLowerCase("tr")
-        .includes(q.toLocaleLowerCase("tr")),
+        .toLocaleLowerCase("es")
+        .includes(q.toLocaleLowerCase("es")),
   );
   const PAGE = 12;
   const max = Math.max(0, Math.ceil(rows.length / PAGE) - 1);
@@ -64,7 +64,7 @@ export default function ContractsTab({
     <>
       {drafts.length > 0 && (
         <div className="draft-strip">
-          <h3>İmza sürecindeki sözleşmeler · {drafts.length}</h3>
+          <h3>Contratos en proceso de firma · {drafts.length}</h3>
           {drafts.map((d) => (
             <button
               className="draft-card"
@@ -72,7 +72,7 @@ export default function ContractsTab({
               onClick={() => setDraft(d.id)}
             >
               <div className="draft-main">
-                <Badge tone={d.status === "Taslak" ? "neutral" : "amber"}>
+                <Badge tone={d.status === "Borrador" ? "neutral" : "amber"}>
                   {d.status}
                 </Badge>
                 <b>
@@ -84,7 +84,7 @@ export default function ContractsTab({
                 </small>
               </div>
               <span className="btn compact primary">
-                <PenLine size={14} /> İncele ve imzala
+                <PenLine size={14} /> Revisar y firmar
               </span>
             </button>
           ))}
@@ -97,9 +97,9 @@ export default function ContractsTab({
             setQ(v);
             setPage(0);
           }}
-          placeholder="Sözleşme no, müşteri, daire veya proje…"
+          placeholder="N.º de contrato, cliente, unidad o proyecto…"
         />
-        <div className="seg" role="tablist" aria-label="Sözleşme durumu">
+        <div className="seg" role="tablist" aria-label="Estado del contrato">
           {STATUSES.map((s) => (
             <button
               key={s}
@@ -123,19 +123,19 @@ export default function ContractsTab({
       <div className="e-pagination">
         <span>
           {rows.length
-            ? `${pg * PAGE + 1}–${Math.min(rows.length, (pg + 1) * PAGE)} / ${rows.length} sözleşme`
-            : "Kayıt yok"}
+            ? `${pg * PAGE + 1}–${Math.min(rows.length, (pg + 1) * PAGE)} de ${rows.length} contratos`
+            : "Sin registros"}
         </span>
         <div>
           <button
-            aria-label="Önceki sayfa"
+            aria-label="Página anterior"
             disabled={pg === 0}
             onClick={() => setPage(pg - 1)}
           >
             ‹
           </button>
           <button
-            aria-label="Sonraki sayfa"
+            aria-label="Página siguiente"
             disabled={pg >= max}
             onClick={() => setPage(pg + 1)}
           >
