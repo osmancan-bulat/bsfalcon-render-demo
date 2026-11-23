@@ -20,22 +20,22 @@ export default function Login() {
         <div className="lv-story">
           <span className="eyebrow">BŞ FALCON GROUP · YÖNETİM MERKEZİ</span>
           <h1>
-            Yaşam alanlarını inşa ederken,
+            Güçlü temeller, yüksek yapılar;
             <br />
-            her kuruşu tek merkezden yönetin.
+            her projenin finansı tek merkezde.
           </h1>
           <p>
-            Satıştan tahsilata, sözleşmeden barter’a, hakedişten rapora;
-            İstanbul ve Bursa’daki bütün projeler tek merkezde.
+            Satış ve tahsilattan kat karşılığı paylaşımına, şantiye giderinden
+            hakediş ve rapora; BŞ Falcon Group projeleri tek merkezde.
           </p>
           <ul className="lv-facts">
             <li>
-              <b>1981</b>
-              <span>Sektör deneyiminin başlangıcı</span>
+              <b>2010</b>
+              <span>İstanbul'da sektör deneyimi</span>
             </li>
             <li>
-              <b>2013</b>
-              <span>BŞ Falcon Group kuruluşu</span>
+              <b>300+</b>
+              <span>İmza atılan daire</span>
             </li>
             <li>
               <b>{active.length}</b>
@@ -85,14 +85,13 @@ export default function Login() {
           <p className="lv-disclaimer">
             <Info size={15} />
             <span>
-              Demo ortamı: kullanıcı girişi ve yetkilendirme bu sürümde yoktur.
-              Kişi ve firma adları kurgusal; satış adetleri, fiyatlar ve finansal tutarlar TEMSİLİDİR, BŞ Falcon Group’ın gerçek verisi değildir; kayıtlar
-              yalnızca bu tarayıcıda saklanır. Güvenli kurumsal giriş ayrı bir
-              aşamada kurulacaktır.
+              Bu platform, BŞ Falcon Group için örnek verilerle hazırlanmış özel bir yazılım demosudur. Kullanıcı girişi ve yetkilendirme bu sürümde yoktur;
+              kişi ve firma adları örnektir; satış, tahsilat, kat karşılığı paylaşımı ve finans tutarları TEMSİLİ DEMO
+              VERİSİDİR. Kayıtlar yalnızca bu tarayıcıda saklanır.
             </span>
           </p>
         </div>
-        <footer>BŞ Falcon Group için hazırlanmış tanıtım demosu · İstanbul · Bursa</footer>
+        <footer>BŞ Falcon Group için hazırlanmış özel yazılım demosu · Kartal / İstanbul</footer>
       </section>
     </main>
   );

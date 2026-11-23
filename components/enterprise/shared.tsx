@@ -50,7 +50,7 @@ export function Drawer({
     >
       <div className="drawer-head">
         <div>
-          <span className="eyebrow">{eyebrow ?? "BŞ Falcon YÖNETİM MERKEZİ"}</span>
+          <span className="eyebrow">{eyebrow ?? "BŞ FALCON GROUP · YÖNETİM MERKEZİ"}</span>
           <h2>{title}</h2>
         </div>
         <button

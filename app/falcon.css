@@ -1,116 +1,237 @@
-/* BŞ Falcon Group kurumsal katmanı (saneinsaat.net kimliği): koyu yeşil #173d29 / #0d291a,
-   kırık beyaz #f2f0e9, turuncu vurgu #e75b38, Manrope + Newsreader başlık yazısı. En son yüklenir. */
-.e-brand {
-  background: #f2f0e9;
-  box-shadow: inset 0 0 0 1px rgb(231 91 56 / 0.18);
-}
-.e-brand .official-logo,
-.lv-brand .official-logo {
-  height: 34px;
-}
+/* BŞ Falcon Group katmanı (en son yüklenir).
+   CEYCON tasarım sistemi korunur: koyu orman yeşili menü, kırık beyaz zemin, ince çerçeveli kartlar.
+   Vurgu, Falcon'un resmî bronz-altın tonudur (#b57b12). Yeni ekranlar: yönetim merkezi (fh-*),
+   kat karşılığı / süreç / bütçe (fc-*), proje merkezi üst bölümü (pf-focus). */
+
+/* ---------- Marka ---------- */
+.e-brand { background: #fbfaf6; box-shadow: inset 0 0 0 1px rgb(181 123 18 / 0.25); }
+.e-brand .official-logo { height: 44px; }
 .e-brand .official-logo img,
-.lv-brand .official-logo img,
-.official-logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: left center;
-}
-.e-brand .official-logo img {
-  object-position: center;
-}
-/* Giriş: resmî Çengilli görseli üzerinde kurumsal yeşil örtü */
+.official-logo img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.lv-brand { width: 250px; padding: 10px 14px; background: #fbfaf6; }
+.lv-brand .official-logo { height: 52px; }
 .lv-visual {
   background:
-    linear-gradient(160deg, rgb(13 41 26 / 0.9) 0%, rgb(13 41 26 / 0.78) 45%, rgb(10 32 21 / 0.94) 100%),
-    url("/images/cengilli-hero.webp") center / cover no-repeat,
+    linear-gradient(160deg, rgb(15 38 32 / 0.92) 0%, rgb(15 38 32 / 0.78) 45%, rgb(11 26 21 / 0.95) 100%),
+    url("/images/agva-triplex.webp") center / cover no-repeat,
     var(--forest-900);
 }
-.lv-brand {
-  width: 236px;
-  padding: 10px 16px;
-  background: #f2f0e9;
+.lv-facts b { color: var(--bronze-300); }
+.product-logo { font-size: 18px; letter-spacing: 0.04em; text-transform: uppercase; }
+.product-logo > span { margin: 0 8px; color: var(--bronze-500); }
+.doc-header img { width: 190px; height: 44px; object-fit: contain; object-position: left center; }
+td.row-actions .btn, td.row-actions button, td.row-actions a { white-space: nowrap; }
+.callout.success { background: var(--positive-bg); color: var(--positive); border-color: #c9dfcf; }
+
+/* ---------- Ortak sayfa ---------- */
+.fc-page, .fh { display: grid; gap: 18px; }
+.fc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
+.fc-head h1 { margin: 4px 0 6px; font-size: 26px; font-weight: 650; letter-spacing: -0.02em; }
+.fc-head p { margin: 0; max-width: 760px; color: var(--text-muted); font-size: 14px; }
+.fc-switch { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: var(--stone-150); }
+.fc-switch button { border: 0; background: transparent; padding: 8px 14px; border-radius: 7px; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
+.fc-switch button.active { background: var(--surface); color: var(--forest-800); box-shadow: var(--shadow-sm); }
+.fc-select { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.fc-select select { min-width: 240px; }
+.fc-note { margin: 4px 0 0; font-size: 12px; color: var(--text-muted); }
+.fc-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.fc-kpi { display: grid; gap: 4px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.fc-kpi span { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); font-weight: 500; }
+.fc-kpi b { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.fc-kpi small { font-size: 12px; color: var(--text-muted); }
+.fc-kpi.warn { border-color: #ecd3a2; background: linear-gradient(180deg, #fdf6e8, var(--surface) 70%); }
+.fc-kpi.warn b { color: var(--warning); }
+.fc-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.fc-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fc-side { display: grid; gap: 16px; }
+
+/* ---------- Kat karşılığı: plan ---------- */
+.o-yk { --o: var(--forest-700); --o-bg: #e3ede8; }
+.o-as1 { --o: var(--bronze-500); --o-bg: #f8ecd2; }
+.o-as2 { --o: #4f6f8f; --o-bg: #e4ecf4; }
+.o-as3 { --o: #8a5b7a; --o-bg: #f1e5ee; }
+.fc-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); }
+.fc-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.fc-legend i, .fc-owner i { width: 12px; height: 12px; border-radius: 3px; background: var(--o-bg); border: 2px solid var(--o); display: inline-block; flex: none; }
+.fc-legend .sep { width: 1px; height: 14px; background: var(--border); }
+.st { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.st.st-sold { background: var(--positive); }
+.st.st-sign { background: var(--warning); }
+.st.st-barter { background: var(--bronze-700); }
+.st.st-res { background: var(--info); }
+.fc-floors { display: grid; gap: 6px; }
+.fc-floor { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px; align-items: stretch; }
+.fc-floor-label { display: flex; align-items: center; font-size: 12px; font-weight: 600; color: var(--text-muted); border-right: 1px solid var(--border); }
+.fc-floor-units { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; }
+.fc-unit { position: relative; display: grid; gap: 1px; text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--o); border-left-width: 4px; background: var(--o-bg); font: inherit; cursor: pointer; color: var(--text); transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.fc-unit:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.fc-unit b { font-size: 13px; font-variant-numeric: tabular-nums; }
+.fc-unit small { font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-unit .st { position: absolute; top: 8px; right: 8px; }
+.fc-owner { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.fc-steps, .fc-checks, .fc-docs, .fc-history { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.fc-steps li { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-left: 3px solid var(--border-strong); background: var(--stone-25); border-radius: 0 6px 6px 0; }
+.fc-steps li.done { border-left-color: var(--positive); }
+.fc-steps li.now { border-left-color: var(--bronze-500); background: #fdf7ea; }
+.fc-steps b, .fc-checks b, .fc-docs b { display: block; font-size: 13px; font-weight: 600; }
+.fc-steps small, .fc-checks small, .fc-docs small { font-size: 11.5px; color: var(--text-muted); }
+.fc-steps select, .fc-timeline select { font-size: 12px; padding: 4px 6px; border-radius: 6px; }
+.fc-checks li label { display: flex; gap: 10px; align-items: flex-start; padding: 8px 4px; border-bottom: 1px solid var(--border-subtle); cursor: pointer; }
+.fc-checks li.done b { text-decoration: line-through; color: var(--text-muted); }
+.fc-checks li.late small { color: var(--danger); }
+.fc-docs li { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 2px; border-bottom: 1px solid var(--border-subtle); }
+.fc-history li { display: grid; grid-template-columns: 92px 1fr; gap: 8px; padding: 7px 2px; border-bottom: 1px solid var(--border-subtle); font-size: 12.5px; }
+.fc-history small { color: var(--text-muted); }
+
+/* ---------- Bütçe ---------- */
+.fc-bars { display: grid; gap: 16px; }
+.fc-bar-row b { font-size: 13.5px; }
+.fc-bar-set { display: grid; gap: 5px; margin-top: 6px; }
+.fc-bar-set div { display: grid; grid-template-columns: 72px 1fr 96px; align-items: center; gap: 10px; font-size: 12px; color: var(--text-secondary); }
+.fc-bar-set i { height: 10px; border-radius: 3px; display: block; min-width: 2px; }
+.fc-bar-set em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text); }
+.b-budget { background: var(--stone-300); }
+.b-spent { background: var(--bronze-500); }
+.b-income { background: var(--forest-600); }
+tr.total td { font-weight: 650; background: var(--stone-50); }
+
+/* ---------- Süreç ---------- */
+.fc-timeline { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+.fc-timeline li { position: relative; display: grid; gap: 4px; align-content: start; padding: 12px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--stone-25); }
+.fc-timeline li .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--stone-150); color: var(--text-muted); }
+.fc-timeline li.done { border-color: #c9dfcf; background: #f1f7f3; }
+.fc-timeline li.done .dot { background: var(--positive); color: #fff; }
+.fc-timeline li.now { border-color: var(--bronze-300); background: #fdf6e6; }
+.fc-timeline li.now .dot { background: var(--bronze-500); color: #fff; }
+.fc-timeline b { font-size: 12.5px; line-height: 1.3; }
+.fc-timeline small { font-size: 11.5px; color: var(--text-muted); }
+.fc-process-foot { margin-top: 14px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+.fc-guarantee { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 10px; border: 1px dashed var(--border-strong); background: var(--stone-25); }
+.fc-guarantee div { flex: 1; display: grid; gap: 2px; }
+.fc-guarantee b { font-size: 13px; }
+.fc-guarantee small { font-size: 12px; color: var(--text-muted); }
+.fc-proc-docs { display: grid; gap: 3px; font-size: 12px; }
+.fc-proc-docs > span { font-weight: 600; color: var(--text-secondary); }
+.fc-proc-docs em { font-style: normal; color: var(--text-muted); }
+
+/* ---------- Yönetim merkezi ---------- */
+.fh-head { display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: center; padding: 18px 22px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.fh-logo { height: 62px; width: auto; display: block; }
+.fh-title h1 { margin: 2px 0 4px; font-size: 26px; font-weight: 650; letter-spacing: -0.02em; }
+.fh-title p { margin: 0; color: var(--text-muted); font-size: 13.5px; }
+.fh-portfolio-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 1.3fr; gap: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
+.fh-portfolio-strip > div { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-right: 1px solid var(--border-subtle); }
+.fh-portfolio-strip b { font-size: 26px; font-weight: 650; color: var(--forest-800); font-variant-numeric: tabular-nums; }
+.fh-portfolio-strip span { display: grid; font-size: 13px; font-weight: 600; }
+.fh-portfolio-strip small { font-weight: 400; font-size: 11.5px; color: var(--text-muted); }
+.fh-portfolio-strip .fh-demo-note { border-right: 0; background: #fdf7ea; font-size: 12.5px; color: var(--bronze-700); }
+.fh-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.fh-kpi { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); text-decoration: none; color: inherit; transition: border-color 0.15s; }
+.fh-kpi:hover { border-color: var(--forest-300); }
+.fh-kpi span { font-size: 12.5px; color: var(--text-secondary); }
+.fh-kpi b { font-size: 23px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.fh-kpi small { font-size: 12px; color: var(--text-muted); }
+.fh-kpi.danger { border-color: #efcdc3; background: linear-gradient(180deg, #fbefeb, var(--surface) 70%); }
+.fh-kpi.danger span, .fh-kpi.danger b { color: var(--danger); }
+.fh-alerts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.fh-alert { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: inherit; text-decoration: none; font-size: 12.5px; }
+.fh-alert span { flex: 1; display: grid; gap: 2px; }
+.fh-alert small { color: var(--text-muted); }
+.fh-alert em { font-style: normal; font-weight: 650; white-space: nowrap; }
+.fh-alert.danger { border-left: 3px solid var(--danger); }
+.fh-alert.danger svg { color: var(--danger); }
+.fh-alert.warning { border-left: 3px solid var(--warning); }
+.fh-alert.warning svg { color: var(--warning); }
+.fh-alert.info { border-left: 3px solid var(--info); }
+.fh-featured { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.fh-card { display: grid; grid-template-columns: 0.9fr 1.1fr; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
+.fh-card-img { position: relative; min-height: 300px; background: var(--forest-900); }
+.fh-card-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fh-img-tag, .pf-focus-img span { position: absolute; left: 10px; bottom: 10px; padding: 3px 8px; border-radius: 999px; background: rgb(15 38 32 / 0.72); color: #fff; font-size: 10.5px; }
+.fh-card-body { display: grid; gap: 14px; padding: 16px 18px; align-content: start; }
+.fh-card-body header { display: flex; justify-content: space-between; gap: 12px; }
+.fh-card-body h2 { margin: 6px 0 2px; font-size: 19px; font-weight: 650; letter-spacing: -0.01em; }
+.fh-card-body header p { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+.fh-delivery { text-align: right; display: grid; align-content: start; }
+.fh-delivery small { font-size: 11px; color: var(--text-muted); }
+.fh-delivery b { font-size: 15px; color: var(--bronze-700); white-space: nowrap; }
+.fh-progress { display: grid; gap: 5px; }
+.fh-progress > div:first-child { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-secondary); }
+.fh-progress small { font-size: 12px; color: var(--text-muted); }
+.fh-figs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.fh-figs dt { font-size: 11.5px; color: var(--text-muted); }
+.fh-figs dd { margin: 2px 0 0; font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.fh-figs dd small { display: block; font-size: 11.5px; font-weight: 400; color: var(--text-muted); }
+.fh-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.fh-row { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.fh-nergis img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; display: block; }
+.fh-nergis .fh-figs { margin-bottom: 12px; }
+.fh-io { display: grid; gap: 3px; min-width: 120px; }
+.fh-io i, .fh-io-legend i { display: block; height: 7px; border-radius: 3px; min-width: 2px; }
+.fh-io .in, .fh-io-legend .in { background: var(--forest-600); }
+.fh-io .out, .fh-io-legend .out { background: var(--bronze-500); }
+.fh-io-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: var(--text-muted); }
+.fh-io-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.fh-io-legend i { width: 14px; }
+.fh-bottom { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.fh-bottom .panel { margin: 0; }
+.fh-list, .fh-todo { list-style: none; margin: 0 0 8px; padding: 0; display: grid; }
+.fh-list li { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border-subtle); font-size: 12.5px; }
+.fh-list li b { display: block; font-weight: 600; font-size: 12.5px; }
+.fh-list li small, .fh-todo small { display: block; font-size: 11px; color: var(--text-muted); }
+.fh-list em { font-style: normal; font-weight: 650; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fh-list em.pos { color: var(--positive); }
+.fh-date { font-size: 11px; font-weight: 700; color: var(--bronze-700); white-space: nowrap; }
+.fh-todo li label { display: flex; gap: 8px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--border-subtle); font-size: 12.5px; cursor: pointer; }
+.fh-todo b { font-weight: 600; }
+.fh-port { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.fh-port article { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.fh-port img { width: 100%; height: 110px; object-fit: cover; display: block; }
+.fh-port article div { display: grid; gap: 2px; padding: 8px 10px 10px; }
+.fh-port b { font-size: 12.5px; }
+.fh-port small { font-size: 11px; color: var(--text-muted); }
+.fh-port .badge { justify-self: start; margin-top: 4px; }
+
+/* ---------- Proje merkezi üst bölümü ---------- */
+.pf-focus { display: grid; grid-template-columns: 360px minmax(0, 1fr); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); margin-bottom: 18px; }
+.pf-focus-img { position: relative; min-height: 220px; background: var(--forest-900); }
+.pf-focus-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pf-focus-body { padding: 16px 18px; display: grid; gap: 14px; }
+.pf-focus-desc { margin: 0; font-size: 13.5px; color: var(--text-secondary); }
+.pf-focus-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.pf-focus-grid > div { display: grid; gap: 4px; align-content: start; padding: 10px 12px; border-radius: 8px; background: var(--stone-25); border: 1px solid var(--border-subtle); }
+.pf-focus-grid small { font-size: 11.5px; color: var(--text-muted); }
+.pf-focus-grid b { font-size: 16px; font-weight: 650; }
+.pf-focus-grid span { font-size: 11.5px; color: var(--text-muted); }
+.pf-focus-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Duyarlı ---------- */
+@media (max-width: 1440px) {
+  .fh-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fh-bottom { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fh-port { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .fc-timeline { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .pf-focus-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-.lv-brand .official-logo {
-  height: 40px;
+@media (max-width: 1180px) {
+  .fh-featured, .fh-row, .fc-grid, .fc-grid.three { grid-template-columns: 1fr; }
+  .fh-alerts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fc-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fh-portfolio-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fh-portfolio-strip .fh-demo-note { grid-column: 1 / -1; }
+  .pf-focus { grid-template-columns: 1fr; }
 }
-.lv-story h1 {
-  font-family: "Newsreader", Georgia, "Times New Roman", serif;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-}
-.lv-facts b {
-  color: #f2b3a4;
-}
-.product-logo {
-  font-size: 19px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.product-logo > span {
-  margin: 0 8px;
-  color: #e75b38;
-}
-/* Şirket başlığı */
-.home.company .home-head h1 {
-  letter-spacing: 0.01em;
-}
-/* Resmî proje görselleri (portföy ve şirket genel bakışı kartları) */
-.project-cover {
-  position: relative;
-  height: 168px;
-  margin: -22px -24px 0;
-  overflow: hidden;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  background: var(--forest-900);
-}
-.pf-card .project-cover {
-  margin: -18px -20px 0;
-}
-.project-cover img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 40%;
-}
-.project-cover::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 55%, rgb(13 41 26 / 0.45));
-}
-.project-cover span {
-  position: absolute;
-  right: 10px;
-  bottom: 8px;
-  z-index: 1;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: 10px;
-  letter-spacing: 0.02em;
-  color: #fff;
-  background: rgb(13 41 26 / 0.55);
-}
-@media (max-width: 720px) {
-  .project-cover {
-    height: 132px;
-    margin: -18px -18px 0;
-  }
-  .pf-card .project-cover {
-    margin: -16px -16px 0;
-  }
-}
-/* Belge başlığındaki resmî logo kırpılmadan gösterilir */
-.doc-header img {
-  width: 200px;
-  height: 37px;
-  object-fit: contain;
-  object-position: left center;
-}
-/* Satır eylem düğmeleri hiçbir genişlikte iki satıra bölünmez */
-td.row-actions .btn,
-td.row-actions button,
-td.row-actions a {
-  white-space: nowrap;
+@media (max-width: 760px) {
+  .fh-head { grid-template-columns: 1fr; }
+  .fh-logo { height: 48px; }
+  .fh-kpis, .fh-alerts, .fh-bottom, .fc-kpis, .fh-figs, .pf-focus-grid { grid-template-columns: 1fr 1fr; }
+  .fh-card { grid-template-columns: 1fr; }
+  .fh-card-img { min-height: 190px; }
+  .fh-port { grid-template-columns: 1fr 1fr; }
+  .fc-timeline { grid-template-columns: 1fr 1fr; }
+  .fc-process-foot { grid-template-columns: 1fr; }
+  .fc-floor { grid-template-columns: 1fr; }
+  .fc-floor-label { border-right: 0; }
+  .fh-portfolio-strip { grid-template-columns: 1fr; }
+  .fh-bottom { grid-template-columns: 1fr; }
 }

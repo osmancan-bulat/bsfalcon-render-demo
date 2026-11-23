@@ -48,7 +48,12 @@ import {
   pname,
   paymentRows,
 } from "@/lib/enterprise";
-import CompanyOverview from "./enterprise/company-overview";
+import FalconHome from "./falcon/FalconHome";
+import LandShareView from "./falcon/LandShareView";
+import ProcessView from "./falcon/ProcessView";
+import BudgetView from "./falcon/BudgetView";
+import ProjectFocus from "./falcon/ProjectFocus";
+import { Landmark } from "lucide-react";
 import { hubHref, isScopeValid, scopeProblem } from "@/lib/catalog";
 import ScopePicker from "./enterprise/scope-picker";
 import ReportsView from "./enterprise/reports-view";
@@ -89,7 +94,14 @@ const GROUPS: Group[] = [
       ["daireler", "Daireler"],
       ["projeler", "Proje portföyü"],
       ["santiye", "Şantiye"],
+      ["butce", "Bütçe & giderler"],
     ],
+  },
+  {
+    id: "kat-karsiligi",
+    title: "Kat Karşılığı",
+    icon: Landmark,
+    tabs: [["kat-karsiligi", "Arsa sahibi paylaşımı"]],
   },
   {
     id: "musteriler-satislar",
@@ -128,6 +140,12 @@ const GROUPS: Group[] = [
       ["arsiv", "Belge arşivi"],
       ["evrak", "Proje evrakı"],
     ],
+  },
+  {
+    id: "surec",
+    title: "Süreç & Güvence",
+    icon: ShieldCheck,
+    tabs: [["surec", "Proje süreci ve güvence"]],
   },
   {
     id: "takvim",
@@ -414,7 +432,10 @@ function Shell({ section }: { section: string }) {
             <div className="e-loading">Çalışma alanı hazırlanıyor…</div>
           ) : (
             <>
-              {section === "genel-bakis" && <CompanyOverview />}
+              {section === "genel-bakis" && <FalconHome />}
+              {section === "kat-karsiligi" && <LandShareView />}
+              {section === "surec" && <ProcessView />}
+              {section === "butce" && <BudgetView />}
               {section === "raporlar" && <ReportsView />}
               {section === "yonetim" && (
                 <AdminView onReset={() => setOverlay("reset")} />
@@ -434,6 +455,7 @@ function Shell({ section }: { section: string }) {
               {section === "arsiv" && <ArchiveView />}
               {section === "hatirlatmalar" && <RemindersView />}
               {section === "evrak" && <Documents />}
+              {projectHub && <ProjectFocus projectId={scope} />}
               {projectHub && <CommandCenter projectId={scope} />}
               {section === "proje" && hubId !== null && !projectHub && (
                 <Empty
@@ -445,8 +467,7 @@ function Shell({ section }: { section: string }) {
           )}
           <footer className="e-footer">
             <span>
-              BŞ Falcon Group <i /> Yönetim Merkezi <i /> Kişi, firma ve
-              finansal kayıtlar tamamen temsilidir.
+              Bu platform, BŞ Falcon Group için örnek verilerle hazırlanmış özel bir yazılım demosudur.
             </span>
             <button onClick={() => setOverlay("reset")}>
               <RotateCcw size={13} /> Demoyu sıfırla
@@ -522,16 +543,18 @@ function Shell({ section }: { section: string }) {
                 kullanmaz.
               </li>
               <li>
-                <b>Resmî kaynaktan doğrulanan bilgiler:</b> proje adları ve
-                konumları; Çengilli Villa Sitesi için A/B blok, 15 kat, 60 adet 3+1
-                ve net 95,9–101,7 m²; Nergis Park Evleri için 3 blok, 92 konut
-                ve 8 ticari birim (saneinsaat.net, verdorakozyatagi.com).
+                <b>Resmî kaynaktan (bsfalcongroup.com) doğrulanan bilgiler:</b> şirket
+                bilgileri (2010'dan beri, 2022'de kurulan BŞ Falcon İnşaat ve Dış Ticaret Ltd. Şti.,
+                300'ü aşkın daire), 12 projelik portföy, Ağva ve Çengilli'nin konum, villa/akıllı ev
+                konsepti ve teslim hedefleri, Nergis Park Evleri'nin zemin + 7 kat, 35 daire + 3 dükkân
+                kurgusu, proje süreci adımları ve proje görselleri.
               </li>
               <li>
-                <b>Bunların dışındaki her şey temsilidir.</b> Liste ve satış
-                fiyatları, satış/rezerve adetleri, tahsilatlar, kasa, bütçe,
-                hakediş ve barter tutarları ile Nergis Park ve Ağva 1111 Triplex Villa daire
-                tipleri demo varsayımıdır; BŞ Falcon Group’ın gerçek verisi değildir.
+                <b>Bunların dışındaki her şey temsilidir.</b> Çengilli villa adedi, metrekareler,
+                liste ve satış fiyatları, satış/rezerve adetleri, tahsilatlar, kasa, bütçe, hakediş,
+                barter tutarları, arsa sahibi paylaşımı ve güvence belgeleri demo varsayımıdır.
+                Nergis Park Evleri'nin durumu resmî kaynakta belirtilmediğinden kat karşılığı demo
+                senaryosu olarak kullanılır.
               </li>
               <li>
                 <b>Veriler yalnızca bu tarayıcıda saklanır.</b> Sunucu

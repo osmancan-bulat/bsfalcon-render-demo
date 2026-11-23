@@ -122,7 +122,7 @@ export default function CompanyOverview() {
               {p.image && (
                 <div className="project-cover">
                   <img src={p.image} alt={`${p.name} resmî proje görseli`} loading="lazy" />
-                  <span>Görsel: saneinsaat.net</span>
+                  <span>Görsel: bsfalcongroup.com</span>
                 </div>
               )}
               <header>

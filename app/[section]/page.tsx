@@ -23,6 +23,9 @@ const sections = [
   "raporlar",
   "yonetim",
   "proje",
+  "kat-karsiligi",
+  "surec",
+  "butce",
 ];
 export function generateStaticParams() {
   return sections.map((section) => ({ section }));

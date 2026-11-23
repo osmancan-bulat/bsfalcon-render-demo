@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
-import "@fontsource/newsreader/400.css";
 import "./theme.css";
 import "./globals.css";
 import "./enterprise.css";
