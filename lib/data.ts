@@ -3,7 +3,7 @@ import { personName, FIRM } from "./names.ts";
 import { unitById } from "./units.ts";
 export const SNAPSHOT = "2026-11-15";
 export type ProjectStatus = "Aktif" | "Tamamlandı" | "Arşiv";
-/** Şirkete bağlı proje. Yerleşik projeler (Corner, Primador) ve kullanıcının eklediği projeler aynı yapıyı kullanır. */
+/** Şirkete bağlı proje. Yerleşik projeler (VERDORA, Sane Time) ve kullanıcının eklediği projeler aynı yapıyı kullanır. */
 export type Project = {
   id: string;
   name: string;
@@ -22,7 +22,7 @@ export type Project = {
   terms: string;
   mix: string;
   commercial: string;
-  /** Sözleşme numaralarında kullanılan kısa kod (SZL-CP-001). */
+  /** Sözleşme numaralarında kullanılan kısa kod (SZL-VK-001). */
   code: string;
   status: ProjectStatus;
   builtIn?: boolean;
@@ -30,41 +30,63 @@ export type Project = {
 };
 export const projects: Project[] = [
   {
-    id: "corner",
-    name: "Corner Prestij",
-    location: "Esenboğa / Ankara",
-    image: "/images/corner.webp",
-    total: 72,
+    id: "verdora",
+    name: "VERDORA Kozyatağı",
+    location: "Kozyatağı, Kadıköy / İstanbul",
+    image: "/images/verdora.webp",
+    total: 60,
     reserved: 4,
-    budget: 180000000,
-    cost: 64800000,
-    delivery: "Kasım 2028",
+    // Bütçe, maliyet ve ilerleme temsili demo varsayımıdır.
+    budget: 640000000,
+    cost: 168000000,
+    delivery: "2028 ilk yarı",
     progress: 38,
     description:
-      "Üniversite, havalimanı ve savunma sanayi aksında konut yaşamı.",
-    terms: "850.000 TL peşinat · 36 ay faizsiz taksit",
-    mix: "72 konut · örnek envanter",
-    commercial: "Ticari envanter bu senaryoya dahil değildir.",
-    code: "CP",
+      "Kozyatağı'nda A ve B bloktan oluşan, 15 katlı, tamamı 3+1 konut projesi; her daireye kapalı otopark.",
+    terms: "M8 Ayşekadın metrosuna yaklaşık 7 dakika · Kaya Sultan Sokak No:4",
+    mix: "60 adet 3+1 · net 95,9–101,7 m²",
+    commercial: "Ticari birim bilgisi resmî proje sayfasında yer almıyor.",
+    code: "VK",
     status: "Aktif",
     builtIn: true,
   },
   {
-    id: "primador",
-    name: "Primador Esenboğa",
-    location: "Yenice, Çubuk / Ankara",
-    image: "/images/primador.webp",
-    total: 106,
+    id: "sanetime",
+    name: "Sane Time Beşevler",
+    location: "Beşevler, Nilüfer / Bursa",
+    image: "/images/sanetime.webp",
+    total: 92,
     reserved: 6,
-    budget: 220000000,
-    cost: 55000000,
-    delivery: "Haziran 2028",
-    progress: 26,
-    description: "Konut ve ticari yaşamı buluşturan, yatırım odaklı proje.",
-    terms: "Havalimanı ve Yıldırım Beyazıt Üniversitesi yakınında",
-    mix: "100 adet 1+1 · 6 adet 2+1",
-    commercial: "Ticari dükkânlar: adet ve satış verisi teyit bekliyor.",
-    code: "PE",
+    budget: 410000000,
+    cost: 132000000,
+    delivery: "",
+    progress: 35,
+    description:
+      "Nilüfer Beşevler'de 3 bloktan oluşan konut ve ticaret projesi; 92 konut ve 8 bağımsız ticari birim.",
+    terms: "Beşevler Kültür Mahallesi · Nilüfer / Bursa",
+    mix: "3 blok · 92 konut (tip dağılımı temsili)",
+    commercial: "8 bağımsız ticari birim (resmî); satış verisi bu demoya dahil değildir.",
+    code: "ST",
+    status: "Aktif",
+    builtIn: true,
+  },
+  {
+    id: "bulvarpark",
+    name: "Bulvar Park II",
+    location: "Kasım Önadım Bulvarı, Bursa",
+    image: "/images/bulvarpark.webp",
+    total: 48,
+    reserved: 3,
+    budget: 245000000,
+    cost: 46000000,
+    delivery: "",
+    progress: 16,
+    description:
+      "Kasım Önadım Bulvarı üzerinde, iç avlulu konut projesi.",
+    terms: "Kasım Önadım Bulvarı · Bursa",
+    mix: "48 konut · adet ve tipler temsili (resmî kaynakta belirtilmemiş)",
+    commercial: "Ticari birim bilgisi resmî proje sayfasında yer almıyor.",
+    code: "BP",
     status: "Aktif",
     builtIn: true,
   },
@@ -89,34 +111,43 @@ export type Customer = {
 /**
  * Örnek (sisteme geçiş öncesi) satışların fiyatlandırma şeması.
  * - "katalog": yeni ve temiz demo başlangıcı; fiyat dairenin liste fiyatından %2–4 pazarlık payıyla türetilir.
- * - "v3.1": önceki sürümün sabit bedelleri (Corner ₺3.550.000, Primador ₺2.650.000).
+ * - "v3.1": önceki sürümün sabit bedelleri (VERDORA ₺14.200.000, diğer projeler ₺5.300.000).
  * Tarayıcıda daha önce işlem yapılmış kayıtlar hangi şemayla oluştuysa o şemayla açılır;
  * imzalı sözleşme bedelleri hiçbir geçişte yeniden fiyatlandırılmaz.
  */
 export type BasePricing = "katalog" | "v3.1";
+/** Projeye göre örnek satış adedi, ödenmiş taksit sayısı ve kişi numarası başlangıcı (temsili). */
+const BASE_SALES: Record<string, { sold: number; paid: number; person: number }> = {
+  verdora: { sold: 28, paid: 4, person: 0 },
+  sanetime: { sold: 42, paid: 3, person: 28 },
+  bulvarpark: { sold: 20, paid: 2, person: 100 },
+};
 const catalogPlan = (project: string, no: number) => {
   const list = unitById(`${project}-${no}`)?.listPrice ?? 0;
-  const deposit = 850000;
+  // Temsili peşinat: liste fiyatının yaklaşık %25'i (50.000 TL'ye yuvarlı)
+  const deposit = Math.round((list * 0.25) / 50000) * 50000;
   const installment =
     Math.round((list * (0.96 + ((no * 3) % 5) * 0.005) - deposit) / 36 / 250) *
     250;
   return { deposit, installment, price: deposit + 36 * installment };
 };
 const legacyPlan = (project: string) =>
-  project === "corner"
-    ? { price: 3550000, deposit: 850000, installment: 75000 }
-    : { price: 2650000, deposit: 850000, installment: 50000 };
+  project === "verdora"
+    ? { price: 14200000, deposit: 3400000, installment: 300000 }
+    : { price: 5300000, deposit: 1340000, installment: 110000 };
 function buildCustomers(pricing: BasePricing): Customer[] {
-  return projects.flatMap((p, pi) =>
-    Array.from({ length: pi === 0 ? 38 : 42 }, (_, i) => ({
+  return projects.flatMap((p) => {
+    const b = BASE_SALES[p.id];
+    if (!b) return [];
+    return Array.from({ length: b.sold }, (_, i) => ({
       id: `${p.id}-${i + 1}`,
       project: p.id,
-      name: personName(i + pi * 38 + 1),
-      unit: `${i % 2 === 0 ? "A" : "B"}-${String(i + 1).padStart(2, "0")}`,
+      name: personName(i + b.person + 1),
+      unit: unitById(`${p.id}-${i + 1}`)?.label ?? `A-${String(i + 1).padStart(2, "0")}`,
       ...(pricing === "katalog" ? catalogPlan(p.id, i + 1) : legacyPlan(p.id)),
-      paidMonths: pi === 0 ? 4 : 3,
-    })),
-  );
+      paidMonths: b.paid,
+    }));
+  });
 }
 export type Installment = {
   id: string;
@@ -152,108 +183,36 @@ export const baseInstallments = (pricing: BasePricing = "katalog") =>
 /** Temiz demo başlangıcı (katalog fiyatları). */
 export const customers: Customer[] = BASE.katalog;
 export const installments: Installment[] = BASE_INSTALLMENTS.katalog;
+// İş paketleri, hakediş/satın alma talepleri ve evrak kayıtları kurgusaldır (temsili demo verisi).
+const wp = (
+  id: string,
+  project: string,
+  name: string,
+  company: string,
+  progress: number,
+  weight: number,
+  value: number,
+  status: string,
+  material: string,
+) => ({ id, project, name, company, progress, weight, value, status, material });
 export const workItems = [
-  {
-    id: "w1",
-    project: "corner",
-    name: "Temel ve zemin işleri",
-    company: FIRM.yapi,
-    progress: 100,
-    weight: 15,
-    /** Kurgusal iş sözleşmesi bedeli (KDV hariç). */
-    value: 4800000,
-    status: "Tamamlandı",
-    material: "Teslim alındı",
-  },
-  {
-    id: "w2",
-    project: "corner",
-    name: "Betonarme taşıyıcı sistem",
-    company: FIRM.yapi,
-    progress: 60,
-    weight: 35,
-    /** Kurgusal iş sözleşmesi bedeli (KDV hariç). */
-    value: 16500000,
-    status: "Devam ediyor",
-    material: "C30 beton · planlandı",
-  },
-  {
-    id: "w3",
-    project: "corner",
-    name: "Mekanik ve elektrik altyapı",
-    company: FIRM.teknik,
-    progress: 0,
-    weight: 25,
-    /** Kurgusal iş sözleşmesi bedeli (KDV hariç). */
-    value: 9600000,
-    status: "Planlandı",
-    material: "Kablo · onay bekliyor",
-  },
-  {
-    id: "w4",
-    project: "corner",
-    name: "Cephe ve ince işler",
-    company: FIRM.cephe,
-    progress: 8,
-    weight: 25,
-    /** Kurgusal iş sözleşmesi bedeli (KDV hariç). */
-    value: 8400000,
-    status: "Devam ediyor",
-    material: "Alüminyum profil · sipariş onayı bekliyor",
-  },
-  {
-    id: "w5",
-    project: "primador",
-    name: "Temel ve zemin işleri",
-    company: FIRM.yapi,
-    progress: 100,
-    weight: 15,
-    /** Kurgusal iş sözleşmesi bedeli (KDV hariç). */
-    value: 3900000,
-    status: "Tamamlandı",
-    material: "Teslim alındı",
-  },
-  {
-    id: "w6",
-    project: "primador",
-    name: "Betonarme taşıyıcı sistem",
-    company: FIRM.yapi,
-    progress: 25,
-    weight: 40,
-    /** Kurgusal iş sözleşmesi bedeli (KDV hariç). */
-    value: 14200000,
-    status: "3 gün gecikme",
-    material: "Demir · 18 Kasım",
-  },
-  {
-    id: "w7",
-    project: "primador",
-    name: "Mekanik ve elektrik altyapı",
-    company: FIRM.teknik,
-    progress: 5,
-    weight: 20,
-    /** Kurgusal iş sözleşmesi bedeli (KDV hariç). */
-    value: 6800000,
-    status: "Devam ediyor",
-    material: "Kablo tavaları · sahada",
-  },
-  {
-    id: "w8",
-    project: "primador",
-    name: "Cephe ve ince işler",
-    company: FIRM.cephe,
-    progress: 0,
-    weight: 25,
-    /** Kurgusal iş sözleşmesi bedeli (KDV hariç). */
-    value: 7500000,
-    status: "Planlandı",
-    material: "Planlama aşamasında",
-  },
+  wp("w1", "verdora", "Temel ve zemin işleri", FIRM.yapi, 100, 15, 12600000, "Tamamlandı", "Teslim alındı"),
+  wp("w2", "verdora", "Betonarme taşıyıcı sistem", FIRM.yapi, 60, 35, 43800000, "Devam ediyor", "C35 beton · planlandı"),
+  wp("w3", "verdora", "Mekanik ve elektrik altyapı", FIRM.teknik, 0, 25, 24500000, "Planlandı", "Kablo · onay bekliyor"),
+  wp("w4", "verdora", "Cephe ve ince işler", FIRM.cephe, 8, 25, 22400000, "Devam ediyor", "Alüminyum profil · sipariş onayı bekliyor"),
+  wp("w5", "sanetime", "Temel ve zemin işleri", FIRM.yapi, 100, 15, 7800000, "Tamamlandı", "Teslim alındı"),
+  wp("w6", "sanetime", "Betonarme taşıyıcı sistem", FIRM.yapi, 45, 40, 26400000, "3 gün gecikme", "Demir · 18 Kasım"),
+  wp("w7", "sanetime", "Mekanik ve elektrik altyapı", FIRM.teknik, 10, 20, 12600000, "Devam ediyor", "Kablo tavaları · sahada"),
+  wp("w8", "sanetime", "Cephe ve ince işler", FIRM.cephe, 0, 25, 13900000, "Planlandı", "Planlama aşamasında"),
+  wp("w9", "bulvarpark", "Temel ve zemin işleri", FIRM.yapi, 80, 20, 5200000, "Devam ediyor", "Hafriyat tamamlandı"),
+  wp("w10", "bulvarpark", "Betonarme taşıyıcı sistem", FIRM.yapi, 0, 35, 14600000, "Planlandı", "Kalıp · teklif aşamasında"),
+  wp("w11", "bulvarpark", "Mekanik ve elektrik altyapı", FIRM.teknik, 0, 20, 7400000, "Planlandı", "Planlama aşamasında"),
+  wp("w12", "bulvarpark", "Cephe ve ince işler", FIRM.cephe, 0, 25, 8300000, "Planlandı", "Planlama aşamasında"),
 ];
 export const approvals = [
   {
     id: "HAK-024",
-    project: "corner",
+    project: "verdora",
     company: FIRM.yapi,
     name: "4. kat betonarme hakedişi",
     type: "Hakediş",
@@ -263,7 +222,7 @@ export const approvals = [
   },
   {
     id: "SAT-018",
-    project: "primador",
+    project: "sanetime",
     company: FIRM.demir,
     name: "32 ton inşaat demiri",
     type: "Satın alma",
@@ -273,7 +232,7 @@ export const approvals = [
   },
   {
     id: "SAT-019",
-    project: "corner",
+    project: "verdora",
     company: FIRM.teknik,
     name: "Elektrik altyapı malzemesi",
     type: "Satın alma",
@@ -283,7 +242,7 @@ export const approvals = [
   },
   {
     id: "HAK-021",
-    project: "primador",
+    project: "sanetime",
     company: FIRM.yapi,
     name: "Temel imalatı hakedişi",
     type: "Hakediş",
@@ -291,11 +250,21 @@ export const approvals = [
     due: "2026-11-20",
     status: "Onaylandı",
   },
+  {
+    id: "HAK-022",
+    project: "bulvarpark",
+    company: FIRM.yapi,
+    name: "Hafriyat ve iksa hakedişi",
+    type: "Hakediş",
+    amount: 520000,
+    due: "2026-11-24",
+    status: "Onay bekliyor",
+  },
 ];
 export const documents = [
   {
     id: "EVR-001",
-    project: "corner",
+    project: "verdora",
     name: "Yapı ruhsatı kontrol dosyası",
     type: "Ruhsat",
     date: "2026-11-20",
@@ -304,7 +273,7 @@ export const documents = [
   },
   {
     id: "EVR-002",
-    project: "primador",
+    project: "sanetime",
     name: "Taşeron sözleşmesi kontrol listesi",
     type: "Sözleşme",
     date: "2026-11-18",
@@ -313,7 +282,7 @@ export const documents = [
   },
   {
     id: "EVR-003",
-    project: "corner",
+    project: "verdora",
     name: "Konut teslim hazırlık planı",
     type: "Teslim",
     date: "2026-11-30",
@@ -322,12 +291,21 @@ export const documents = [
   },
   {
     id: "EVR-004",
-    project: "primador",
+    project: "sanetime",
     name: "Kasım saha toplantısı tutanağı",
     type: "Tutanak",
     date: "2026-11-16",
     owner: "Şantiye şefi",
     status: "Hazır",
+  },
+  {
+    id: "EVR-005",
+    project: "bulvarpark",
+    name: "Zemin etüdü ve iksa raporu",
+    type: "Teknik rapor",
+    date: "2026-11-19",
+    owner: "Proje yönetimi",
+    status: "İncelemede",
   },
 ];
 /** Tam TL tutarlar kuruşsuz, kuruşlu tutarlar iki haneli gösterilir. */

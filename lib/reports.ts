@@ -392,7 +392,7 @@ export type ReportKind = "finans" | "satis" | "taksit" | "barter" | "taseron" | 
 export function reportCsv(s: EnterpriseState, kind: ReportKind, f: ReportFilter): (string | number)[][] {
   syncCatalog(s);
   const head: (string | number)[][] = [
-    [`CEYCON İnşaat · ${REPORT_TITLES[kind]}`],
+    [`SANE İnşaat · ${REPORT_TITLES[kind]}`],
     ["Kapsam", f.project === "all" ? "Tüm projeler" : pname(f.project)],
     ["Dönem", periodLabel(f)],
     ["Senaryo tarihi", fmt(SNAPSHOT)],

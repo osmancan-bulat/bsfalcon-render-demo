@@ -564,6 +564,8 @@ export function reservedUnits(s: EnterpriseState, id: string) {
       !(s.drafts ?? []).some((d) => d.id === k),
   );
 }
+/** Temsili ay başı kasa bakiyesi (yalnızca yerleşik projeler; demo varsayımı). */
+const OPENING_CASH: Record<string, number> = { verdora: 12500000, sanetime: 4800000, bulvarpark: 2600000 };
 export function summary(s: EnterpriseState, project = "all") {
   syncCatalog(s);
   const inScope = (id: string) => project === "all" || id === project;
@@ -635,7 +637,7 @@ export function summary(s: EnterpriseState, project = "all") {
   );
   const opening = ps.reduce(
     // Temsili ay başı kasa bakiyesi yalnızca yerleşik projelerde vardır; yeni projeler sıfırdan başlar.
-    (a, p) => a + (p.id === "corner" ? 4200000 : p.id === "primador" ? 2250000 : 0),
+    (a, p) => a + (OPENING_CASH[p.id] ?? 0),
     0,
   );
   // Kasaya bu ay giren peşinat: ay başından önce imzada alınan peşinat açılış kasasına dahildir.
@@ -1446,7 +1448,7 @@ export function applyAction(
 const seedFirstDue = new Map<string, string>();
 for (const i of installments)
   if (!seedFirstDue.has(i.customerId)) seedFirstDue.set(i.customerId, i.due);
-const PROJECT_CODE: Record<string, string> = { corner: "CP", primador: "PE" };
+const PROJECT_CODE: Record<string, string> = { verdora: "VK", sanetime: "ST", bulvarpark: "BP" };
 
 export const contractNumber = (id: string) => {
   const [p, n] = id.split("-");
@@ -2152,7 +2154,7 @@ export function workContracts(
   project = "all",
 ): WorkContract[] {
   const groups = new Map<string, WorkContract>();
-  // Numara: proje içinde iş paketlerinin sırasına göre IS-CP-01, IS-CP-02 … (proje filtresinden bağımsız, kalıcı)
+  // Numara: proje içinde iş paketlerinin sırasına göre IS-VK-01, IS-VK-02 … (proje filtresinden bağımsız, kalıcı)
   const order = new Map<string, number>();
   for (const w of workList(s)) {
     const key = w.project + "|" + firmKey(w.company);

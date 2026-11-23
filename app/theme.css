@@ -1,36 +1,36 @@
-/* CEYCON / YAPI360 tasarım sistemi — tek kaynak tasarım değişkenleri.
+/* SANE Yönetim Merkezi tasarım sistemi — tek kaynak tasarım değişkenleri.
    Renkler, tipografi, boşluk, köşe ve gölge değerleri yalnızca burada tanımlanır. */
 :root {
-  /* Kurumsal orman yeşili (menü, birincil eylem) */
-  --forest-950: #0f2620;
-  --forest-900: #142f28;
-  --forest-800: #1b3b32;
-  --forest-700: #24493e;
-  --forest-600: #2f5b4d;
-  --forest-500: #4a7564;
-  --forest-300: #9db5aa;
-  --forest-100: #e6eee9;
+  /* SANE kurumsal yeşili (saneinsaat.net: #173d29 / #0d291a) — menü, birincil eylem */
+  --forest-950: #0a2015;
+  --forest-900: #0d291a;
+  --forest-800: #173d29;
+  --forest-700: #1f4a33;
+  --forest-600: #2b5a40;
+  --forest-500: #4d735c;
+  --forest-300: #9cad9a;
+  --forest-100: #e3ebe3;
 
   /* Doğal taş / kırık beyaz yüzeyler */
   --surface: #ffffff;
-  --stone-25: #fcfbf8;
-  --stone-50: #f8f7f3;
-  --stone-100: #f2f0ea;
-  --stone-150: #ebe8e0;
-  --stone-200: #e2ded4;
-  --stone-300: #cfcabd;
+  --stone-25: #fbfaf6;
+  --stone-50: #f7f6f1;
+  --stone-100: #f2f0e9;
+  --stone-150: #eae8e0;
+  --stone-200: #e3e1d8;
+  --stone-300: #cdcabd;
 
   /* Grafit metin */
-  --graphite-900: #1b211f;
-  --graphite-700: #38413d;
-  --graphite-500: #5f6864;
+  --graphite-900: #11140f;
+  --graphite-700: #353a33;
+  --graphite-500: #61655e;
   --graphite-400: #878e8a;
 
-  /* Kontrollü bronz vurgu */
-  --bronze-700: #7a5a2e;
-  --bronze-500: #a8834f;
-  --bronze-300: #d5bf98;
-  --bronze-100: #f5eee2;
+  /* SANE vurgu rengi (turuncu) — tasarımda bronz adıyla anılır */
+  --bronze-700: #b4442a;
+  --bronze-500: #d9542f;
+  --bronze-300: #f0b6a3;
+  --bronze-100: #fcece6;
 
   /* Anlamsal durumlar */
   --positive: #2f6b4f;
@@ -55,8 +55,8 @@
   --focus: var(--bronze-500);
 
   /* Tipografi */
-  --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
-  --font-features: "cv11", "ss01", "ss03";
+  --font-sans: "Manrope Variable", Manrope, "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-features: normal;
   --fs-micro: 11px;
   --fs-xs: 12px;
   --fs-sm: 13px;

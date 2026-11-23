@@ -291,7 +291,7 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
           <span className="eyebrow">{date(SNAPSHOT)}</span>
           <h1>{p.name}</h1>
           <p>
-            {p.location} · {p.total} daire · teslim {p.delivery}
+            {p.location} · {p.total} daire{p.delivery ? ` · teslim ${p.delivery}` : ""}
           </p>
         </div>
         <nav className="quick-actions" aria-label="Hızlı işlemler">

@@ -43,7 +43,7 @@ export default function PrintDocument() {
     setP({
       tur: q.get("tur") ?? "",
       id: q.get("id") ?? "",
-      project: q.get("project") ?? "corner",
+      project: q.get("project") ?? "verdora",
       rapor: q.get("rapor") ?? "yonetici",
       from: q.get("from") ?? undefined,
       to: q.get("to") ?? undefined,
@@ -85,7 +85,7 @@ export default function PrintDocument() {
               <tbody>
                 <tr>
                   <th>Satıcı</th>
-                  <td>CEYCON İnşaat (temsili demo kaydı)</td>
+                  <td>SANE İnşaat (temsili demo kaydı)</td>
                 </tr>
                 <tr>
                   <th>Alıcı</th>
@@ -387,7 +387,7 @@ export default function PrintDocument() {
             <tbody>
               <tr>
                 <th>Daireyi veren</th>
-                <td>CEYCON İnşaat (temsili demo kaydı)</td>
+                <td>SANE İnşaat (temsili demo kaydı)</td>
               </tr>
               <tr>
                 <th>İşi yapan firma</th>
@@ -449,7 +449,7 @@ export default function PrintDocument() {
           </p>
           <div className="doc-signatures">
             <div>
-              <span>CEYCON İnşaat adına</span>
+              <span>SANE İnşaat adına</span>
               <i />
             </div>
             <div>
@@ -480,7 +480,7 @@ export default function PrintDocument() {
             <tbody>
               <tr>
                 <th>İşveren</th>
-                <td>CEYCON İnşaat (temsili demo kaydı)</td>
+                <td>SANE İnşaat (temsili demo kaydı)</td>
               </tr>
               <tr>
                 <th>Yüklenici</th>
@@ -533,7 +533,7 @@ export default function PrintDocument() {
           </p>
           <div className="doc-signatures">
             <div>
-              <span>CEYCON İnşaat adına</span>
+              <span>SANE İnşaat adına</span>
               <i />
             </div>
             <div>
@@ -553,7 +553,7 @@ export default function PrintDocument() {
         <>
           <DocMeta
             items={[
-              ["Kapsam", p.project === "all" ? "CEYCON İnşaat · şirket geneli" : pname(p.project)],
+              ["Kapsam", p.project === "all" ? "SANE İnşaat · şirket geneli" : pname(p.project)],
               ["Dönem", periodLabel(f)],
               ["Rapor tarihi", date(SNAPSHOT)],
               ["Kaynak", "Tarayıcıdaki demo kayıtları"],
@@ -588,7 +588,7 @@ export default function PrintDocument() {
             items={[
               ["Rapor tarihi", date(SNAPSHOT)],
               ["Konum", pr.location],
-              ["Teslim hedefi", pr.delivery],
+              ["Teslim hedefi", pr.delivery || "Açıklanmadı"],
               ["İnşaat ilerlemesi", `%${s.progress}`],
             ]}
           />
@@ -677,9 +677,9 @@ export default function PrintDocument() {
           TEMSİLİ DEMO BELGESİ · HUKUKİ GEÇERLİLİĞİ YOKTUR
         </div>
         <header className="doc-header">
-          <img src="/images/ceycon-logo.png" alt="CEYCON İnşaat" />
+          <img src="/images/sane-logo.png" alt="SANE İnşaat" />
           <div>
-            <span>YAPI360 Yönetim Merkezi</span>
+            <span>Yönetim Merkezi</span>
             <h1>{title}</h1>
           </div>
         </header>

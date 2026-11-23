@@ -27,7 +27,7 @@ for (const c of customers) {
     36 - c.paidMonths,
   );
 }
-assert.equal(new Set(customers.map((c) => c.name)).size, 80);
+assert.equal(new Set(customers.map((c) => c.name)).size, 90);
 const base = stats(),
   changed = stats("all", [installments[0].id]);
 assert.equal(changed.collected, base.collected + installments[0].amount);

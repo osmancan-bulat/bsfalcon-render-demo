@@ -87,8 +87,8 @@ test("Flexible plan totals equal the contract price to the kuruş", () => {
 test("Flexible-plan sale creates exact receivables, staged deposit and unified ledger", () => {
   const base = seed(),
     before = summary(base);
-  const s = applyAction(base, { type: "contract", record: sale("corner-66") });
-  const rows = installmentList(s).filter((i) => i.customerId === "corner-66");
+  const s = applyAction(base, { type: "contract", record: sale("verdora-47") });
+  const rows = installmentList(s).filter((i) => i.customerId === "verdora-47");
   assert.equal(rows.length, 38);
   const after = summary(s);
   assert.equal(after.revenue, before.revenue + 3550000.75);
@@ -99,16 +99,16 @@ test("Flexible-plan sale creates exact receivables, staged deposit and unified l
   );
   assert.equal(after.depositPending, before.depositPending + 350000.5);
   const parts = depositSchedule(
-    customerList(s).find((c) => c.id === "corner-66"),
+    customerList(s).find((c) => c.id === "verdora-47"),
   );
   assert.deepEqual(
     parts.map((p) => p.remaining),
     [0, 350000.5],
   );
-  const ledger = customerLedger(s, "corner-66");
+  const ledger = customerLedger(s, "verdora-47");
   const acc = accountOf(
     s,
-    customerList(s).find((c) => c.id === "corner-66"),
+    customerList(s).find((c) => c.id === "verdora-47"),
   );
   assert.equal(ledger.at(-1).balance, acc.balance);
   assert.equal(acc.balance, 3050000.75);
@@ -123,26 +123,26 @@ test("Flexible-plan sale creates exact receivables, staged deposit and unified l
   });
   t = applyAction(t, {
     type: "deposit-receipt",
-    id: "corner-66",
+    id: "verdora-47",
     amount: 350000.5,
   });
   assert.equal(outstanding(t, lastRow), 0);
   const acc2 = accountOf(
     t,
-    customerList(t).find((c) => c.id === "corner-66"),
+    customerList(t).find((c) => c.id === "verdora-47"),
   );
   assert.equal(
     acc2.balance,
     Math.round((3050000.75 - lastRow.amount - 350000.5) * 100) / 100,
   );
-  assert.equal(customerLedger(t, "corner-66").at(-1).balance, acc2.balance);
+  assert.equal(customerLedger(t, "verdora-47").at(-1).balance, acc2.balance);
   assert.throws(() =>
-    applyAction(t, { type: "deposit-receipt", id: "corner-66", amount: 0.01 }),
+    applyAction(t, { type: "deposit-receipt", id: "verdora-47", amount: 0.01 }),
   );
   assert.throws(() =>
     applyAction(base, {
       type: "contract",
-      record: sale("corner-66", { depositExpected: 850000 }),
+      record: sale("verdora-47", { depositExpected: 850000 }),
     }),
   );
 });
@@ -164,10 +164,10 @@ test("Draft contract blocks the unit without financial effect; sign and cancel l
     before = summary(base);
   let s = applyAction(base, {
     type: "contract",
-    record: sale("corner-65"),
+    record: sale("verdora-46"),
     status: "Taslak",
   });
-  assert(unitTaken(s, "corner-65"));
+  assert(unitTaken(s, "verdora-46"));
   for (const k of [
     "revenue",
     "cash",
@@ -179,60 +179,60 @@ test("Draft contract blocks the unit without financial effect; sign and cancel l
     assert.equal(summary(s)[k], before[k]);
   assert.equal(summary(s).drafts, before.drafts + 1);
   assert.equal(
-    contractList(s).find((c) => c.id === "corner-65").status,
+    contractList(s).find((c) => c.id === "verdora-46").status,
     "Taslak",
   );
-  assert.throws(() => applyAction(s, { type: "reserve", id: "corner-65" }));
+  assert.throws(() => applyAction(s, { type: "reserve", id: "verdora-46" }));
   assert.throws(() =>
-    applyAction(s, { type: "contract", record: sale("corner-65") }),
+    applyAction(s, { type: "contract", record: sale("verdora-46") }),
   );
   s = applyAction(s, {
     type: "contract-status",
-    id: "corner-65",
+    id: "verdora-46",
     status: "İmza bekliyor",
   });
   assert.equal(
-    contractList(s).find((c) => c.id === "corner-65").status,
+    contractList(s).find((c) => c.id === "verdora-46").status,
     "İmza bekliyor",
   );
   assert.throws(() =>
     applyAction(s, {
       type: "contract-sign",
-      id: "corner-65",
+      id: "verdora-46",
       depositPaid: 900000,
     }),
   );
   const signed = applyAction(s, {
     type: "contract-sign",
-    id: "corner-65",
+    id: "verdora-46",
     depositPaid: 500000,
   });
   assert.equal(summary(signed).cash, before.cash + 500000);
   assert.equal(summary(signed).revenue, before.revenue + 3550000.75);
-  const view = contractList(signed).find((c) => c.id === "corner-65");
+  const view = contractList(signed).find((c) => c.id === "verdora-46");
   assert.equal(view.status, "Aktif");
   assert.equal(view.history.length, 3);
   // İptal: yalnızca taslak; konut stoka döner
   const cancelled = applyAction(s, {
     type: "contract-cancel",
-    id: "corner-65",
+    id: "verdora-46",
     reason: "Müşteri vazgeçti",
   });
-  assert(!unitTaken(cancelled, "corner-65"));
+  assert(!unitTaken(cancelled, "verdora-46"));
   assert.equal(
-    contractList(cancelled).find((c) => c.id === "corner-65").status,
+    contractList(cancelled).find((c) => c.id === "verdora-46").status,
     "İptal",
   );
   assert.equal(summary(cancelled).cash, before.cash);
   assert.throws(() =>
     applyAction(signed, {
       type: "contract-cancel",
-      id: "corner-65",
+      id: "verdora-46",
       reason: "x",
     }),
   );
   assert.throws(() =>
-    applyAction(s, { type: "contract-cancel", id: "corner-65", reason: " " }),
+    applyAction(s, { type: "contract-cancel", id: "verdora-46", reason: " " }),
   );
 });
 
@@ -270,8 +270,8 @@ test("Barter offset settles an approved progress payment without cash", () => {
   let s = seed();
   const barter = {
     id: "BRT-1",
-    project: "corner",
-    unitId: "corner-72",
+    project: "verdora",
+    unitId: "verdora-56",
     company: "Karataş Yapı Taahhüt",
     work: "Betonarme",
     amount: 1000000,
@@ -291,21 +291,21 @@ test("Barter offset settles an approved progress payment without cash", () => {
     }),
   );
   s = applyAction(s, { type: "approve", id: "HAK-024" });
-  const before = summary(s, "corner");
+  const before = summary(s, "verdora");
   s = applyAction(s, {
     type: "barter-offset",
     barterId: "BRT-1",
     requestId: "HAK-024",
     amount: 400000,
   });
-  const mid = summary(s, "corner");
+  const mid = summary(s, "verdora");
   assert.equal(mid.cash, before.cash);
   assert.equal(mid.payable, before.payable - 400000);
   assert.equal(mid.offset, before.offset + 400000);
   // Kalan 850.000 TL nakit ödenir; kasa yalnızca net tutar kadar azalır
   const paid = applyAction(s, { type: "pay-order", id: "HAK-024" });
-  assert.equal(summary(paid, "corner").cash, before.cash - 850000);
-  assert.equal(summary(paid, "corner").paid, before.paid + 850000);
+  assert.equal(summary(paid, "verdora").cash, before.cash - 850000);
+  assert.equal(summary(paid, "verdora").paid, before.paid + 850000);
   // Barter bakiyesi ve hakediş bakiyesi aşılamaz; farklı firma reddedilir
   assert.throws(() =>
     applyAction(s, {
@@ -357,8 +357,8 @@ test("Full barter offset closes a progress payment as settled", () => {
     type: "barter",
     record: {
       id: "BRT-2",
-      project: "corner",
-      unitId: "corner-71",
+      project: "verdora",
+      unitId: "verdora-55",
       company: "KARATAŞ YAPI TAAHHÜT ",
       work: "Kaba inşaat",
       amount: 2000000,
@@ -388,11 +388,20 @@ test("Full barter offset closes a progress payment as settled", () => {
 });
 
 test("Unit catalogue covers every unit with consistent attributes", () => {
-  assert.equal(units.filter((u) => u.project === "corner").length, 72);
-  const pr = units.filter((u) => u.project === "primador");
-  assert.equal(pr.length, 106);
-  assert.equal(pr.filter((u) => u.type === "1+1").length, 100);
-  assert.equal(pr.filter((u) => u.type === "2+1").length, 6);
+  // VERDORA: resmî proje sayfası — A/B blok, 15 kat, 60 adet 3+1, net 95,9 / 101,7 m², brüt 106,4 / 112,2 m²
+  const vk = units.filter((u) => u.project === "verdora");
+  assert.equal(vk.length, 60);
+  assert(vk.every((u) => u.type === "3+1"));
+  assert.deepEqual([...new Set(vk.map((u) => u.block))], ["A", "B"]);
+  assert.equal(new Set(vk.map((u) => u.floor)).size, 15);
+  assert.deepEqual([...new Set(vk.map((u) => u.net))].sort(), [101.7, 95.9]);
+  assert(vk.every((u) => (u.corner ? u.net === 101.7 && u.gross === 112.2 : u.net === 95.9 && u.gross === 106.4)));
+  assert.equal(vk.filter((u) => u.block === "A").length, 30);
+  // Sane Time: resmî — 3 blok, 92 konut
+  const pr = units.filter((u) => u.project === "sanetime");
+  assert.equal(pr.length, 92);
+  assert.deepEqual([...new Set(pr.map((u) => u.block))], ["A", "B", "C"]);
+  assert.equal(units.filter((u) => u.project === "bulvarpark").length, 48);
   for (const u of units) {
     assert(u.gross > u.net && u.net > 0);
     assert(u.listPrice > 0 && u.listPrice % 5000 === 0);
@@ -415,7 +424,7 @@ test("Demo seed is internally consistent and reconciles", () => {
   customerList(s).forEach((c) => claim(c.id, "satış"));
   s.drafts.forEach((d) => claim(d.id, "taslak"));
   s.barters.forEach((b) => claim(b.unitId, "barter"));
-  for (const p of ["corner", "primador"])
+  for (const p of ["verdora", "sanetime", "bulvarpark"])
     reservedUnits(s, p).forEach((id) => claim(id, "rezerve"));
   // Esnek planlar bedelle kuruşu kuruşuna eşit, kayıtlı taksit tutarı plan tabanıyla aynı
   for (const c of [...s.contracts, ...s.drafts]) {
@@ -450,13 +459,13 @@ test("Demo seed is internally consistent and reconciles", () => {
         .reduce((a, o) => a + o.amount, 0) <= b.amount,
     );
   // Senaryo: gecikme, bekleyen peşinat, taslak, mahsup ve barter mevcut
-  const corner = summary(s, "corner");
+  const vk = summary(s, "verdora");
   assert(
-    corner.overdue > 0 &&
-      corner.depositPending > 0 &&
-      corner.drafts === 2 &&
-      corner.offset === 1100000 &&
-      corner.barterCount === 2,
+    vk.overdue > 0 &&
+      vk.depositPending > 0 &&
+      vk.drafts === 2 &&
+      vk.offset === 1100000 &&
+      vk.barterCount === 2,
   );
   assert.equal(
     requestStatus(
@@ -466,7 +475,7 @@ test("Demo seed is internally consistent and reconciles", () => {
     "Ödendi",
   );
   // Kasa: Kasım öncesi peşinatlar açılış kasasına dahil, yalnızca Kasım hareketleri eklenir
-  assert.equal(corner.cash, 4200000 + corner.received + 2000000 - 560000);
+  assert.equal(vk.cash, 12500000 + vk.received + 8950000 - 560000);
   // Toplamlar ve cari hesaplar tutarlı
   const tot = summary(s);
   assert.equal(
@@ -505,40 +514,40 @@ test("Payment statuses classify every row and reconcile with portfolio totals", 
     sum(rows.filter((r) => r.status === "Gecikti")),
     summary(s).overdueTotal,
   );
-  for (const p of ["corner", "primador"])
+  for (const p of ["verdora", "sanetime", "bulvarpark"])
     assert.equal(
       sum(rows.filter((r) => r.status === "Gecikti" && r.project === p)),
       summary(s, p).overdueTotal,
     );
   // Kısmen ödenmiş ve vadesi geçmiş taksit gecikmiş sayılır; ödenen kısım korunur
-  const b44 = rows.find((r) => r.id === "corner-44-3");
+  const b44 = rows.find((r) => r.id === "verdora-34-3");
   assert.equal(b44.status, "Gecikti");
-  assert.equal(b44.paid, 40000);
+  assert.equal(b44.paid, 170000);
   // Kademeli peşinatın vadesi geçmiş ikinci parçası gecikmiş peşinat olarak görünür
   assert.equal(
-    rows.find((r) => r.id === "deposit:corner-43:1").status,
+    rows.find((r) => r.id === "deposit:verdora-33:1").status,
     "Gecikti",
   );
   // Tahsilat satır durumunu günceller
   const t2 = applyAction(s, {
     type: "receipt",
-    installmentId: "corner-44-3",
-    amount: 35516,
+    installmentId: "verdora-34-3",
+    amount: 152916,
     method: "Nakit",
     reference: "T",
   });
   assert.equal(
-    paymentRows(t2).find((r) => r.id === "corner-44-3").status,
+    paymentRows(t2).find((r) => r.id === "verdora-34-3").status,
     "Ödendi",
   );
 });
 
 test("Agenda lists signature, progress payment, barter and payment dates in order", () => {
-  const items = agenda(seed(), "corner");
-  assert(items.some((i) => i.ref.type === "draft" && i.ref.id === "corner-52"));
+  const items = agenda(seed(), "verdora");
+  assert(items.some((i) => i.ref.type === "draft" && i.ref.id === "verdora-42"));
   assert(items.some((i) => i.ref.type === "request" && i.ref.id === "HAK-025"));
   assert(items.some((i) => i.kind === "Peşinat" && i.ref.focus === "deposit"));
-  assert(items.every((i) => i.project === "corner"));
+  assert(items.every((i) => i.project === "verdora"));
   for (let k = 1; k < items.length; k++)
     assert(items[k - 1].date <= items[k].date);
   assert(items.every((i) => i.days <= 90));
@@ -546,7 +555,7 @@ test("Agenda lists signature, progress payment, barter and payment dates in orde
 
 test("Collection scope: prior + in-plan equals the collected total everywhere", () => {
   let s = seed();
-  for (const p of ["all", "corner", "primador"]) {
+  for (const p of ["all", "verdora", "sanetime", "bulvarpark"]) {
     const cb = collectionBreakdown(s, p);
     assert.equal(cb.total, summary(s, p).collected);
     assert(cb.prior > 0 && cb.inPlan > 0);
@@ -562,20 +571,20 @@ test("Collection scope: prior + in-plan equals the collected total everywhere", 
   // Tahsilat, deposit tahsilatı ve yeni satış her iki toplamı da birlikte değiştirir
   s = applyAction(s, {
     type: "receipt",
-    installmentId: "corner-44-3",
-    amount: 35516,
+    installmentId: "verdora-34-3",
+    amount: 152916,
     method: "Nakit",
     reference: "T",
   });
   s = applyAction(s, {
     type: "deposit-receipt",
-    id: "corner-43",
+    id: "verdora-33",
     amount: 400000,
   });
-  s = applyAction(s, { type: "contract", record: sale("corner-66") });
-  const cb = collectionBreakdown(s, "corner");
-  assert.equal(cb.total, summary(s, "corner").collected);
-  assert.equal(cb.prior, collectionBreakdown(seed(), "corner").prior);
+  s = applyAction(s, { type: "contract", record: sale("verdora-47") });
+  const cb = collectionBreakdown(s, "verdora");
+  assert.equal(cb.total, summary(s, "verdora").collected);
+  assert.equal(cb.prior, collectionBreakdown(seed(), "verdora").prior);
 });
 
 test("System documents exist for every contract, draft and barter", () => {
@@ -589,7 +598,7 @@ test("System documents exist for every contract, draft and barter", () => {
     );
     assert(docs.some((d) => d.kind === "Ödeme planı"));
   }
-  assert(systemDocuments(s, "corner-52")[0].kind === "Satış sözleşmesi");
+  assert(systemDocuments(s, "verdora-42")[0].kind === "Satış sözleşmesi");
   for (const b of s.barters)
     assert.equal(
       systemDocuments(s, b.id)[0].href,
@@ -598,15 +607,15 @@ test("System documents exist for every contract, draft and barter", () => {
   // Tahsilat makbuzu müşterinin belgelerine eklenir
   const t2 = applyAction(s, {
     type: "receipt",
-    installmentId: "corner-44-4",
+    installmentId: "verdora-34-4",
     amount: 1000,
     method: "Nakit",
     reference: "M",
   });
   assert(
-    systemDocuments(t2, "corner-44").filter((d) => d.kind === "Makbuz")
+    systemDocuments(t2, "verdora-34").filter((d) => d.kind === "Makbuz")
       .length ===
-      systemDocuments(s, "corner-44").filter((d) => d.kind === "Makbuz")
+      systemDocuments(s, "verdora-34").filter((d) => d.kind === "Makbuz")
         .length +
         1,
   );
@@ -614,7 +623,7 @@ test("System documents exist for every contract, draft and barter", () => {
 
 test("File history is derived from contract events, payments and changes", () => {
   let s = seed();
-  const h = fileHistory(s, "corner-1");
+  const h = fileHistory(s, "verdora-1");
   assert(
     h.some((e) => e.kind === "Sözleşme" && e.title === "Sözleşme imzalandı"),
   );
@@ -625,7 +634,7 @@ test("File history is derived from contract events, payments and changes", () =>
     Math.round(
       accountOf(
         s,
-        customerList(s).find((c) => c.id === "corner-1"),
+        customerList(s).find((c) => c.id === "verdora-1"),
       ).collected,
     ),
   );
@@ -633,10 +642,10 @@ test("File history is derived from contract events, payments and changes", () =>
   // Taslaktan imzaya geçen sözleşmenin tüm adımları görünür
   s = applyAction(s, {
     type: "contract-sign",
-    id: "corner-52",
+    id: "verdora-42",
     depositPaid: 900000,
   });
-  const steps = fileHistory(s, "corner-52")
+  const steps = fileHistory(s, "verdora-42")
     .filter((e) => e.kind === "Sözleşme")
     .map((e) => e.title);
   assert(
@@ -647,16 +656,16 @@ test("File history is derived from contract events, payments and changes", () =>
   // Vade değişikliği ve devir geçmişe yazılır
   s = applyAction(s, {
     type: "reschedule",
-    id: "corner-44-4",
+    id: "verdora-34-4",
     date: "2026-11-30",
   });
   s = applyAction(s, {
     type: "contract-transfer",
-    id: "corner-44",
+    id: "verdora-34",
     name: "Demo Devralan",
     note: "",
   });
-  const h44 = fileHistory(s, "corner-44");
+  const h44 = fileHistory(s, "verdora-34");
   assert(h44.some((e) => e.title === "Vade değiştirildi"));
   assert(h44.some((e) => e.title === "Sözleşme devredildi"));
   assert(!h44.some((e) => e.title === "Müşteri bilgileri güncellendi"));
@@ -672,16 +681,16 @@ test("Document structure: every contract and barter has exactly one contract doc
   // İptal edilen taslağın belgesi listeden düşer; yeni barterın belgesi eklenir
   s = applyAction(s, {
     type: "contract-cancel",
-    id: "corner-53",
+    id: "verdora-43",
     reason: "Vazgeçti",
   });
-  assert.equal(systemDocuments(s, "corner-53").length, 0);
+  assert.equal(systemDocuments(s, "verdora-43").length, 0);
   s = applyAction(s, {
     type: "barter",
     record: {
       id: "BRT-T",
-      project: "corner",
-      unitId: "corner-69",
+      project: "verdora",
+      unitId: "verdora-48",
       company: "Örnek Firma",
       work: "İş",
       amount: 1000000,
@@ -700,17 +709,17 @@ test("Document structure: every contract and barter has exactly one contract doc
 
 test("Work (subcontractor) contracts are derived from work packages and progress payments", () => {
   const s = seed();
-  const corner = workContracts(s, "corner");
-  // Corner iş paketlerindeki her firma için bir iş sözleşmesi
-  assert.deepEqual(corner.map((w) => w.company).sort(), [
+  const vk = workContracts(s, "verdora");
+  // VERDORA iş paketlerindeki her firma için bir iş sözleşmesi
+  assert.deepEqual(vk.map((w) => w.company).sort(), [
     "Atlas Mekanik Elektrik",
     "Karataş Yapı Taahhüt",
     "Kuzey Cephe Sistemleri",
   ]);
-  const cephe = corner.find((w) => w.company === "Kuzey Cephe Sistemleri");
-  assert.equal(cephe.barterId, "BRT-CP-01");
+  const cephe = vk.find((w) => w.company === "Kuzey Cephe Sistemleri");
+  assert.equal(cephe.barterId, "BRT-VK-01");
   assert.equal(cephe.offset, 700000);
-  const yapi = corner.find((w) => w.company === "Karataş Yapı Taahhüt");
+  const yapi = vk.find((w) => w.company === "Karataş Yapı Taahhüt");
   assert.equal(yapi.hakedisTotal, 1250000 + 960000);
   assert.equal(
     yapi.paid,
@@ -721,7 +730,7 @@ test("Work (subcontractor) contracts are derived from work packages and progress
   );
   assert.equal(
     workContracts(s).length,
-    corner.length + workContracts(s, "primador").length,
+    vk.length + workContracts(s, "sanetime").length + workContracts(s, "bulvarpark").length,
   );
   const doc = workContractDocument(s, cephe);
   assert.equal(doc.kind, "İş sözleşmesi");

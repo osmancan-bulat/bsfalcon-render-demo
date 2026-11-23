@@ -1,4 +1,4 @@
-// Kurgusal kimlik kataloğu. Kişi ve firma adlarının tamamı uydurmadır; gerçek CEYCON
+// Kurgusal kimlik kataloğu. Kişi ve firma adlarının tamamı uydurmadır; gerçek SANE
 // müşterileri, çalışanları veya yüklenicileriyle ilişkisi yoktur.
 // Ad, kayıt numarasından deterministik üretilir: aynı numara her ekranda aynı kişiyi verir.
 const FIRST = [

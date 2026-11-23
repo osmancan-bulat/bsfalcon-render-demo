@@ -34,7 +34,7 @@ test("Portfolio totals reconcile across project scopes", () => {
   ])
     assert.equal(
       all[key],
-      summary(seed(), "corner")[key] + summary(seed(), "primador")[key],
+      summary(seed(), "verdora")[key] + summary(seed(), "sanetime")[key] + summary(seed(), "bulvarpark")[key],
     );
   assert.equal(all.revenue, all.collected + all.balance);
 });
@@ -131,14 +131,14 @@ test("Purchase revision, reapproval and delivery lifecycle", () => {
 });
 test("Reservations and new sale reconcile inventory, cash and 36 installments", () => {
   let s = seed();
-  const before = summary(s, "corner");
-  s = applyAction(s, { type: "reserve", id: "corner-72" });
-  assert.equal(summary(s, "corner").reserved, before.reserved + 1);
-  s = applyAction(s, { type: "release", id: "corner-72" });
-  assert.equal(summary(s, "corner").reserved, before.reserved);
+  const before = summary(s, "verdora");
+  s = applyAction(s, { type: "reserve", id: "verdora-56" });
+  assert.equal(summary(s, "verdora").reserved, before.reserved + 1);
+  s = applyAction(s, { type: "release", id: "verdora-56" });
+  assert.equal(summary(s, "verdora").reserved, before.reserved);
   const c = {
-    id: "corner-72",
-    project: "corner",
+    id: "verdora-56",
+    project: "verdora",
     name: "Test Müşteri",
     unit: "B-72",
     price: 3550000,
@@ -147,7 +147,7 @@ test("Reservations and new sale reconcile inventory, cash and 36 installments", 
     paidMonths: 0,
   };
   s = applyAction(s, { type: "contract", record: c });
-  const after = summary(s, "corner");
+  const after = summary(s, "verdora");
   assert.equal(after.sold, before.sold + 1);
   assert.equal(after.cash, before.cash + 850000);
   assert.equal(after.revenue, before.revenue + 3550000);
@@ -164,7 +164,7 @@ test("Reservations and new sale reconcile inventory, cash and 36 installments", 
   assert.throws(() =>
     applyAction(seed(), { type: "contract", record: { ...c, price: NaN } }),
   );
-  assert.throws(() => applyAction(s, { type: "reserve", id: "corner-72" }));
+  assert.throws(() => applyAction(s, { type: "reserve", id: "verdora-56" }));
 });
 test("Rescheduling preserves receivable and changes due bucket", () => {
   let s = seed();
@@ -179,14 +179,14 @@ test("Rescheduling preserves receivable and changes due bucket", () => {
 });
 test("Weighted progress updates all summaries", () => {
   let s = seed();
-  const before = projectProgress(s, "primador");
+  const before = projectProgress(s, "sanetime");
   s = applyAction(s, {
     type: "work",
     id: "w6",
     patch: { progress: 100, note: "Tamamlandı", material: "Hazır" },
   });
-  assert(projectProgress(s, "primador") > before);
-  assert.equal(summary(s, "primador").progress, projectProgress(s, "primador"));
+  assert(projectProgress(s, "sanetime") > before);
+  assert.equal(summary(s, "sanetime").progress, projectProgress(s, "sanetime"));
   assert.throws(() =>
     applyAction(s, {
       type: "work",
@@ -197,7 +197,7 @@ test("Weighted progress updates all summaries", () => {
 });
 test("Reset restores isolated seed and clears audit", () => {
   const s = applyAction(
-    applyAction(seed(), { type: "note", text: "Deneme", project: "corner" }),
+    applyAction(seed(), { type: "note", text: "Deneme", project: "verdora" }),
     { type: "reset" },
   );
   assert.deepEqual(s, seedState);
@@ -209,8 +209,8 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     count = installmentList(base).length;
   const record = {
     id: "BARTER-TEST",
-    project: "corner",
-    unitId: "corner-71",
+    project: "verdora",
+    unitId: "verdora-55",
     company: "Örnek Firma",
     work: "Temsili cephe işi",
     amount: 3500000,
@@ -224,7 +224,7 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     assert.equal(summary(s)[key], before[key]);
   assert.equal(summary(s).barterCount, before.barterCount + 1);
   assert.equal(installmentList(s).length, count);
-  assert.throws(() => applyAction(s, { type: "reserve", id: "corner-71" }));
+  assert.throws(() => applyAction(s, { type: "reserve", id: "verdora-55" }));
   assert.throws(() =>
     applyAction(s, { type: "barter", record: { ...record, id: "duplicate" } }),
   );
@@ -232,8 +232,8 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     applyAction(s, {
       type: "contract",
       record: {
-        id: "corner-71",
-        project: "corner",
+        id: "verdora-55",
+        project: "verdora",
         name: "Demo",
         unit: "A-71",
         price: 3550000,
@@ -258,8 +258,8 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   let s = applyAction(base, {
     type: "contract",
     record: {
-      id: "corner-70",
-      project: "corner",
+      id: "verdora-54",
+      project: "verdora",
       name: "Demo Peşinat",
       unit: "B-70",
       price: 3550000,
@@ -274,7 +274,7 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   assert.equal(summary(s).balance, before.balance + 3550000);
   s = applyAction(s, {
     type: "deposit-receipt",
-    id: "corner-70",
+    id: "verdora-54",
     amount: 250000,
   });
   assert.equal(summary(s).cash, before.cash + 250000);
@@ -282,18 +282,18 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   assert.throws(() =>
     applyAction(s, {
       type: "deposit-receipt",
-      id: "corner-70",
+      id: "verdora-54",
       amount: 600001,
     }),
   );
   s = applyAction(s, {
     type: "deposit-receipt",
-    id: "corner-70",
+    id: "verdora-54",
     amount: 600000,
   });
   assert.equal(summary(s).balance, before.balance + 2700000);
   assert.throws(() =>
-    applyAction(s, { type: "deposit-receipt", id: "corner-70", amount: 1 }),
+    applyAction(s, { type: "deposit-receipt", id: "verdora-54", amount: 1 }),
   );
 });
 test("Custom reminders toggle without financial effect", () => {
@@ -301,7 +301,7 @@ test("Custom reminders toggle without financial effect", () => {
     type: "reminder",
     record: {
       id: "R1",
-      project: "corner",
+      project: "verdora",
       title: "Demo takip",
       due: "2026-11-20",
       done: false,

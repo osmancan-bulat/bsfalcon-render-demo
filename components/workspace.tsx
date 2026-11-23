@@ -175,11 +175,13 @@ function Shell({ section }: { section: string }) {
   }, [section]);
   // Adresin işaret ettiği proje (proje merkezleri): yerleşik adresler veya /proje/?id=…
   const urlProject =
-    section === "corner-prestij"
-      ? "corner"
-      : section === "primador-esenboga"
-        ? "primador"
-        : section === "proje"
+    section === "verdora-kozyatagi"
+      ? "verdora"
+      : section === "sane-time-besevler"
+        ? "sanetime"
+        : section === "bulvar-park-2"
+          ? "bulvarpark"
+          : section === "proje"
           ? hubId
           : null;
   // Adresteki proje geçersizse (silinmiş, arşivde, hiç olmamış) kapsam olarak kullanılmaz.
@@ -233,7 +235,7 @@ function Shell({ section }: { section: string }) {
   }, [ready, urlProject, urlKnown, urlValid]);
   // Kapsam değişiminde anında geçiş için şirket ve proje merkezleri önceden yüklenir.
   useEffect(() => {
-    for (const href of ["/genel-bakis", "/corner-prestij", "/primador-esenboga", "/proje"])
+    for (const href of ["/genel-bakis", "/verdora-kozyatagi", "/sane-time-besevler", "/bulvar-park-2", "/proje"])
       router.prefetch(href);
   }, [router]);
   const homeHref = hubHref(project);
@@ -294,7 +296,7 @@ function Shell({ section }: { section: string }) {
         <Link
           href="/genel-bakis"
           className="e-brand"
-          aria-label="CEYCON yönetici özeti"
+          aria-label="SANE yönetici özeti"
         >
           <Logo />
         </Link>
@@ -329,8 +331,8 @@ function Shell({ section }: { section: string }) {
             </Link>
           </div>
           <div className="e-powered">
-            YAPI<span>360</span>
-            <small>YÖNETİM PLATFORMU</small>
+            SANE<span> · </span>
+            <small>YÖNETİM MERKEZİ</small>
           </div>
         </div>
       </aside>
@@ -351,7 +353,7 @@ function Shell({ section }: { section: string }) {
             >
               <Menu size={20} />
             </button>
-            <span className="crumb-company">CEYCON İnşaat</span>
+            <span className="crumb-company">SANE İnşaat</span>
             <ChevronRight size={13} className="crumb-company" />
             <span>{scope === "all" ? "Tüm projeler" : pname(scope)}</span>
             <ChevronRight size={13} />
@@ -443,7 +445,7 @@ function Shell({ section }: { section: string }) {
           )}
           <footer className="e-footer">
             <span>
-              CEYCON İnşaat <i /> YAPI360 Yönetim Merkezi <i /> Kişi, firma ve
+              SANE İnşaat <i /> Yönetim Merkezi <i /> Kişi, firma ve
               finansal kayıtlar tamamen temsilidir.
             </span>
             <button onClick={() => setOverlay("reset")}>
@@ -504,14 +506,14 @@ function Shell({ section }: { section: string }) {
         {overlay === "demo" && (
           <section className="acct-section demo-scope">
             <p className="drawer-intro">
-              YAPI360, CEYCON İnşaat için hazırlanmış bir ürün demosudur.
+              Bu yönetim merkezi, SANE İnşaat için hazırlanmış bir ürün demosudur.
               Ekrandaki tüm kişi, firma, sözleşme ve tutarlar kurgusaldır.
             </p>
             <ul className="confirm-list">
               <li>
                 <b>Kişi ve firma adları kurgusaldır.</b> Selin Yılmaz, Kuzey
                 Cephe Sistemleri gibi adlar örnek senaryo için uydurulmuştur;
-                gerçek CEYCON müşterileri, çalışanları veya yüklenicileri
+                gerçek SANE müşterileri, çalışanları veya yüklenicileri
                 değildir. Telefon, e-posta ve kimlik bilgisi içermez.
               </li>
               <li>
@@ -520,8 +522,16 @@ function Shell({ section }: { section: string }) {
                 kullanmaz.
               </li>
               <li>
-                <b>Daire tipi, m², kat, cephe ve liste fiyatları temsili
-                varsayımdır.</b> Resmî proje veya satış verisi değildir.
+                <b>Resmî kaynaktan doğrulanan bilgiler:</b> proje adları ve
+                konumları; VERDORA Kozyatağı için A/B blok, 15 kat, 60 adet 3+1
+                ve net 95,9–101,7 m²; Sane Time Beşevler için 3 blok, 92 konut
+                ve 8 ticari birim (saneinsaat.net, verdorakozyatagi.com).
+              </li>
+              <li>
+                <b>Bunların dışındaki her şey temsilidir.</b> Liste ve satış
+                fiyatları, satış/rezerve adetleri, tahsilatlar, kasa, bütçe,
+                hakediş ve barter tutarları ile Sane Time ve Bulvar Park II daire
+                tipleri demo varsayımıdır; SANE İnşaat’ın gerçek verisi değildir.
               </li>
               <li>
                 <b>Veriler yalnızca bu tarayıcıda saklanır.</b> Sunucu

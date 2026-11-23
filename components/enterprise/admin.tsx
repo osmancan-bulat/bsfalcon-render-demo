@@ -21,8 +21,8 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
   useEffect(() => {
     try {
       setStorage({
-        size: (localStorage.getItem("ceycon-enterprise-v3") ?? "").length,
-        backup: !!localStorage.getItem("ceycon-enterprise-v3-yedek-v1"),
+        size: (localStorage.getItem("sane-enterprise-v1") ?? "").length,
+        backup: !!localStorage.getItem("sane-enterprise-v1-yedek-v1"),
       });
     } catch {
       setStorage(null);
@@ -33,7 +33,7 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `ceycon-demo-kayitlari-${SNAPSHOT}.json`;
+    a.download = `sane-demo-kayitlari-${SNAPSHOT}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -56,7 +56,7 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
         </div>
       </header>
 
-      <Panel title="Şirket ve projeler" subtitle="CEYCON İnşaat ana şirkettir; projeler şirkete bağlıdır. Proje bilgileri temsilidir.">
+      <Panel title="Şirket ve projeler" subtitle="SANE İnşaat ana şirkettir; projeler şirkete bağlıdır. Proje adı ve konumu resmîdir; satış ve finans verileri temsilidir.">
         <div className="e-table-wrap">
           <table>
             <thead>
@@ -81,7 +81,7 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
                     <td>{p.location}</td>
                     <td className="numeric num">{s.total}</td>
                     <td className="numeric num">{s.sold}</td>
-                    <td>{p.delivery}</td>
+                    <td>{p.delivery || "Açıklanmadı"}</td>
                     <td className="row-actions">
                       <button
                         className="btn compact"

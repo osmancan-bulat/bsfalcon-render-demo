@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
+import "@fontsource/newsreader/400.css";
 import "./theme.css";
 import "./globals.css";
 import "./enterprise.css";
@@ -9,10 +11,11 @@ import "./print.css";
 import "./simple.css";
 import "./platform.css";
 import "./polish.css";
+import "./sane.css";
 export const metadata: Metadata = {
-  title: "CEYCON | YAPI360 Yönetim Merkezi",
+  title: "SANE İnşaat | Yönetim Merkezi",
   description:
-    "CEYCON İnşaat için hazırlanmış interaktif proje, satış ve operasyon yönetimi demosu.",
+    "SANE İnşaat için hazırlanmış interaktif proje, satış ve operasyon yönetimi demosu.",
   robots: { index: false, follow: false },
 };
 export default function Layout({ children }: { children: React.ReactNode }) {

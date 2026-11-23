@@ -30,21 +30,21 @@ const r2 = (n) => Math.round(n * 100) / 100;
 
 test("Deposit payment reversal is traceable and restores the deposit balance exactly", () => {
   let s = seed();
-  const id = "corner-43"; // kademeli peşinat: 400.000 TL parça gecikmiş
+  const id = "verdora-33"; // kademeli peşinat: 1.800.000 TL parça gecikmiş
   const c0 = customerList(s).find((c) => c.id === id);
-  const before = { acc: accountOf(s, c0), cash: summary(s, "corner").cash, fin: financialReport(s, { project: "corner" }) };
+  const before = { acc: accountOf(s, c0), cash: summary(s, "verdora").cash, fin: financialReport(s, { project: "verdora" }) };
   s = applyAction(s, { type: "deposit-receipt", id, amount: 150000 });
   const pid = s.depositPayments.at(-1).id;
   const mid = accountOf(s, customerList(s).find((c) => c.id === id));
   assert.equal(mid.collected, r2(before.acc.collected + 150000));
-  assert.equal(summary(s, "corner").cash, r2(before.cash + 150000));
+  assert.equal(summary(s, "verdora").cash, r2(before.cash + 150000));
   assert.throws(() => applyAction(s, { type: "deposit-reverse", id: pid, reason: "" }), /gerekçe/);
   s = applyAction(s, { type: "deposit-reverse", id: pid, reason: "Yanlış müşteriye işlendi" });
   const c1 = customerList(s).find((c) => c.id === id);
   const after = accountOf(s, c1);
   assert.equal(after.collected, before.acc.collected);
   assert.equal(after.balance, before.acc.balance);
-  assert.equal(summary(s, "corner").cash, before.cash);
+  assert.equal(summary(s, "verdora").cash, before.cash);
   assert.deepEqual(depositSchedule(c1).map((p) => p.remaining), depositSchedule(c0).map((p) => p.remaining));
   // Kayıt silinmez: tahsilat ve iptal satırı birlikte, iptal edilen işaretli
   assert.equal(s.depositPayments.length, 1);
@@ -55,11 +55,11 @@ test("Deposit payment reversal is traceable and restores the deposit balance exa
   assert.equal(ledger.at(-1).balance, after.balance);
   // İmzada alınan peşinat satırı değişmez
   assert.equal(ledger.find((e) => e.ref === "PSN-0").credit, ledger.find((e) => e.ref === "PSN-0").credit);
-  assert.equal(financialReport(s, { project: "corner" }).inflow, before.fin.inflow);
-  assert.equal(financialReport(s, { project: "corner" }).overdue, before.fin.overdue);
+  assert.equal(financialReport(s, { project: "verdora" }).inflow, before.fin.inflow);
+  assert.equal(financialReport(s, { project: "verdora" }).overdue, before.fin.overdue);
   assert.throws(() => applyAction(s, { type: "deposit-reverse", id: pid, reason: "Tekrar" }), /zaten/);
   // Düzeltme sonrası doğru tutar yeniden alınabilir
-  s = applyAction(s, { type: "deposit-receipt", id, amount: 400000 });
+  s = applyAction(s, { type: "deposit-receipt", id, amount: 1800000 });
   assert.equal(depositSchedule(customerList(s).find((c) => c.id === id)).at(-1).remaining, 0);
 });
 
@@ -77,7 +77,7 @@ test("Partial receipt reversal restores only that receipt; other receipts on the
 
 test("Site progress is only reported when work package weights total 100%", () => {
   const s0 = seed();
-  for (const p of ["corner", "primador"]) {
+  for (const p of ["verdora", "sanetime", "bulvarpark"]) {
     const info = progressInfo(s0, p);
     assert.equal(info.weight, 100);
     assert.equal(info.value, projectProgress(s0, p));
@@ -104,9 +104,10 @@ test("Portfolio stock reconciles: total = sold + in signing + barter + reserved 
     assert.equal(t.total, units.filter((u) => u.project === p.id).length);
     for (const k of Object.keys(sum)) sum[k] += t[k];
   }
-  assert.deepEqual(sum, { total: 178, sold: 86, inSigning: 3, barter: 3, reserved: 10, available: 76 });
-  assert.equal(summary(s).sold, 86);
-  assert.equal(summary(s).total, 178);
+  // 200 = VERDORA 60 + Sane Time 92 + Bulvar Park II 48; satış 97 = 90 örnek + 7 yeni sözleşme
+  assert.deepEqual(sum, { total: 200, sold: 97, inSigning: 3, barter: 3, reserved: 13, available: 84 });
+  assert.equal(summary(s).sold, 97);
+  assert.equal(summary(s).total, 200);
 });
 
 test("Repairs report which fields were affected so data loss is never silent", () => {

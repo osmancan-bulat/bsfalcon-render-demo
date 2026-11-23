@@ -146,7 +146,7 @@ export function SearchResults({
   if (norm(query).length < 2)
     return (
       <p className="muted">
-        Müşteri adı, daire (ör. A-67), sözleşme no (ör. SZL-CP-052), firma veya
+        Müşteri adı, daire (ör. A-67), sözleşme no (ör. SZL-VK-052), firma veya
         hakediş no yazın.
       </p>
     );

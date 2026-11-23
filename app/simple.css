@@ -646,7 +646,7 @@ button.e-demo-label:hover {
     ),
     linear-gradient(160deg, var(--forest-800), var(--forest-950));
 }
-.e-project-cover.primador {
+.e-project-cover.sanetime {
   background:
     radial-gradient(
       120% 90% at 100% 0%,

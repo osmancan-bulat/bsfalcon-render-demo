@@ -1,5 +1,5 @@
 "use client";
-// Çalışma kapsamı seçici: CEYCON İnşaat (şirket geneli) veya şirketin projelerinden biri.
+// Çalışma kapsamı seçici: SANE İnşaat (şirket geneli) veya şirketin projelerinden biri.
 // Proje sayısı arttıkça menüyü doldurmaz: tek satırlık bir seçici, açılınca arama ve
 // durumlara göre gruplanmış liste. Arşivdeki projeler Proje portföyünden açılır.
 import Link from "next/link";
@@ -54,10 +54,10 @@ export default function ScopePicker({
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
-        <span className={`project-dot ${scope === "all" ? "company" : scope === "corner" ? "bronze" : ""}`} />
+        <span className={`project-dot ${scope === "all" ? "company" : scope === "verdora" ? "bronze" : ""}`} />
         <span className="scope-text">
           <b>{current ? current.name : "Tüm projeler"}</b>
-          <small>{current ? `CEYCON İnşaat · ${current.code}` : "CEYCON İnşaat · şirket geneli"}</small>
+          <small>{current ? `SANE İnşaat · ${current.code}` : "SANE İnşaat · şirket geneli"}</small>
         </span>
         <ChevronsUpDown size={15} />
       </button>
@@ -79,7 +79,7 @@ export default function ScopePicker({
             <span className="project-dot company" />
             <span className="scope-text">
               <b>Tüm projeler</b>
-              <small>CEYCON İnşaat · şirket geneli</small>
+              <small>SANE İnşaat · şirket geneli</small>
             </span>
             {scope === "all" && <Check size={14} />}
           </button>
@@ -96,7 +96,7 @@ export default function ScopePicker({
                   className="scope-item"
                   onClick={() => pick(p.id)}
                 >
-                  <span className={`project-dot ${p.id === "corner" ? "bronze" : ""}`} />
+                  <span className={`project-dot ${p.id === "verdora" ? "bronze" : ""}`} />
                   <span className="scope-text">
                     <b>{p.name}</b>
                     <small>

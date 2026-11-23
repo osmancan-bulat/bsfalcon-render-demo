@@ -1,4 +1,4 @@
-// Proje ve daire kataloğu: yerleşik projeler (Corner Prestij, Primador Esenboğa) + kullanıcının
+// Proje ve daire kataloğu: yerleşik projeler (VERDORA Kozyatağı, Sane Time Beşevler, Bulvar Park II) + kullanıcının
 // eklediği projeler, bloklar ve daireler. `projects` ve `units` dizileri tüm uygulamada paylaşılır;
 // syncCatalog(durum) bunları o durumun kataloğuyla yerinde günceller (kod değişikliği gerekmeden
 // yeni projeler her ekrana, seçiciye ve rapora otomatik dahil olur).
@@ -58,11 +58,13 @@ export const PROJECT_STATUSES: ProjectStatus[] = ["Aktif", "Tamamlandı", "Arşi
 
 /** Proje merkezi adresi: yerleşik projelerin eski adresleri korunur, yeniler genel adresi kullanır. */
 export const hubHref = (id: string) =>
-  id === "corner"
-    ? "/corner-prestij"
-    : id === "primador"
-      ? "/primador-esenboga"
-      : id === "all"
+  id === "verdora"
+    ? "/verdora-kozyatagi"
+    : id === "sanetime"
+      ? "/sane-time-besevler"
+      : id === "bulvarpark"
+        ? "/bulvar-park-2"
+        : id === "all"
         ? "/genel-bakis"
         : `/proje/?id=${encodeURIComponent(id)}`;
 

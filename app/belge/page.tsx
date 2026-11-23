@@ -3,7 +3,7 @@ import { Provider } from "@/components/enterprise/context";
 import PrintDocument from "@/components/enterprise/print-document";
 
 export const metadata: Metadata = {
-  title: "CEYCON | Belge önizleme",
+  title: "SANE İnşaat | Belge önizleme",
   robots: { index: false, follow: false },
 };
 

@@ -1,0 +1,116 @@
+/* SANE İnşaat kurumsal katmanı (saneinsaat.net kimliği): koyu yeşil #173d29 / #0d291a,
+   kırık beyaz #f2f0e9, turuncu vurgu #e75b38, Manrope + Newsreader başlık yazısı. En son yüklenir. */
+.e-brand {
+  background: #f2f0e9;
+  box-shadow: inset 0 0 0 1px rgb(231 91 56 / 0.18);
+}
+.e-brand .official-logo,
+.lv-brand .official-logo {
+  height: 34px;
+}
+.e-brand .official-logo img,
+.lv-brand .official-logo img,
+.official-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+.e-brand .official-logo img {
+  object-position: center;
+}
+/* Giriş: resmî VERDORA görseli üzerinde kurumsal yeşil örtü */
+.lv-visual {
+  background:
+    linear-gradient(160deg, rgb(13 41 26 / 0.9) 0%, rgb(13 41 26 / 0.78) 45%, rgb(10 32 21 / 0.94) 100%),
+    url("/images/verdora-hero.webp") center / cover no-repeat,
+    var(--forest-900);
+}
+.lv-brand {
+  width: 236px;
+  padding: 10px 16px;
+  background: #f2f0e9;
+}
+.lv-brand .official-logo {
+  height: 40px;
+}
+.lv-story h1 {
+  font-family: "Newsreader", Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.lv-facts b {
+  color: #f2b3a4;
+}
+.product-logo {
+  font-size: 19px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.product-logo > span {
+  margin: 0 8px;
+  color: #e75b38;
+}
+/* Şirket başlığı */
+.home.company .home-head h1 {
+  letter-spacing: 0.01em;
+}
+/* Resmî proje görselleri (portföy ve şirket genel bakışı kartları) */
+.project-cover {
+  position: relative;
+  height: 168px;
+  margin: -22px -24px 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--forest-900);
+}
+.pf-card .project-cover {
+  margin: -18px -20px 0;
+}
+.project-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+}
+.project-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgb(13 41 26 / 0.45));
+}
+.project-cover span {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  z-index: 1;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: rgb(13 41 26 / 0.55);
+}
+@media (max-width: 720px) {
+  .project-cover {
+    height: 132px;
+    margin: -18px -18px 0;
+  }
+  .pf-card .project-cover {
+    margin: -16px -16px 0;
+  }
+}
+/* Belge başlığındaki resmî logo kırpılmadan gösterilir */
+.doc-header img {
+  width: 200px;
+  height: 37px;
+  object-fit: contain;
+  object-position: left center;
+}
+/* Satır eylem düğmeleri hiçbir genişlikte iki satıra bölünmez */
+td.row-actions .btn,
+td.row-actions button,
+td.row-actions a {
+  white-space: nowrap;
+}

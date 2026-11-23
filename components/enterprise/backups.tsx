@@ -9,14 +9,14 @@ import { Panel, Badge } from "./shared";
 import { migrateSaved, customerList } from "@/lib/enterprise";
 import { syncCatalog } from "@/lib/catalog";
 
-const MAIN = "ceycon-enterprise-v3";
-const PREFIX = "ceycon-enterprise-v3-yedek";
-const MANUAL = "ceycon-yedek-manuel-";
+const MAIN = "sane-enterprise-v1";
+const PREFIX = "sane-enterprise-v1-yedek";
+const MANUAL = "sane-yedek-manuel-";
 const LABELS: Record<string, string> = {
-  "ceycon-enterprise-v3-yedek-v1": "Sürüm geçişi öncesi (v3.1)",
-  "ceycon-enterprise-v3-yedek-onarim": "Onarım öncesi kayıt",
-  "ceycon-enterprise-v3-yedek-okunamayan": "Okunamayan kayıt",
-  "ceycon-enterprise-v3-yedek-geri-yukleme-oncesi": "Son geri yükleme öncesi durum",
+  "sane-enterprise-v1-yedek-v1": "Sürüm geçişi öncesi (v3.1)",
+  "sane-enterprise-v1-yedek-onarim": "Onarım öncesi kayıt",
+  "sane-enterprise-v1-yedek-okunamayan": "Okunamayan kayıt",
+  "sane-enterprise-v1-yedek-geri-yukleme-oncesi": "Son geri yükleme öncesi durum",
 };
 
 type Item = {
@@ -60,7 +60,7 @@ export default function Backups() {
         if (k.startsWith(PREFIX) || k.startsWith(MANUAL)) list.push(inspect(k, localStorage.getItem(k) ?? ""));
       }
       setItems(list.sort((a, b) => b.key.localeCompare(a.key)));
-      const r = localStorage.getItem("ceycon-onarim-raporu");
+      const r = localStorage.getItem("sane-onarim-raporu");
       setReport(r ? JSON.parse(r) : null);
     } catch {
       setItems([]);
@@ -106,7 +106,7 @@ export default function Backups() {
     const ok = !!migrateSaved(raw);
     syncCatalog(state);
     if (!ok) {
-      notify("Dosya geçerli bir CEYCON demo yedeği değil; geri yüklenmedi.");
+      notify("Dosya geçerli bir SANE demo yedeği değil; geri yüklenmedi.");
       return;
     }
     setConfirm({ label: f.name, raw });

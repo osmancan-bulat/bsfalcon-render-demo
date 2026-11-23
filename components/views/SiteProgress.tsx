@@ -84,7 +84,7 @@ export default function SiteProgress() {
                     w.material,
                   ]),
                 ],
-                "ceycon-saha-raporu.csv",
+                "sane-saha-raporu.csv",
               )
             }
           >
@@ -113,7 +113,7 @@ export default function SiteProgress() {
           value={String(critical)}
           sub={
             critical
-              ? "Primador betonarme · 3 gün"
+              ? "Sane Time betonarme · 3 gün"
               : "Kritik gecikme kaydı bulunmuyor"
           }
           icon={<TriangleAlert size={19} />}
@@ -209,7 +209,7 @@ export default function SiteProgress() {
               {critical > 0 && (
                 <div>
                   <Badge tone="red">3 gün program sapması</Badge>
-                  <h3>Primador demir sevkiyatı</h3>
+                  <h3>Sane Time demir sevkiyatı</h3>
                   <p>
                     {state.delivered.includes("SAT-018")
                       ? "Demir teslim alındı. İmalat programı ve saha ilerlemesi güncellenmeli."
@@ -220,15 +220,15 @@ export default function SiteProgress() {
                   <Link
                     href="/satinalma"
                     className="e-text-link"
-                    onClick={() => setProject("primador")}
+                    onClick={() => setProject("sanetime")}
                   >
                     İlgili satın alma <ArrowUpRight size={14} />
                   </Link>
                 </div>
               )}
-              {(project === "all" || project === "corner") && (
+              {(project === "all" || project === "verdora") && (
                 <div>
-                  <Badge>Corner Prestij</Badge>
+                  <Badge>VERDORA Kozyatağı</Badge>
                   <h3>Kat imalatı kontrolü</h3>
                   <p>
                     Betonarme imalat ilerlemesi %
@@ -241,13 +241,31 @@ export default function SiteProgress() {
                   <Link
                     href="/operasyon"
                     className="e-text-link"
-                    onClick={() => setProject("corner")}
+                    onClick={() => setProject("verdora")}
                   >
                     Hakedişi incele <ArrowUpRight size={14} />
                   </Link>
                 </div>
               )}
-              {critical === 0 && project !== "all" && project !== "corner" && (
+              {(project === "all" || project === "bulvarpark") && (
+                <div>
+                  <Badge>Bulvar Park II</Badge>
+                  <h3>Zemin etüdü ve iksa</h3>
+                  <p>
+                    Temel ve zemin işleri %
+                    {all.find((w) => w.id === "w9")?.progress ?? 80}. İksa raporu proje
+                    müellifiyle değerlendirilecek; betonarme teklifleri toplanıyor.
+                  </p>
+                  <Link
+                    href="/evrak"
+                    className="e-text-link"
+                    onClick={() => setProject("bulvarpark")}
+                  >
+                    Evrakı incele <ArrowUpRight size={14} />
+                  </Link>
+                </div>
+              )}
+              {critical === 0 && project !== "all" && project !== "verdora" && project !== "bulvarpark" && (
                 <p className="muted">
                   Bu kapsamda kayıtlı saha önceliği yok. İş paketleri ve hakedişler Taşeronlar ve
                   Hakediş ekranlarından izlenir.

@@ -25,14 +25,16 @@ export default function NewSaleForm({
   const p = projects.find((p) => p.id === u.project)!;
   const [name, setName] = useState("");
   const [price, setPrice] = useState(String(u.listPrice));
+  // Önerilen peşinat: liste fiyatının yaklaşık %25'i (50.000 TL'ye yuvarlı); kullanıcı değiştirebilir.
+  const suggested = String(Math.max(0, Math.round((u.listPrice * 0.25) / 50000) * 50000));
   const [deposits, setDeposits] = useState<Row[]>([
-    { amount: "850000", due: SNAPSHOT },
+    { amount: suggested, due: SNAPSHOT },
   ]);
   const [count, setCount] = useState("36");
   const [firstDue, setFirstDue] = useState("2026-12-15");
   const [interim, setInterim] = useState<Interim[]>([]);
   const [mode, setMode] = useState<"Aktif" | "Taslak">("Aktif");
-  const [paidNow, setPaidNow] = useState("850000");
+  const [paidNow, setPaidNow] = useState(suggested);
   const [showAll, setShowAll] = useState(false);
 
   const spec: PlanSpec = {
@@ -99,7 +101,7 @@ export default function NewSaleForm({
           </small>
         </div>
         <div className="sale-unit-price">
-          <small>Liste fiyatı</small>
+          <small>Liste fiyatı (temsili)</small>
           <b className="num">{money(u.listPrice)}</b>
           <small>{money(Math.round(u.listPrice / u.gross))} / m²</small>
         </div>

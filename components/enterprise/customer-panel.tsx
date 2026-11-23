@@ -536,7 +536,7 @@ export default function CustomerPanel({
               <dd className="num">{money(c.price)}</dd>
             </div>
             <div>
-              <dt>Liste fiyatı</dt>
+              <dt>Liste fiyatı (temsili)</dt>
               <dd className="num">
                 {contract.listPrice ? money(contract.listPrice) : "—"}
               </dd>

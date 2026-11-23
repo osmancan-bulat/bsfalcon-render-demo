@@ -1434,12 +1434,12 @@
 .performance-project h3 {
   font-size: 13px;
 }
-.e-project-cover.corner > div > span {
+.e-project-cover.verdora > div > span {
   font-size: var(--fs-micro);
   letter-spacing: 1.5px;
   color: var(--bronze-300);
 }
-.e-project-cover.corner p {
+.e-project-cover.verdora p {
   font-size: var(--fs-micro);
   letter-spacing: 1.5px;
   color: var(--forest-300);

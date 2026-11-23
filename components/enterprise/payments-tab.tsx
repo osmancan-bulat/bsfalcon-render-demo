@@ -175,7 +175,7 @@ export default function PaymentsTab({
                   ];
                 }),
               ],
-              "ceycon-odeme-takibi.csv",
+              "sane-odeme-takibi.csv",
             )
           }
         >

@@ -110,7 +110,7 @@ export default function ReportsView() {
             <button
               className="btn"
               disabled={invalid}
-              onClick={() => csvDownload(reportCsv(state, kind, f), `ceycon-${kind}-raporu-${project}.csv`)}
+              onClick={() => csvDownload(reportCsv(state, kind, f), `sane-${kind}-raporu-${project}.csv`)}
             >
               <Download size={15} /> CSV (Excel)
             </button>

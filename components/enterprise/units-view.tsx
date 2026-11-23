@@ -366,7 +366,7 @@ export function UnitDrawer({
               </dd>
             </div>
             <div className="wide">
-              <dt>Liste fiyatı</dt>
+              <dt>Liste fiyatı (temsili)</dt>
               <dd className="num big">{money(u.listPrice)}</dd>
             </div>
           </dl>

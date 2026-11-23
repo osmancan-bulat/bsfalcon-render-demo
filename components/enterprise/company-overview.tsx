@@ -1,5 +1,5 @@
 "use client";
-// Şirket genel bakışı: CEYCON İnşaat'ın bütün projeleri. Rakamlar raporlama motorundan hesaplanır.
+// Şirket genel bakışı: SANE İnşaat'ın bütün projeleri. Rakamlar raporlama motorundan hesaplanır.
 import Link from "next/link";
 import {
   ArrowRight,
@@ -46,10 +46,10 @@ export default function CompanyOverview() {
       <header className="home-head">
         <div>
           <span className="eyebrow">{date(SNAPSHOT)} · Şirket genel bakışı</span>
-          <h1>CEYCON İnşaat</h1>
+          <h1>SANE İnşaat</h1>
           <p>
             {projects.filter((p) => p.status === "Aktif").length} aktif proje · {sales.total.total} bağımsız
-            bölüm · {sales.total.sold} satış
+            bölüm · {sales.total.sold} satış · tutarlar temsilidir
           </p>
         </div>
         <nav className="quick-actions" aria-label="Hızlı işlemler">
@@ -119,12 +119,18 @@ export default function CompanyOverview() {
           const ir = installmentReport(state, pf);
           return (
             <article key={p.id} className="company-project">
+              {p.image && (
+                <div className="project-cover">
+                  <img src={p.image} alt={`${p.name} resmî proje görseli`} loading="lazy" />
+                  <span>Görsel: saneinsaat.net</span>
+                </div>
+              )}
               <header>
-                <span className={`project-dot ${p.id === "corner" ? "bronze" : ""}`} />
+                <span className={`project-dot ${p.id === "verdora" ? "bronze" : ""}`} />
                 <div>
                   <h2>{p.name}</h2>
                   <p>
-                    {p.location} · teslim {p.delivery}
+                    {p.location}{p.delivery ? ` · teslim ${p.delivery}` : ""}
                   </p>
                 </div>
                 <Link className="btn primary" href={hubHref(p.id)} onClick={() => setProject(p.id)}>

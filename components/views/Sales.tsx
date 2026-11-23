@@ -166,7 +166,7 @@ export default function Sales() {
           ];
         }),
       ],
-      "ceycon-satis-listesi.csv",
+      "sane-satis-listesi.csv",
     );
   }
   return (
@@ -490,9 +490,7 @@ export default function Sales() {
                   <div className="flex-between">
                     <h3>{p.name}</h3>
                     <small>
-                      {p.id === "corner"
-                        ? "72 konut · demo envanteri"
-                        : "106 konut · 100 × 1+1, 6 × 2+1"}
+                      {p.mix || `${p.total} konut`}
                     </small>
                   </div>
                   <div className="e-unit-grid">
@@ -658,7 +656,7 @@ function UnitFacts({ id }: { id: string }) {
         </dd>
       </div>
       <div>
-        <dt>Liste fiyatı</dt>
+        <dt>Liste fiyatı (temsili)</dt>
         <dd className="num">{money(u.listPrice)}</dd>
       </div>
       <div>

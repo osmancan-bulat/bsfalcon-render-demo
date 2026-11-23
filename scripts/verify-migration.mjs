@@ -43,8 +43,9 @@ function fingerprint(s) {
     deposits: s.depositPayments,
     offsets: s.offsets,
     all: summary(s),
-    corner: summary(s, "corner"),
-    primador: summary(s, "primador"),
+    verdora: summary(s, "verdora"),
+    bulvar: summary(s, "bulvarpark"),
+    sanetime: summary(s, "sanetime"),
     breakdown: collectionBreakdown(s),
   };
 }
@@ -65,20 +66,20 @@ function legacyBrowserData() {
   );
   const baseIds = new Set(baseCustomers("v3.1").map((c) => c.id));
   const lateBase = paymentRows(s).find((r) => r.status === "Gecikti" && baseIds.has(r.customerId) && r.paid === 0);
-  const nextBase = paymentRows(s).find((r) => r.customerId === "primador-2" && r.remaining > 0);
+  const nextBase = paymentRows(s).find((r) => r.customerId === "sanetime-2" && r.remaining > 0);
   // Kısmi tahsilat (geciken örnek taksit), tam tahsilat (gelecek taksit), peşinat parçası, vade değişikliği, imza
   LATE_ID = lateBase.customerId;
   s = applyAction(s, { type: "receipt", installmentId: lateBase.installmentId, amount: 30000, method: "Banka havalesi", reference: "DEMO-USER-1" });
   s = applyAction(s, { type: "receipt", installmentId: nextBase.installmentId, amount: nextBase.remaining, method: "Kredi kartı", reference: "DEMO-USER-2" });
-  s = applyAction(s, { type: "deposit-receipt", id: "corner-43", amount: 150000 });
-  const later = paymentRows(s).find((r) => r.customerId === "corner-20" && r.remaining > 0 && r.due > SNAPSHOT);
+  s = applyAction(s, { type: "deposit-receipt", id: "verdora-33", amount: 150000 });
+  const later = paymentRows(s).find((r) => r.customerId === "verdora-20" && r.remaining > 0 && r.due > SNAPSHOT);
   s = applyAction(s, { type: "reschedule", id: later.installmentId, date: "2027-02-26" });
-  s = applyAction(s, { type: "contract-sign", id: "corner-52", depositPaid: 900000 });
+  s = applyAction(s, { type: "contract-sign", id: "verdora-42", depositPaid: 900000 });
   // Önceki sürümün adları
   const text = JSON.stringify({ ...s, dataset: undefined, basePricing: undefined })
     .replace(/"(Demo Müşteri \d{3})"/g, '"$1"');
   let legacy = text;
-  for (let n = 1; n <= 93; n++) legacy = legacy.split(`"${personName(n)}"`).join(`"Demo Müşteri ${String(n).padStart(3, "0")}"`);
+  for (let n = 1; n <= 120; n++) legacy = legacy.split(`"${personName(n)}"`).join(`"Demo Müşteri ${String(n).padStart(3, "0")}"`);
   for (const [k, v] of [["yapi", "Örnek Yapı"], ["teknik", "Örnek Teknik"], ["cephe", "Örnek Cephe"], ["demir", "Örnek Demir"], ["aluminyum", "Örnek Alüminyum"]])
     legacy = legacy.split(FIRM[k]).join(v);
   return { engineState: s, raw: legacy };
@@ -86,8 +87,8 @@ function legacyBrowserData() {
 
 test("Clean demo start may use catalogue prices; previous-version prices stay available unchanged", () => {
   const legacy = baseCustomers("v3.1");
-  assert(legacy.every((c) => c.price === (c.project === "corner" ? 3550000 : 2650000)));
-  assert(legacy.every((c) => c.deposit === 850000 && c.installment === (c.project === "corner" ? 75000 : 50000)));
+  assert(legacy.every((c) => c.price === (c.project === "verdora" ? 14200000 : 5300000)));
+  assert(legacy.every((c) => c.deposit === (c.project === "verdora" ? 3400000 : 1340000) && c.installment === (c.project === "verdora" ? 300000 : 110000)));
   assert.equal(seedState.basePricing, "katalog");
   // Kimlik, daire ve vadeler iki şemada aynıdır; yalnızca bedel farklıdır
   const cat = baseCustomers("katalog");
@@ -110,12 +111,13 @@ test("Migrating previous-version browser data never re-prices contracts or alter
   assert.deepEqual(after.deposits, before.deposits);
   assert.deepEqual(after.offsets, before.offsets);
   assert.deepEqual(after.all, before.all);
-  assert.deepEqual(after.corner, before.corner);
-  assert.deepEqual(after.primador, before.primador);
+  assert.deepEqual(after.verdora, before.verdora);
+  assert.deepEqual(after.sanetime, before.sanetime);
+  assert.deepEqual(after.bulvar, before.bulvar);
   assert.deepEqual(after.breakdown, before.breakdown);
   // Önceki sürümün tahsilat dekontları aynen korunur (yalnızca kişi/firma adı taşınır)
   assert(after.receipts.some((r) => r.reference === "DEMO-USER-1" && r.amount === 30000));
-  assert.equal(customerList(out.state).find((c) => c.id === "corner-1").price, 3550000);
+  assert.equal(customerList(out.state).find((c) => c.id === "verdora-1").price, 14200000);
 });
 
 test("A migrated record keeps working: new receipts reduce the preserved balance exactly once", () => {
@@ -127,7 +129,7 @@ test("A migrated record keeps working: new receipts reduce the preserved balance
   const after = accountOf(next, customerList(next).find((x) => x.id === LATE_ID));
   assert.equal(after.collected, before.collected + row.remaining);
   assert.equal(after.balance, before.balance - row.remaining);
-  assert.equal(c.price, 3550000);
+  assert.equal(c.price, c.project === "verdora" ? 14200000 : 5300000);
   assert.equal(summary(next).cash, summary(out).cash + row.remaining);
 });
 
@@ -180,7 +182,7 @@ test("Statuses follow due dates for deposits and installments across dates (both
     }
     for (const st of ["Gecikti", "Yaklaşıyor", "Gelecek dönem", "Ödendi"]) assert(seen.has(st), `${s.basePricing} has ${st}`);
     // Peşinatın geciken parçası ve gelecek parçası ayrı izlenir
-    const dep = rows.filter((r) => r.customerId === "corner-43" && r.kind === "Peşinat");
+    const dep = rows.filter((r) => r.customerId === "verdora-33" && r.kind === "Peşinat");
     assert(dep.length === 2);
   }
 });
@@ -198,7 +200,7 @@ test("Names, contract numbers, unit codes and totals agree across every view (bo
     }
     for (const a of agenda(s, "all", 30))
       if (a.ref.type === "customer") assert(a.title.startsWith(people.get(a.ref.id).name), a.id);
-    for (const id of ["corner-43", "corner-1"])
+    for (const id of ["verdora-33", "verdora-1"])
       for (const d of systemDocuments(s, id)) assert(d.name.startsWith(contractNumber(id)) || d.name.startsWith("THS-"), d.name);
     // Portföy toplamları kişi hesaplarının toplamıdır
     const sum = (f) => Math.round([...people.values()].reduce((a, c) => a + f(accountOf(s, c)), 0) * 100) / 100;
@@ -207,7 +209,7 @@ test("Names, contract numbers, unit codes and totals agree across every view (bo
     assert.equal(total.collected, sum((a) => a.collected));
     assert.equal(total.balance, sum((a) => a.balance));
     assert.equal(collectionBreakdown(s).total, total.collected);
-    assert.equal(summary(s, "corner").revenue + summary(s, "primador").revenue, total.revenue);
+    assert.equal(summary(s, "verdora").revenue + summary(s, "sanetime").revenue + summary(s, "bulvarpark").revenue, total.revenue);
   }
 });
 
