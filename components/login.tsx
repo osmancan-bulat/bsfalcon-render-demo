@@ -5,7 +5,7 @@ import { Logo } from "./enterprise/shared";
 import { useApp } from "./enterprise/context";
 import { projects } from "@/lib/enterprise";
 
-// Tek giriş: SANE Yönetim Merkezi → şirket genel bakışı. Proje seçimi içeride yapılır.
+// Tek giriş: BŞ Falcon Yönetim Merkezi → şirket genel bakışı. Proje seçimi içeride yapılır.
 // Demo ortamında kimlik doğrulama yoktur; kullanıcı adı/şifre alanı veya sahte oturum gösterilmez.
 // Proje listesi katalogdan gelir: yeni projeler burada da otomatik görünür.
 export default function Login() {
@@ -18,7 +18,7 @@ export default function Login() {
           <Logo />
         </div>
         <div className="lv-story">
-          <span className="eyebrow">SANE İNŞAAT · YÖNETİM MERKEZİ</span>
+          <span className="eyebrow">BŞ FALCON GROUP · YÖNETİM MERKEZİ</span>
           <h1>
             Yaşam alanlarını inşa ederken,
             <br />
@@ -35,7 +35,7 @@ export default function Login() {
             </li>
             <li>
               <b>2013</b>
-              <span>SANE İnşaat kuruluşu</span>
+              <span>BŞ Falcon Group kuruluşu</span>
             </li>
             <li>
               <b>{active.length}</b>
@@ -46,7 +46,7 @@ export default function Login() {
         <ol className="lv-projects" aria-label="Devam eden projeler">
           {active.slice(0, 4).map((p) => (
             <li key={p.id}>
-              <i className={p.id === "verdora" ? "bronze" : ""} />
+              <i className={p.id === "cengilli" ? "bronze" : ""} />
               {p.name} {p.location && <small>{p.location}</small>}
             </li>
           ))}
@@ -57,9 +57,9 @@ export default function Login() {
       <section className="lv-form">
         <div className="lv-form-inner">
           <div className="product-logo">
-            SANE<span>·</span>Yönetim Merkezi
+            BŞ Falcon<span>·</span>Yönetim Merkezi
           </div>
-          <h2>SANE Yönetim Merkezi</h2>
+          <h2>BŞ Falcon Yönetim Merkezi</h2>
           <p className="lv-lead">
             Şirket genel bakışıyla başlayın; projelere içeriden, çalışma
             kapsamı seçicisiyle geçin.
@@ -70,7 +70,7 @@ export default function Login() {
           <dl className="lv-scope">
             <div>
               <dt>Şirket</dt>
-              <dd>SANE İnşaat</dd>
+              <dd>BŞ Falcon Group</dd>
             </div>
             <div>
               <dt>Projeler</dt>
@@ -86,13 +86,13 @@ export default function Login() {
             <Info size={15} />
             <span>
               Demo ortamı: kullanıcı girişi ve yetkilendirme bu sürümde yoktur.
-              Kişi ve firma adları kurgusal; satış adetleri, fiyatlar ve finansal tutarlar TEMSİLİDİR, SANE İnşaat’ın gerçek verisi değildir; kayıtlar
+              Kişi ve firma adları kurgusal; satış adetleri, fiyatlar ve finansal tutarlar TEMSİLİDİR, BŞ Falcon Group’ın gerçek verisi değildir; kayıtlar
               yalnızca bu tarayıcıda saklanır. Güvenli kurumsal giriş ayrı bir
               aşamada kurulacaktır.
             </span>
           </p>
         </div>
-        <footer>SANE İnşaat için hazırlanmış tanıtım demosu · İstanbul · Bursa</footer>
+        <footer>BŞ Falcon Group için hazırlanmış tanıtım demosu · İstanbul · Bursa</footer>
       </section>
     </main>
   );

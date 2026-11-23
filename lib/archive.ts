@@ -34,7 +34,7 @@ export function validateArchiveFile(file: { name: string; size: number }) {
 }
 function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const r = indexedDB.open("sane-demo-archive", 1);
+    const r = indexedDB.open("bsfalcon-demo-archive", 1);
     r.onupgradeneeded = () =>
       r.result.createObjectStore("files", { keyPath: "id" });
     r.onsuccess = () => resolve(r.result);

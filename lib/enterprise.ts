@@ -31,6 +31,14 @@ import {
   BUILTIN_PROJECT_IDS,
 } from "./catalog.ts";
 import type { Unit } from "./units.ts";
+import {
+  CONTRACTOR,
+  seedLandShare,
+  seedProcess,
+  type LandShareState,
+  type ProcessState,
+  type StepStatus,
+} from "./falcon.ts";
 import type { Project, ProjectStatus } from "./data.ts";
 import {
   demoContracts,
@@ -191,6 +199,10 @@ export type EnterpriseState = {
   unitEdits?: Record<string, Partial<Unit>>;
   /** Kullanıcının eklediği iş paketleri (taşeron firma + iş + sözleşme bedeli). */
   workCustom?: WorkItem[];
+  /** BŞ Falcon: kat karşılığı paylaşımı (arsa sahibi / yüklenici), aşamalar ve değişiklik geçmişi. */
+  landshare?: LandShareState;
+  /** BŞ Falcon: proje süreci adımları ve güvence belge takibi (temsili). */
+  process?: ProcessState;
 };
 export type WorkItem = {
   id: string;
@@ -219,7 +231,7 @@ export const seedState: EnterpriseState = {
   receipts: [
     ...installments
       .filter((i) => i.due.startsWith("2026-11") && i.due.slice(-2) === "10")
-      .slice(0, 3)
+      .slice(0, 1)
       .map((i, n) => ({
         id: `THS-00${n + 1}`,
         installmentId: i.id,
@@ -231,11 +243,11 @@ export const seedState: EnterpriseState = {
     ...demoReceipts,
   ],
   // SAT-019: onaylı, malzeme teslim alındı, ödemesi vadeli (ödeme planında)
-  approved: ["SAT-019"],
+  approved: ["SAT-019", "GDR-001"],
   rejected: [],
-  paidOrders: ["HAK-026"],
+  paidOrders: ["HAK-026", "GDR-001"],
   // HAK-026 vadesi 8 Kasım; ödeme aynı gün kaydedildi (işlem geçmişi AUD-D04)
-  paidDates: { "HAK-026": "2026-11-08" },
+  paidDates: { "HAK-026": "2026-11-08", "GDR-001": "2026-11-06" },
   delivered: ["SAT-019"],
   requests: demoRequests,
   requestEdits: {},
@@ -253,6 +265,8 @@ export const seedState: EnterpriseState = {
   unitsCustom: [],
   unitEdits: {},
   workCustom: [],
+  landshare: seedLandShare,
+  process: seedProcess,
 };
 /**
  * Tarayıcıda kayıtlı durumu güvenle okur. Önceki demo sürümünün jenerik adları
@@ -395,6 +409,14 @@ export type Action =
       amount: number;
     }
   | { type: "reset" }
+  | { type: "share-assign"; unit: string; owner: string; note?: string }
+  | { type: "share-step"; project: string; key: string; status: StepStatus }
+  | { type: "obligation-toggle"; project: string; id: string }
+  | { type: "process-step"; project: string; key: string; status: StepStatus; note?: string }
+  | {
+      type: "expense";
+      record: { project: string; category: string; company: string; name: string; amount: number; date: string };
+    }
   | { type: "receipt-reverse"; id: string; reason: string }
   | { type: "deposit-reverse"; id: string; reason: string }
   | {
@@ -517,7 +539,11 @@ export const outstanding = (s: EnterpriseState, i: Installment) =>
     ),
   );
 /** Konut satış, taslak sözleşme veya barter nedeniyle bloke mi? */
+/** Bağımsız bölümün paydaşı: arsa sahibi kimliği veya "yuklenici". */
+export const unitOwner = (s: EnterpriseState, id: string) => s.landshare?.owners?.[id] ?? CONTRACTOR;
+export const isLandownerUnit = (s: EnterpriseState, id: string) => unitOwner(s, id) !== CONTRACTOR;
 export const unitTaken = (s: EnterpriseState, id: string) =>
+  isLandownerUnit(s, id) ||
   customerList(s).some((c) => c.id === id) ||
   s.barters.some((b) => b.unitId === id) ||
   (s.drafts ?? []).some((d) => d.id === id);
@@ -565,7 +591,7 @@ export function reservedUnits(s: EnterpriseState, id: string) {
   );
 }
 /** Temsili ay başı kasa bakiyesi (yalnızca yerleşik projeler; demo varsayımı). */
-const OPENING_CASH: Record<string, number> = { verdora: 12500000, sanetime: 4800000, bulvarpark: 2600000 };
+const OPENING_CASH: Record<string, number> = { agva: 1200000, cengilli: 6500000, nergis: 9800000 };
 export function summary(s: EnterpriseState, project = "all") {
   syncCatalog(s);
   const inScope = (id: string) => project === "all" || id === project;
@@ -721,7 +747,107 @@ export function applyAction(
     syncCatalog(fresh);
     return fresh;
   }
-  if (action.type === "barter") {
+  // Kat karşılığı: arsa sahibi payındaki bölüm yüklenici tarafından satılamaz, rezerve veya barter edilemez.
+  const targetUnit =
+    action.type === "contract" ? action.record.id
+    : action.type === "reserve" ? action.id
+    : action.type === "barter" ? action.record.unitId
+    : null;
+  if (targetUnit && isLandownerUnit(s, targetUnit))
+    throw Error("Bu bağımsız bölüm arsa sahibi payında; yüklenici satışı, rezervasyonu veya barteri yapılamaz.");
+  if (action.type === "share-assign") {
+    const u = unitById(action.unit);
+    const ls = s.landshare ?? seedLandShare;
+    const ag = u && ls.agreements.find((a) => a.project === u.project);
+    if (!u || !ag) throw Error("Bu proje için kat karşılığı anlaşması tanımlı değil.");
+    const from = unitOwner(s, u.id);
+    const to = action.owner;
+    if (to !== CONTRACTOR && !ag.owners.some((o) => o.id === to)) throw Error("Geçersiz arsa sahibi.");
+    if (from === to) throw Error("Bağımsız bölüm zaten bu paydaşta.");
+    // Yüklenicide satılmış, imza sürecindeki, barterli veya rezerve bölüm arsa sahibine aktarılamaz
+    if (
+      from === CONTRACTOR &&
+      (customerList(s).some((c) => c.id === u.id) ||
+        (s.drafts ?? []).some((d) => d.id === u.id) ||
+        s.barters.some((b) => b.unitId === u.id) ||
+        reservedUnits(s, u.project).includes(u.id))
+    )
+      throw Error("Satılmış, imza sürecinde, barterli veya rezerve bölüm arsa sahibine aktarılamaz.");
+    const name = (id: string) => (id === CONTRACTOR ? "Yüklenici" : ag.owners.find((o) => o.id === id)?.name ?? id);
+    const owners = { ...ls.owners };
+    if (to === CONTRACTOR) delete owners[u.id];
+    else owners[u.id] = to;
+    const text = `${u.label} (${u.type}): ${name(from)} → ${name(to)}${action.note?.trim() ? " · " + action.note.trim() : ""}`;
+    next.landshare = { ...ls, owners, history: [{ id: id(), date: SNAPSHOT, project: u.project, text }, ...ls.history].slice(0, 60) };
+    entity = u.id;
+    project = u.project;
+    message = `Kat karşılığı paylaşımı güncellendi: ${text}`;
+  } else if (action.type === "share-step") {
+    const ls = s.landshare ?? seedLandShare;
+    const ag = ls.agreements.find((a) => a.project === action.project);
+    const st = ag?.steps.find((x) => x.key === action.key);
+    if (!ag || !st) throw Error("Anlaşma aşaması bulunamadı.");
+    next.landshare = {
+      ...ls,
+      agreements: ls.agreements.map((a) =>
+        a !== ag ? a : { ...a, steps: a.steps.map((x) => (x.key !== st.key ? x : { ...x, status: action.status, date: action.status === "Tamamlandı" ? x.date || SNAPSHOT : x.date })) },
+      ),
+      history: [{ id: id(), date: SNAPSHOT, project: ag.project, text: `Anlaşma aşaması: ${st.title} → ${action.status}` }, ...ls.history].slice(0, 60),
+    };
+    entity = st.key;
+    project = ag.project;
+    message = `Kat karşılığı aşaması güncellendi: ${st.title} · ${action.status}`;
+  } else if (action.type === "obligation-toggle") {
+    const ls = s.landshare ?? seedLandShare;
+    const ag = ls.agreements.find((a) => a.project === action.project);
+    const ob = ag?.obligations.find((o) => o.id === action.id);
+    if (!ag || !ob) throw Error("Yükümlülük bulunamadı.");
+    next.landshare = {
+      ...ls,
+      agreements: ls.agreements.map((a) => (a !== ag ? a : { ...a, obligations: a.obligations.map((o) => (o.id === ob.id ? { ...o, done: !o.done } : o)) })),
+      history: [{ id: id(), date: SNAPSHOT, project: ag.project, text: `Yükümlülük ${ob.done ? "yeniden açıldı" : "tamamlandı"}: ${ob.title}` }, ...ls.history].slice(0, 60),
+    };
+    entity = ob.id;
+    project = ag.project;
+    message = `Teslim yükümlülüğü ${ob.done ? "yeniden açıldı" : "tamamlandı"}`;
+  } else if (action.type === "process-step") {
+    const pr = s.process ?? seedProcess;
+    const cur = pr[action.project];
+    const st = cur?.steps.find((x) => x.key === action.key);
+    if (!cur || !st) throw Error("Süreç adımı bulunamadı.");
+    next.process = {
+      ...pr,
+      [action.project]: {
+        ...cur,
+        steps: cur.steps.map((x) => (x.key !== st.key ? x : { ...x, status: action.status, note: action.note ?? x.note, date: action.status === "Tamamlandı" ? x.date || SNAPSHOT : x.date })),
+      },
+    };
+    entity = st.key;
+    project = action.project;
+    message = `Proje süreci güncellendi: ${st.title} · ${action.status}`;
+  } else if (action.type === "expense") {
+    const r = action.record;
+    const pj = projects.find((x) => x.id === r.project);
+    if (!pj) throw Error("Proje bulunamadı.");
+    if (pj.status !== "Aktif") throw Error("Yalnızca aktif projeye şantiye gideri kaydedilebilir.");
+    if (!r.name.trim() || !r.company.trim()) throw Error("Gider açıklaması ve firma zorunludur.");
+    if (!Number.isFinite(r.amount) || r.amount <= 0) throw Error("Gider tutarı pozitif olmalı.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date) || r.date > SNAPSHOT) throw Error("Gider tarihi geçerli olmalı ve bugünden ileri olamaz.");
+    const all = requestList(s);
+    let n = all.filter((x) => x.id.startsWith("GDR-")).length + 1;
+    while (all.some((x) => x.id === `GDR-${String(n).padStart(3, "0")}`)) n++;
+    const gid = `GDR-${String(n).padStart(3, "0")}`;
+    next.requests = [
+      ...s.requests,
+      { id: gid, project: r.project, company: r.company.trim(), name: r.name.trim(), type: "Şantiye gideri", amount: r2(r.amount), due: r.date, status: "Ödendi", description: r.category },
+    ];
+    next.approved = [...s.approved, gid];
+    next.paidOrders = [...s.paidOrders, gid];
+    next.paidDates = { ...(s.paidDates ?? {}), [gid]: r.date };
+    entity = gid;
+    project = r.project;
+    message = `Şantiye gideri kaydedildi (${r.category}); kasa ve bütçe raporu güncellendi`;
+  } else if (action.type === "barter") {
     const b = action.record,
       p = projects.find((p) => p.id === b.project),
       bu = unitById(b.unitId);
@@ -1448,7 +1574,7 @@ export function applyAction(
 const seedFirstDue = new Map<string, string>();
 for (const i of installments)
   if (!seedFirstDue.has(i.customerId)) seedFirstDue.set(i.customerId, i.due);
-const PROJECT_CODE: Record<string, string> = { verdora: "VK", sanetime: "ST", bulvarpark: "BP" };
+const PROJECT_CODE: Record<string, string> = { agva: "AG", cengilli: "CV", nergis: "NP" };
 
 export const contractNumber = (id: string) => {
   const [p, n] = id.split("-");
@@ -2154,7 +2280,7 @@ export function workContracts(
   project = "all",
 ): WorkContract[] {
   const groups = new Map<string, WorkContract>();
-  // Numara: proje içinde iş paketlerinin sırasına göre IS-VK-01, IS-VK-02 … (proje filtresinden bağımsız, kalıcı)
+  // Numara: proje içinde iş paketlerinin sırasına göre IS-CV-01, IS-CV-02 … (proje filtresinden bağımsız, kalıcı)
   const order = new Map<string, number>();
   for (const w of workList(s)) {
     const key = w.project + "|" + firmKey(w.company);

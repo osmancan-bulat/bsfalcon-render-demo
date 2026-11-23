@@ -2,9 +2,9 @@ import Workspace from "@/components/workspace";
 import { notFound } from "next/navigation";
 const sections = [
   "genel-bakis",
-  "verdora-kozyatagi",
-  "sane-time-besevler",
-  "bulvar-park-2",
+  "cengilli-villa-sitesi",
+  "nergis-park-evleri",
+  "agva-triplex-villa",
   "finans",
   "satinalma",
   "taseronlar",

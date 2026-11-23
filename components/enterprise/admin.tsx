@@ -21,8 +21,8 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
   useEffect(() => {
     try {
       setStorage({
-        size: (localStorage.getItem("sane-enterprise-v1") ?? "").length,
-        backup: !!localStorage.getItem("sane-enterprise-v1-yedek-v1"),
+        size: (localStorage.getItem("bsfalcon-enterprise-v1") ?? "").length,
+        backup: !!localStorage.getItem("bsfalcon-enterprise-v1-yedek-v1"),
       });
     } catch {
       setStorage(null);
@@ -33,7 +33,7 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `sane-demo-kayitlari-${SNAPSHOT}.json`;
+    a.download = `bsfalcon-demo-kayitlari-${SNAPSHOT}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -56,7 +56,7 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
         </div>
       </header>
 
-      <Panel title="Şirket ve projeler" subtitle="SANE İnşaat ana şirkettir; projeler şirkete bağlıdır. Proje adı ve konumu resmîdir; satış ve finans verileri temsilidir.">
+      <Panel title="Şirket ve projeler" subtitle="BŞ Falcon Group ana şirkettir; projeler şirkete bağlıdır. Proje adı ve konumu resmîdir; satış ve finans verileri temsilidir.">
         <div className="e-table-wrap">
           <table>
             <thead>

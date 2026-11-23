@@ -1,12 +1,12 @@
-# SANE Yönetim Merkezi — Sunum akışı
+# BŞ Falcon Yönetim Merkezi — Sunum akışı
 
 Tüm kişi, firma ve finansal tutarlar temsilidir. Senaryo tarihi 15 Kasım 2026.
 Sunumdan önce sayfanın altındaki **Demoyu sıfırla** ile başlangıç verisine dönün.
 
 1. **Giriş → Yönetim merkezine gir.** Şirket genel bakışı: 3 proje, 200 bağımsız bölüm, sözleşmeli satış,
    tahsilat, kalan ve geciken alacak; resmî proje görselleriyle proje kartları.
-2. **VERDORA Kozyatağı › Projeye geç.** Bugün yapılacaklar: geciken taksit (A Blok · Daire 34),
-   geciken peşinat parçası (A Blok · Daire 33), imza bekleyen sözleşme (SZL-VK-042), onay bekleyen hakediş.
+2. **Çengilli Villa Sitesi › Projeye geç.** Bugün yapılacaklar: geciken taksit (A Blok · Daire 34),
+   geciken peşinat parçası (A Blok · Daire 33), imza bekleyen sözleşme (SZL-CV-042), onay bekleyen hakediş.
 3. **Projeler & Daireler › Daireler.** Resmî plan: A/B blok, 15 kat, her katta köşe ve orta 3+1.
    Müsait bir daire › **Satış sözleşmesi** → peşinat, vade, ara ödeme, canlı ödeme planı.
 4. **Müşteri dosyası › Tahsilat kaydet.** Kalan bakiye, kasa etkisi ve makbuz (yazdırılabilir).

@@ -1,7 +1,7 @@
-/* SANE Yönetim Merkezi tasarım sistemi — tek kaynak tasarım değişkenleri.
+/* BŞ Falcon Yönetim Merkezi tasarım sistemi — tek kaynak tasarım değişkenleri.
    Renkler, tipografi, boşluk, köşe ve gölge değerleri yalnızca burada tanımlanır. */
 :root {
-  /* SANE kurumsal yeşili (saneinsaat.net: #173d29 / #0d291a) — menü, birincil eylem */
+  /* BŞ Falcon kurumsal yeşili (saneinsaat.net: #173d29 / #0d291a) — menü, birincil eylem */
   --forest-950: #0a2015;
   --forest-900: #0d291a;
   --forest-800: #173d29;
@@ -26,7 +26,7 @@
   --graphite-500: #61655e;
   --graphite-400: #878e8a;
 
-  /* SANE vurgu rengi (turuncu) — tasarımda bronz adıyla anılır */
+  /* BŞ Falcon vurgu rengi (turuncu) — tasarımda bronz adıyla anılır */
   --bronze-700: #b4442a;
   --bronze-500: #d9542f;
   --bronze-300: #f0b6a3;

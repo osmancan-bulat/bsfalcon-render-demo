@@ -178,7 +178,7 @@ export default function Finance() {
                     l.reference,
                   ]),
                 ],
-                "sane-finans-hareketleri.csv",
+                "bsfalcon-finans-hareketleri.csv",
               )
             }
           >

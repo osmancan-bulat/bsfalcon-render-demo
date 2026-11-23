@@ -3,7 +3,7 @@ import { Provider } from "@/components/enterprise/context";
 import PrintDocument from "@/components/enterprise/print-document";
 
 export const metadata: Metadata = {
-  title: "SANE İnşaat | Belge önizleme",
+  title: "BŞ Falcon Group | Belge önizleme",
   robots: { index: false, follow: false },
 };
 

@@ -21,6 +21,7 @@ import {
   barterOffset,
   workContracts,
   reservedUnits,
+  isLandownerUnit,
   summary,
   installmentList,
   type EnterpriseState,
@@ -145,7 +146,7 @@ export function salesReport(s: EnterpriseState, f: ReportFilter) {
   const barter = new Set(s.barters.map((b) => b.unitId));
   const reserved = new Set(scopeProjects(f).flatMap((p) => reservedUnits(s, p.id)));
   const status = (id: string) =>
-    sold.has(id) ? "Satıldı" : drafts.has(id) ? "İmza sürecinde" : barter.has(id) ? "Barter" : reserved.has(id) ? "Rezerve" : "Müsait";
+    sold.has(id) ? "Satıldı" : drafts.has(id) ? "İmza sürecinde" : barter.has(id) ? "Barter" : reserved.has(id) ? "Rezerve" : isLandownerUnit(s, id) ? "Arsa sahibi" : "Müsait";
   const scopeUnits = units.filter((u) => inScope(f, u.project));
   const row = (list: typeof scopeUnits) => {
     const soldList = list.filter((u) => sold.has(u.id)).map((u) => sold.get(u.id)!);
@@ -157,6 +158,7 @@ export function salesReport(s: EnterpriseState, f: ReportFilter) {
       inSigning: list.filter((u) => status(u.id) === "İmza sürecinde").length,
       barter: list.filter((u) => status(u.id) === "Barter").length,
       reserved: list.filter((u) => status(u.id) === "Rezerve").length,
+      landowner: list.filter((u) => status(u.id) === "Arsa sahibi").length,
       available: list.filter((u) => status(u.id) === "Müsait").length,
       value,
       collected,
@@ -392,7 +394,7 @@ export type ReportKind = "finans" | "satis" | "taksit" | "barter" | "taseron" | 
 export function reportCsv(s: EnterpriseState, kind: ReportKind, f: ReportFilter): (string | number)[][] {
   syncCatalog(s);
   const head: (string | number)[][] = [
-    [`SANE İnşaat · ${REPORT_TITLES[kind]}`],
+    [`BŞ Falcon Group · ${REPORT_TITLES[kind]}`],
     ["Kapsam", f.project === "all" ? "Tüm projeler" : pname(f.project)],
     ["Dönem", periodLabel(f)],
     ["Senaryo tarihi", fmt(SNAPSHOT)],

@@ -11,11 +11,11 @@ import "./print.css";
 import "./simple.css";
 import "./platform.css";
 import "./polish.css";
-import "./sane.css";
+import "./falcon.css";
 export const metadata: Metadata = {
-  title: "SANE İnşaat | Yönetim Merkezi",
+  title: "BŞ Falcon Group | Yönetim Merkezi",
   description:
-    "SANE İnşaat için hazırlanmış interaktif proje, satış ve operasyon yönetimi demosu.",
+    "BŞ Falcon Group için hazırlanmış interaktif proje, satış ve operasyon yönetimi demosu.",
   robots: { index: false, follow: false },
 };
 export default function Layout({ children }: { children: React.ReactNode }) {

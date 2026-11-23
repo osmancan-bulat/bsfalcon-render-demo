@@ -175,12 +175,12 @@ function Shell({ section }: { section: string }) {
   }, [section]);
   // Adresin işaret ettiği proje (proje merkezleri): yerleşik adresler veya /proje/?id=…
   const urlProject =
-    section === "verdora-kozyatagi"
-      ? "verdora"
-      : section === "sane-time-besevler"
-        ? "sanetime"
-        : section === "bulvar-park-2"
-          ? "bulvarpark"
+    section === "cengilli-villa-sitesi"
+      ? "cengilli"
+      : section === "nergis-park-evleri"
+        ? "nergis"
+        : section === "agva-triplex-villa"
+          ? "agva"
           : section === "proje"
           ? hubId
           : null;
@@ -235,7 +235,7 @@ function Shell({ section }: { section: string }) {
   }, [ready, urlProject, urlKnown, urlValid]);
   // Kapsam değişiminde anında geçiş için şirket ve proje merkezleri önceden yüklenir.
   useEffect(() => {
-    for (const href of ["/genel-bakis", "/verdora-kozyatagi", "/sane-time-besevler", "/bulvar-park-2", "/proje"])
+    for (const href of ["/genel-bakis", "/cengilli-villa-sitesi", "/nergis-park-evleri", "/agva-triplex-villa", "/proje"])
       router.prefetch(href);
   }, [router]);
   const homeHref = hubHref(project);
@@ -296,7 +296,7 @@ function Shell({ section }: { section: string }) {
         <Link
           href="/genel-bakis"
           className="e-brand"
-          aria-label="SANE yönetici özeti"
+          aria-label="BŞ Falcon yönetici özeti"
         >
           <Logo />
         </Link>
@@ -331,7 +331,7 @@ function Shell({ section }: { section: string }) {
             </Link>
           </div>
           <div className="e-powered">
-            SANE<span> · </span>
+            BŞ Falcon<span> · </span>
             <small>YÖNETİM MERKEZİ</small>
           </div>
         </div>
@@ -353,7 +353,7 @@ function Shell({ section }: { section: string }) {
             >
               <Menu size={20} />
             </button>
-            <span className="crumb-company">SANE İnşaat</span>
+            <span className="crumb-company">BŞ Falcon Group</span>
             <ChevronRight size={13} className="crumb-company" />
             <span>{scope === "all" ? "Tüm projeler" : pname(scope)}</span>
             <ChevronRight size={13} />
@@ -445,7 +445,7 @@ function Shell({ section }: { section: string }) {
           )}
           <footer className="e-footer">
             <span>
-              SANE İnşaat <i /> Yönetim Merkezi <i /> Kişi, firma ve
+              BŞ Falcon Group <i /> Yönetim Merkezi <i /> Kişi, firma ve
               finansal kayıtlar tamamen temsilidir.
             </span>
             <button onClick={() => setOverlay("reset")}>
@@ -506,14 +506,14 @@ function Shell({ section }: { section: string }) {
         {overlay === "demo" && (
           <section className="acct-section demo-scope">
             <p className="drawer-intro">
-              Bu yönetim merkezi, SANE İnşaat için hazırlanmış bir ürün demosudur.
+              Bu yönetim merkezi, BŞ Falcon Group için hazırlanmış bir ürün demosudur.
               Ekrandaki tüm kişi, firma, sözleşme ve tutarlar kurgusaldır.
             </p>
             <ul className="confirm-list">
               <li>
                 <b>Kişi ve firma adları kurgusaldır.</b> Selin Yılmaz, Kuzey
                 Cephe Sistemleri gibi adlar örnek senaryo için uydurulmuştur;
-                gerçek SANE müşterileri, çalışanları veya yüklenicileri
+                gerçek BŞ Falcon müşterileri, çalışanları veya yüklenicileri
                 değildir. Telefon, e-posta ve kimlik bilgisi içermez.
               </li>
               <li>
@@ -523,15 +523,15 @@ function Shell({ section }: { section: string }) {
               </li>
               <li>
                 <b>Resmî kaynaktan doğrulanan bilgiler:</b> proje adları ve
-                konumları; VERDORA Kozyatağı için A/B blok, 15 kat, 60 adet 3+1
-                ve net 95,9–101,7 m²; Sane Time Beşevler için 3 blok, 92 konut
+                konumları; Çengilli Villa Sitesi için A/B blok, 15 kat, 60 adet 3+1
+                ve net 95,9–101,7 m²; Nergis Park Evleri için 3 blok, 92 konut
                 ve 8 ticari birim (saneinsaat.net, verdorakozyatagi.com).
               </li>
               <li>
                 <b>Bunların dışındaki her şey temsilidir.</b> Liste ve satış
                 fiyatları, satış/rezerve adetleri, tahsilatlar, kasa, bütçe,
-                hakediş ve barter tutarları ile Sane Time ve Bulvar Park II daire
-                tipleri demo varsayımıdır; SANE İnşaat’ın gerçek verisi değildir.
+                hakediş ve barter tutarları ile Nergis Park ve Ağva 1111 Triplex Villa daire
+                tipleri demo varsayımıdır; BŞ Falcon Group’ın gerçek verisi değildir.
               </li>
               <li>
                 <b>Veriler yalnızca bu tarayıcıda saklanır.</b> Sunucu

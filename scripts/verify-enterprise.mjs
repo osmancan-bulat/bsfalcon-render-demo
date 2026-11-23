@@ -34,7 +34,7 @@ test("Portfolio totals reconcile across project scopes", () => {
   ])
     assert.equal(
       all[key],
-      summary(seed(), "verdora")[key] + summary(seed(), "sanetime")[key] + summary(seed(), "bulvarpark")[key],
+      summary(seed(), "cengilli")[key] + summary(seed(), "nergis")[key] + summary(seed(), "agva")[key],
     );
   assert.equal(all.revenue, all.collected + all.balance);
 });
@@ -43,7 +43,8 @@ test("Partial receipt updates customer balance, overdue, cash, and totals", () =
   const i = installmentList(s).find(
       (i) => i.due < "2026-11-15" && outstanding(s, i) > 0,
     ),
-    before = summary(s);
+    before = summary(s),
+    o0 = outstanding(s, i);
   s = applyAction(s, {
     type: "receipt",
     installmentId: i.id,
@@ -51,7 +52,7 @@ test("Partial receipt updates customer balance, overdue, cash, and totals", () =
     method: "Havale",
     reference: "TEST-001",
   });
-  assert.equal(outstanding(s, i), i.amount - 10000);
+  assert.equal(outstanding(s, i), o0 - 10000);
   const after = summary(s);
   assert.equal(after.collected, before.collected + 10000);
   assert.equal(after.cash, before.cash + 10000);
@@ -131,14 +132,14 @@ test("Purchase revision, reapproval and delivery lifecycle", () => {
 });
 test("Reservations and new sale reconcile inventory, cash and 36 installments", () => {
   let s = seed();
-  const before = summary(s, "verdora");
-  s = applyAction(s, { type: "reserve", id: "verdora-56" });
-  assert.equal(summary(s, "verdora").reserved, before.reserved + 1);
-  s = applyAction(s, { type: "release", id: "verdora-56" });
-  assert.equal(summary(s, "verdora").reserved, before.reserved);
+  const before = summary(s, "nergis");
+  s = applyAction(s, { type: "reserve", id: "nergis-35" });
+  assert.equal(summary(s, "nergis").reserved, before.reserved + 1);
+  s = applyAction(s, { type: "release", id: "nergis-35" });
+  assert.equal(summary(s, "nergis").reserved, before.reserved);
   const c = {
-    id: "verdora-56",
-    project: "verdora",
+    id: "nergis-35",
+    project: "nergis",
     name: "Test Müşteri",
     unit: "B-72",
     price: 3550000,
@@ -147,7 +148,7 @@ test("Reservations and new sale reconcile inventory, cash and 36 installments", 
     paidMonths: 0,
   };
   s = applyAction(s, { type: "contract", record: c });
-  const after = summary(s, "verdora");
+  const after = summary(s, "nergis");
   assert.equal(after.sold, before.sold + 1);
   assert.equal(after.cash, before.cash + 850000);
   assert.equal(after.revenue, before.revenue + 3550000);
@@ -164,40 +165,41 @@ test("Reservations and new sale reconcile inventory, cash and 36 installments", 
   assert.throws(() =>
     applyAction(seed(), { type: "contract", record: { ...c, price: NaN } }),
   );
-  assert.throws(() => applyAction(s, { type: "reserve", id: "verdora-56" }));
+  assert.throws(() => applyAction(s, { type: "reserve", id: "nergis-35" }));
 });
 test("Rescheduling preserves receivable and changes due bucket", () => {
   let s = seed();
   const i = installmentList(s).find(
       (i) => i.due < "2026-11-15" && outstanding(s, i) > 0,
     ),
-    before = summary(s);
+    before = summary(s),
+    o0 = outstanding(s, i);
   s = applyAction(s, { type: "reschedule", id: i.id, date: "2026-12-15" });
-  assert.equal(summary(s).overdue, before.overdue - i.amount);
+  assert.equal(summary(s).overdue, before.overdue - o0);
   assert.equal(summary(s).balance, before.balance);
-  assert.equal(summary(s).planned, before.planned - i.amount);
+  assert.equal(summary(s).planned, before.planned - (i.due.startsWith("2026-11") ? i.amount : 0));
 });
 test("Weighted progress updates all summaries", () => {
   let s = seed();
-  const before = projectProgress(s, "sanetime");
+  const before = projectProgress(s, "nergis");
   s = applyAction(s, {
     type: "work",
-    id: "w6",
+    id: "w10",
     patch: { progress: 100, note: "Tamamlandı", material: "Hazır" },
   });
-  assert(projectProgress(s, "sanetime") > before);
-  assert.equal(summary(s, "sanetime").progress, projectProgress(s, "sanetime"));
+  assert(projectProgress(s, "nergis") > before);
+  assert.equal(summary(s, "nergis").progress, projectProgress(s, "nergis"));
   assert.throws(() =>
     applyAction(s, {
       type: "work",
-      id: "w6",
+      id: "w10",
       patch: { progress: 101, note: "", material: "" },
     }),
   );
 });
 test("Reset restores isolated seed and clears audit", () => {
   const s = applyAction(
-    applyAction(seed(), { type: "note", text: "Deneme", project: "verdora" }),
+    applyAction(seed(), { type: "note", text: "Deneme", project: "nergis" }),
     { type: "reset" },
   );
   assert.deepEqual(s, seedState);
@@ -209,8 +211,8 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     count = installmentList(base).length;
   const record = {
     id: "BARTER-TEST",
-    project: "verdora",
-    unitId: "verdora-55",
+    project: "nergis",
+    unitId: "nergis-34",
     company: "Örnek Firma",
     work: "Temsili cephe işi",
     amount: 3500000,
@@ -224,7 +226,7 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     assert.equal(summary(s)[key], before[key]);
   assert.equal(summary(s).barterCount, before.barterCount + 1);
   assert.equal(installmentList(s).length, count);
-  assert.throws(() => applyAction(s, { type: "reserve", id: "verdora-55" }));
+  assert.throws(() => applyAction(s, { type: "reserve", id: "nergis-34" }));
   assert.throws(() =>
     applyAction(s, { type: "barter", record: { ...record, id: "duplicate" } }),
   );
@@ -232,8 +234,8 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     applyAction(s, {
       type: "contract",
       record: {
-        id: "verdora-55",
-        project: "verdora",
+        id: "nergis-34",
+        project: "nergis",
         name: "Demo",
         unit: "A-71",
         price: 3550000,
@@ -258,8 +260,8 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   let s = applyAction(base, {
     type: "contract",
     record: {
-      id: "verdora-54",
-      project: "verdora",
+      id: "nergis-15",
+      project: "nergis",
       name: "Demo Peşinat",
       unit: "B-70",
       price: 3550000,
@@ -274,7 +276,7 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   assert.equal(summary(s).balance, before.balance + 3550000);
   s = applyAction(s, {
     type: "deposit-receipt",
-    id: "verdora-54",
+    id: "nergis-15",
     amount: 250000,
   });
   assert.equal(summary(s).cash, before.cash + 250000);
@@ -282,18 +284,18 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   assert.throws(() =>
     applyAction(s, {
       type: "deposit-receipt",
-      id: "verdora-54",
+      id: "nergis-15",
       amount: 600001,
     }),
   );
   s = applyAction(s, {
     type: "deposit-receipt",
-    id: "verdora-54",
+    id: "nergis-15",
     amount: 600000,
   });
   assert.equal(summary(s).balance, before.balance + 2700000);
   assert.throws(() =>
-    applyAction(s, { type: "deposit-receipt", id: "verdora-54", amount: 1 }),
+    applyAction(s, { type: "deposit-receipt", id: "nergis-15", amount: 1 }),
   );
 });
 test("Custom reminders toggle without financial effect", () => {
@@ -301,7 +303,7 @@ test("Custom reminders toggle without financial effect", () => {
     type: "reminder",
     record: {
       id: "R1",
-      project: "verdora",
+      project: "nergis",
       title: "Demo takip",
       due: "2026-11-20",
       done: false,

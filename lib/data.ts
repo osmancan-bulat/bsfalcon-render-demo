@@ -3,7 +3,7 @@ import { personName, FIRM } from "./names.ts";
 import { unitById } from "./units.ts";
 export const SNAPSHOT = "2026-11-15";
 export type ProjectStatus = "Aktif" | "Tamamlandı" | "Arşiv";
-/** Şirkete bağlı proje. Yerleşik projeler (VERDORA, Sane Time) ve kullanıcının eklediği projeler aynı yapıyı kullanır. */
+/** Şirkete bağlı proje. Yerleşik projeler (Çengilli, Nergis Park) ve kullanıcının eklediği projeler aynı yapıyı kullanır. */
 export type Project = {
   id: string;
   name: string;
@@ -22,7 +22,7 @@ export type Project = {
   terms: string;
   mix: string;
   commercial: string;
-  /** Sözleşme numaralarında kullanılan kısa kod (SZL-VK-001). */
+  /** Sözleşme numaralarında kullanılan kısa kod (SZL-CV-001). */
   code: string;
   status: ProjectStatus;
   builtIn?: boolean;
@@ -30,63 +30,63 @@ export type Project = {
 };
 export const projects: Project[] = [
   {
-    id: "verdora",
-    name: "VERDORA Kozyatağı",
-    location: "Kozyatağı, Kadıköy / İstanbul",
-    image: "/images/verdora.webp",
-    total: 60,
-    reserved: 4,
-    // Bütçe, maliyet ve ilerleme temsili demo varsayımıdır.
-    budget: 640000000,
-    cost: 168000000,
-    delivery: "2028 ilk yarı",
-    progress: 38,
+    id: "agva",
+    name: "Ağva 1111 Triplex Villa",
+    location: "Ağva, Şile / İstanbul",
+    image: "/images/agva-triplex.webp",
+    total: 1,
+    reserved: 0,
+    // Bütçe, maliyet ve ilerleme TEMSİLİ demo varsayımıdır.
+    budget: 24000000,
+    cost: 9600000,
+    delivery: "Aralık 2027",
+    progress: 48,
     description:
-      "Kozyatağı'nda A ve B bloktan oluşan, 15 katlı, tamamı 3+1 konut projesi; her daireye kapalı otopark.",
-    terms: "M8 Ayşekadın metrosuna yaklaşık 7 dakika · Kaya Sultan Sokak No:4",
-    mix: "60 adet 3+1 · net 95,9–101,7 m²",
-    commercial: "Ticari birim bilgisi resmî proje sayfasında yer almıyor.",
-    code: "VK",
+      "Ağva'da üç katlı yaşam kurgusuyla tasarlanan, akıllı ev altyapılı triplex villa; cam korkuluklu teras ve bahçe havuzu.",
+    terms: "Villa · Akıllı ev · Şile / Ağva",
+    mix: "1 triplex villa · akıllı ev konsepti",
+    commercial: "Ticari birim yok.",
+    code: "AG",
     status: "Aktif",
     builtIn: true,
   },
   {
-    id: "sanetime",
-    name: "Sane Time Beşevler",
-    location: "Beşevler, Nilüfer / Bursa",
-    image: "/images/sanetime.webp",
-    total: 92,
-    reserved: 6,
-    budget: 410000000,
-    cost: 132000000,
-    delivery: "",
-    progress: 35,
+    id: "cengilli",
+    name: "Çengilli Villa Sitesi",
+    location: "Çengilli Köyü, Şile / İstanbul",
+    image: "/images/cengilli-villa.webp",
+    total: 8,
+    reserved: 0,
+    budget: 150000000,
+    cost: 52000000,
+    delivery: "Kasım 2027",
+    progress: 31,
     description:
-      "Nilüfer Beşevler'de 3 bloktan oluşan konut ve ticaret projesi; 92 konut ve 8 bağımsız ticari birim.",
-    terms: "Beşevler Kültür Mahallesi · Nilüfer / Bursa",
-    mix: "3 blok · 92 konut (tip dağılımı temsili)",
-    commercial: "8 bağımsız ticari birim (resmî); satış verisi bu demoya dahil değildir.",
-    code: "ST",
+      "Şile Çengilli'de yeşil arazide sıralanan, bahçeli ve havuzlu müstakil triplex villalar; akıllı ev konsepti.",
+    terms: "Villa sitesi · Akıllı ev · Şile / Çengilli",
+    mix: "Müstakil triplex villalar · villa adedi temsili (8)",
+    commercial: "Ticari birim yok.",
+    code: "CV",
     status: "Aktif",
     builtIn: true,
   },
   {
-    id: "bulvarpark",
-    name: "Bulvar Park II",
-    location: "Kasım Önadım Bulvarı, Bursa",
-    image: "/images/bulvarpark.webp",
-    total: 48,
-    reserved: 3,
-    budget: 245000000,
-    cost: 46000000,
+    id: "nergis",
+    name: "Nergis Park Evleri",
+    location: "İstanbul · metroya 200 m",
+    image: "/images/nergis-park.webp",
+    total: 38,
+    reserved: 2,
+    budget: 210000000,
+    cost: 128000000,
     delivery: "",
-    progress: 16,
+    progress: 52,
     description:
-      "Kasım Önadım Bulvarı üzerinde, iç avlulu konut projesi.",
-    terms: "Kasım Önadım Bulvarı · Bursa",
-    mix: "48 konut · adet ve tipler temsili (resmî kaynakta belirtilmemiş)",
-    commercial: "Ticari birim bilgisi resmî proje sayfasında yer almıyor.",
-    code: "BP",
+      "Zemin + 7 kat, 1.360 m² alan üzerinde 35 daire ve 3 dükkândan oluşan konut + ticaret projesi; 2+1 ve 3+1 planlar.",
+    terms: "Kat karşılığı demo senaryosu: proje durumu resmî kaynakta belirtilmemiştir; paylaşım ve satış verileri temsilidir.",
+    mix: "Zemin + 7 kat · 35 daire + 3 dükkân",
+    commercial: "3 dükkân (resmî)",
+    code: "NP",
     status: "Aktif",
     builtIn: true,
   },
@@ -111,16 +111,18 @@ export type Customer = {
 /**
  * Örnek (sisteme geçiş öncesi) satışların fiyatlandırma şeması.
  * - "katalog": yeni ve temiz demo başlangıcı; fiyat dairenin liste fiyatından %2–4 pazarlık payıyla türetilir.
- * - "v3.1": önceki sürümün sabit bedelleri (VERDORA ₺14.200.000, diğer projeler ₺5.300.000).
+ * - "v3.1": önceki sürümün sabit bedelleri (Çengilli ₺14.200.000, diğer projeler ₺5.300.000).
  * Tarayıcıda daha önce işlem yapılmış kayıtlar hangi şemayla oluştuysa o şemayla açılır;
  * imzalı sözleşme bedelleri hiçbir geçişte yeniden fiyatlandırılmaz.
  */
 export type BasePricing = "katalog" | "v3.1";
-/** Projeye göre örnek satış adedi, ödenmiş taksit sayısı ve kişi numarası başlangıcı (temsili). */
-const BASE_SALES: Record<string, { sold: number; paid: number; person: number }> = {
-  verdora: { sold: 28, paid: 4, person: 0 },
-  sanetime: { sold: 42, paid: 3, person: 28 },
-  bulvarpark: { sold: 20, paid: 2, person: 100 },
+/**
+ * Sisteme geçiş öncesi örnek satışlar (TEMSİLİ): hangi bağımsız bölümlerin satıldığı, ödenmiş taksit
+ * sayısı ve kişi numarası başlangıcı. Satışlar yalnızca yüklenici payındaki bölümlerden yapılır.
+ */
+const BASE_SALES: Record<string, { units: number[]; paid: number; person: number }> = {
+  nergis: { units: [1, 2, 3, 4, 5, 6, 7, 8, 9], paid: 6, person: 0 },
+  cengilli: { units: [1, 2], paid: 8, person: 20 },
 };
 const catalogPlan = (project: string, no: number) => {
   const list = unitById(`${project}-${no}`)?.listPrice ?? 0;
@@ -132,19 +134,19 @@ const catalogPlan = (project: string, no: number) => {
   return { deposit, installment, price: deposit + 36 * installment };
 };
 const legacyPlan = (project: string) =>
-  project === "verdora"
+  project === "cengilli"
     ? { price: 14200000, deposit: 3400000, installment: 300000 }
     : { price: 5300000, deposit: 1340000, installment: 110000 };
 function buildCustomers(pricing: BasePricing): Customer[] {
   return projects.flatMap((p) => {
     const b = BASE_SALES[p.id];
     if (!b) return [];
-    return Array.from({ length: b.sold }, (_, i) => ({
-      id: `${p.id}-${i + 1}`,
+    return b.units.map((no, i) => ({
+      id: `${p.id}-${no}`,
       project: p.id,
       name: personName(i + b.person + 1),
-      unit: unitById(`${p.id}-${i + 1}`)?.label ?? `A-${String(i + 1).padStart(2, "0")}`,
-      ...(pricing === "katalog" ? catalogPlan(p.id, i + 1) : legacyPlan(p.id)),
+      unit: unitById(`${p.id}-${no}`)?.label ?? String(no),
+      ...(pricing === "katalog" ? catalogPlan(p.id, no) : legacyPlan(p.id)),
       paidMonths: b.paid,
     }));
   });
@@ -183,7 +185,7 @@ export const baseInstallments = (pricing: BasePricing = "katalog") =>
 /** Temiz demo başlangıcı (katalog fiyatları). */
 export const customers: Customer[] = BASE.katalog;
 export const installments: Installment[] = BASE_INSTALLMENTS.katalog;
-// İş paketleri, hakediş/satın alma talepleri ve evrak kayıtları kurgusaldır (temsili demo verisi).
+// İş paketleri, hakediş/satın alma talepleri ve evrak kayıtları TEMSİLİ demo verisidir.
 const wp = (
   id: string,
   project: string,
@@ -196,117 +198,31 @@ const wp = (
   material: string,
 ) => ({ id, project, name, company, progress, weight, value, status, material });
 export const workItems = [
-  wp("w1", "verdora", "Temel ve zemin işleri", FIRM.yapi, 100, 15, 12600000, "Tamamlandı", "Teslim alındı"),
-  wp("w2", "verdora", "Betonarme taşıyıcı sistem", FIRM.yapi, 60, 35, 43800000, "Devam ediyor", "C35 beton · planlandı"),
-  wp("w3", "verdora", "Mekanik ve elektrik altyapı", FIRM.teknik, 0, 25, 24500000, "Planlandı", "Kablo · onay bekliyor"),
-  wp("w4", "verdora", "Cephe ve ince işler", FIRM.cephe, 8, 25, 22400000, "Devam ediyor", "Alüminyum profil · sipariş onayı bekliyor"),
-  wp("w5", "sanetime", "Temel ve zemin işleri", FIRM.yapi, 100, 15, 7800000, "Tamamlandı", "Teslim alındı"),
-  wp("w6", "sanetime", "Betonarme taşıyıcı sistem", FIRM.yapi, 45, 40, 26400000, "3 gün gecikme", "Demir · 18 Kasım"),
-  wp("w7", "sanetime", "Mekanik ve elektrik altyapı", FIRM.teknik, 10, 20, 12600000, "Devam ediyor", "Kablo tavaları · sahada"),
-  wp("w8", "sanetime", "Cephe ve ince işler", FIRM.cephe, 0, 25, 13900000, "Planlandı", "Planlama aşamasında"),
-  wp("w9", "bulvarpark", "Temel ve zemin işleri", FIRM.yapi, 80, 20, 5200000, "Devam ediyor", "Hafriyat tamamlandı"),
-  wp("w10", "bulvarpark", "Betonarme taşıyıcı sistem", FIRM.yapi, 0, 35, 14600000, "Planlandı", "Kalıp · teklif aşamasında"),
-  wp("w11", "bulvarpark", "Mekanik ve elektrik altyapı", FIRM.teknik, 0, 20, 7400000, "Planlandı", "Planlama aşamasında"),
-  wp("w12", "bulvarpark", "Cephe ve ince işler", FIRM.cephe, 0, 25, 8300000, "Planlandı", "Planlama aşamasında"),
+  wp("w1", "agva", "Temel ve bodrum betonarme", FIRM.yapi, 100, 25, 2200000, "Tamamlandı", "Teslim alındı"),
+  wp("w2", "agva", "Kaba inşaat · 3 kat", FIRM.yapi, 60, 35, 5600000, "Devam ediyor", "Çatı betonu planlandı"),
+  wp("w3", "agva", "Akıllı ev ve elektrik altyapısı", FIRM.teknik, 10, 20, 3100000, "Devam ediyor", "Otomasyon paneli · sipariş onayında"),
+  wp("w4", "agva", "Cephe, havuz ve peyzaj", FIRM.cephe, 0, 20, 4400000, "Planlandı", "Taş kaplama numuneleri bekleniyor"),
+  wp("w5", "cengilli", "Altyapı ve parsel hazırlığı", FIRM.yapi, 100, 15, 4800000, "Tamamlandı", "Teslim alındı"),
+  wp("w6", "cengilli", "Villa kaba inşaatları", FIRM.yapi, 40, 40, 22000000, "3 gün gecikme", "Demir · 18 Kasım"),
+  wp("w7", "cengilli", "Akıllı ev altyapısı", FIRM.teknik, 0, 20, 8600000, "Planlandı", "Teknik şartname onayında"),
+  wp("w8", "cengilli", "Çatı, cephe ve peyzaj", FIRM.cephe, 0, 25, 12400000, "Planlandı", "Planlama aşamasında"),
+  wp("w9", "nergis", "Temel ve bodrum", FIRM.yapi, 100, 15, 9500000, "Tamamlandı", "Teslim alındı"),
+  wp("w10", "nergis", "Betonarme · zemin + 7 kat", FIRM.yapi, 80, 35, 38000000, "Devam ediyor", "7. kat kalıbı sahada"),
+  wp("w11", "nergis", "Mekanik ve elektrik tesisat", FIRM.teknik, 30, 20, 18500000, "Devam ediyor", "Kablo tavaları · sahada"),
+  wp("w12", "nergis", "Cephe ve ince işler", FIRM.cephe, 10, 30, 26000000, "Devam ediyor", "Çerçeveli balkon profilleri siparişte"),
 ];
 export const approvals = [
-  {
-    id: "HAK-024",
-    project: "verdora",
-    company: FIRM.yapi,
-    name: "4. kat betonarme hakedişi",
-    type: "Hakediş",
-    amount: 1250000,
-    due: "2026-11-18",
-    status: "Onay bekliyor",
-  },
-  {
-    id: "SAT-018",
-    project: "sanetime",
-    company: FIRM.demir,
-    name: "32 ton inşaat demiri",
-    type: "Satın alma",
-    amount: 890000,
-    due: "2026-11-18",
-    status: "Onay bekliyor",
-  },
-  {
-    id: "SAT-019",
-    project: "verdora",
-    company: FIRM.teknik,
-    name: "Elektrik altyapı malzemesi",
-    type: "Satın alma",
-    amount: 340000,
-    due: "2026-11-22",
-    status: "Onay bekliyor",
-  },
-  {
-    id: "HAK-021",
-    project: "sanetime",
-    company: FIRM.yapi,
-    name: "Temel imalatı hakedişi",
-    type: "Hakediş",
-    amount: 760000,
-    due: "2026-11-20",
-    status: "Onaylandı",
-  },
-  {
-    id: "HAK-022",
-    project: "bulvarpark",
-    company: FIRM.yapi,
-    name: "Hafriyat ve iksa hakedişi",
-    type: "Hakediş",
-    amount: 520000,
-    due: "2026-11-24",
-    status: "Onay bekliyor",
-  },
+  { id: "HAK-024", project: "nergis", company: FIRM.yapi, name: "Betonarme 7. kat hakedişi", type: "Hakediş", amount: 1250000, due: "2026-11-18", status: "Onay bekliyor" },
+  { id: "SAT-018", project: "cengilli", company: FIRM.demir, name: "28 ton inşaat demiri", type: "Satın alma", amount: 820000, due: "2026-11-18", status: "Onay bekliyor" },
+  { id: "SAT-019", project: "agva", company: FIRM.teknik, name: "Akıllı ev altyapı malzemesi", type: "Satın alma", amount: 340000, due: "2026-11-22", status: "Onay bekliyor" },
+  { id: "HAK-021", project: "nergis", company: FIRM.yapi, name: "Betonarme 6. kat hakedişi", type: "Hakediş", amount: 1380000, due: "2026-11-20", status: "Onaylandı" },
 ];
 export const documents = [
-  {
-    id: "EVR-001",
-    project: "verdora",
-    name: "Yapı ruhsatı kontrol dosyası",
-    type: "Ruhsat",
-    date: "2026-11-20",
-    owner: "Proje yönetimi",
-    status: "Kontrol bekliyor",
-  },
-  {
-    id: "EVR-002",
-    project: "sanetime",
-    name: "Taşeron sözleşmesi kontrol listesi",
-    type: "Sözleşme",
-    date: "2026-11-18",
-    owner: "Satın alma",
-    status: "İncelemede",
-  },
-  {
-    id: "EVR-003",
-    project: "verdora",
-    name: "Konut teslim hazırlık planı",
-    type: "Teslim",
-    date: "2026-11-30",
-    owner: "Satış operasyon",
-    status: "Taslak",
-  },
-  {
-    id: "EVR-004",
-    project: "sanetime",
-    name: "Kasım saha toplantısı tutanağı",
-    type: "Tutanak",
-    date: "2026-11-16",
-    owner: "Şantiye şefi",
-    status: "Hazır",
-  },
-  {
-    id: "EVR-005",
-    project: "bulvarpark",
-    name: "Zemin etüdü ve iksa raporu",
-    type: "Teknik rapor",
-    date: "2026-11-19",
-    owner: "Proje yönetimi",
-    status: "İncelemede",
-  },
+  { id: "EVR-001", project: "cengilli", name: "Parsel bazlı yapı ruhsatı kontrol dosyası", type: "Ruhsat", date: "2026-11-20", owner: "Proje yönetimi", status: "Kontrol bekliyor" },
+  { id: "EVR-002", project: "nergis", name: "Kat karşılığı sözleşmesi ek protokol kontrolü", type: "Sözleşme", date: "2026-11-18", owner: "Hukuk ve sözleşme", status: "İncelemede" },
+  { id: "EVR-003", project: "agva", name: "Akıllı ev sistemleri teknik şartnamesi", type: "Teknik", date: "2026-11-30", owner: "Teknik ofis", status: "Taslak" },
+  { id: "EVR-004", project: "nergis", name: "Kasım saha toplantısı tutanağı", type: "Tutanak", date: "2026-11-16", owner: "Şantiye şefi", status: "Hazır" },
+  { id: "EVR-005", project: "cengilli", name: "Bitirme ve inşaat tamamlama sigortası belge takibi (temsili)", type: "Güvence", date: "2026-11-25", owner: "Proje yönetimi", status: "Kontrol bekliyor" },
 ];
 /** Tam TL tutarlar kuruşsuz, kuruşlu tutarlar iki haneli gösterilir. */
 export const money = (n: number) => {

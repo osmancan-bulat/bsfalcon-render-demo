@@ -1,9 +1,10 @@
-// Bağımsız bölüm kataloğu.
-// - VERDORA Kozyatağı: blok (A/B), kat sayısı (15), daire sayısı (60), tip (tamamı 3+1) ve net/brüt
-//   metrekareler (köşe 101,7/112,2 · orta 95,9/106,4) SANE İnşaat'ın resmî proje sayfasıyla uyumludur.
-// - Sane Time Beşevler: 3 blok ve 92 konut resmîdir; blok dağılımı, tip ve metrekareler temsilidir.
-// - Bulvar Park II: daire sayısı, tip ve metrekareler resmî kaynakta yer almaz; tamamen temsilidir.
-// Liste fiyatlarının TAMAMI demo varsayımıdır; gerçek satış fiyatı değildir.
+// Bağımsız bölüm kataloğu — BŞ Falcon Group demosu.
+// Resmî kaynaktan (bsfalcongroup.com) doğrulananlar:
+// - Ağva 1111 Triplex Villa: Şile/Ağva'da üç katlı, akıllı ev konseptli tek villa projesi.
+// - Nergis Park Evleri: zemin + 7 kat, 35 daire + 3 dükkân, 2+1 ve 3+1 planlar.
+// - Çengilli Villa Sitesi: müstakil triplex villalar; villa adedi resmî kaynakta belirtilmemiştir.
+// TEMSİLİ DEMO VERİLERİ: Çengilli villa adedi (8), bütün metrekareler, cepheler, kat bazlı tip dağılımı
+// ve liste fiyatlarının tamamı demo varsayımıdır; gerçek satış fiyatı değildir.
 export type Unit = {
   id: string;
   project: string;
@@ -22,91 +23,86 @@ export type Unit = {
 
 const round5k = (n: number) => Math.round(n / 5000) * 5000;
 const floorLabel = (f: number) => (f === 0 ? "Zemin kat" : `${f}. kat`);
-const label = (block: string, no: number) => `${block}-${String(no).padStart(2, "0")}`;
 
-/** VERDORA: her katta A köşe, A orta, B orta, B köşe (resmî plan sırası). */
-function verdoraUnit(no: number): Unit {
-  const floor = Math.floor((no - 1) / 4),
-    k = (no - 1) % 4;
-  const block = k < 2 ? "A" : "B";
-  const corner = k === 0 || k === 3;
-  const net = corner ? 101.7 : 95.9;
-  const gross = corner ? 112.2 : 106.4;
+/** Ağva 1111 Triplex Villa: tek villa (bodrum + zemin + 1. kat yaşam kurgusu). */
+function agvaUnit(): Unit {
   return {
-    id: `verdora-${no}`,
-    project: "verdora",
-    no,
-    label: label(block, no),
-    block,
-    floor,
-    floorLabel: floorLabel(floor),
-    type: "3+1",
-    gross,
-    net,
-    facade: corner ? "Köşe · 3 cephe" : "Orta · 2 cephe",
-    corner,
-    // Temsili liste fiyatı (net m² × varsayılan birim fiyat × kat ve köşe primi)
-    listPrice: round5k(net * 142000 * (1 + floor * 0.008) * (corner ? 1.04 : 1)),
+    id: "agva-1",
+    project: "agva",
+    no: 1,
+    label: "V-01",
+    block: "Villa",
+    floor: 0,
+    floorLabel: "Triplex · 3 kat",
+    type: "Triplex villa",
+    gross: 340,
+    net: 285,
+    facade: "Bahçe ve havuz cephesi",
+    corner: true,
+    listPrice: 42500000,
   };
 }
 
-/** Sane Time: A ve B blok 8 kat × 4, C blok 7 kat × 4 = 92 konut (tip ve m² temsili). */
-function sanetimeUnit(no: number): Unit {
-  const block = no <= 32 ? "A" : no <= 64 ? "B" : "C";
-  const i = no - (block === "A" ? 1 : block === "B" ? 33 : 65);
-  const floor = Math.floor(i / 4),
-    k = i % 4;
-  const type = k === 0 ? "3+1" : k === 3 ? "1+1" : "2+1";
-  const gross = type === "3+1" ? 146 : type === "2+1" ? (k === 1 ? 116 : 112) : 74;
-  const facade = ["Güney-Doğu", "Güney", "Kuzey", "Kuzey-Batı"][k];
-  const facadeFactor = facade.startsWith("Güney") ? 1.03 : 0.98;
+/** Çengilli Villa Sitesi: müstakil triplex villa parselleri (adet ve alanlar temsili). */
+function cengilliUnit(no: number): Unit {
+  const gross = [318, 296, 304, 296, 312, 300, 296, 324][no - 1];
+  const facade = no <= 4 ? "Yol cephesi · bahçeli" : "Vadi cephesi · bahçeli";
   return {
-    id: `sanetime-${no}`,
-    project: "sanetime",
+    id: `cengilli-${no}`,
+    project: "cengilli",
     no,
-    label: label(block, no),
-    block,
-    floor,
-    floorLabel: floorLabel(floor),
-    type,
+    label: `V-${String(no).padStart(2, "0")}`,
+    block: "Parsel",
+    floor: 0,
+    floorLabel: "Triplex · 3 kat",
+    type: "Triplex villa",
     gross,
-    net: Math.round(gross * 0.82),
+    net: Math.round(gross * 0.84),
     facade,
-    corner: k === 0 || k === 3,
-    listPrice: round5k(gross * 47500 * (1 + floor * 0.01) * facadeFactor),
+    corner: no === 1 || no === 8,
+    listPrice: round5k(gross * 108000 * (no > 4 ? 1.03 : 1)),
   };
 }
 
-/** Bulvar Park II: tek blok, 6 kat × 8 konut (tamamen temsili). */
-function bulvarparkUnit(no: number): Unit {
-  const floor = Math.floor((no - 1) / 8),
-    k = (no - 1) % 8;
-  const corner = k === 0 || k === 3 || k === 4 || k === 7;
-  const type = corner ? "3+1" : "2+1";
-  const gross = corner ? 138 : [0, 108, 104, 0, 0, 104, 108, 0][k];
-  const facade = k < 4 ? "Bulvar cephesi" : "Bahçe cephesi";
+/**
+ * Nergis Park Evleri: 1–7. katlarda her katta 5 daire (35 daire), zeminde 3 dükkân.
+ * Daire no 1–35 katlara göre, dükkânlar 36–38. Kat bazlı 2+1 / 3+1 dağılımı temsilidir.
+ */
+function nergisUnit(no: number): Unit {
+  if (no > 35) {
+    const k = no - 35;
+    const gross = [96, 118, 84][k - 1];
+    return {
+      id: `nergis-${no}`, project: "nergis", no, label: `D-${k}`, block: "Dükkân",
+      floor: 0, floorLabel: "Zemin kat", type: "Dükkân", gross, net: Math.round(gross * 0.9),
+      facade: "Cadde cephesi", corner: k === 2, listPrice: round5k(gross * 152000),
+    };
+  }
+  const floor = Math.ceil(no / 5), k = (no - 1) % 5;
+  const type = k === 0 || k === 4 ? "3+1" : "2+1";
+  const gross = type === "3+1" ? (k === 0 ? 142 : 138) : [0, 104, 98, 102, 0][k];
   return {
-    id: `bulvarpark-${no}`,
-    project: "bulvarpark",
+    id: `nergis-${no}`,
+    project: "nergis",
     no,
-    label: label("A", no),
+    label: `${floor}-${String(no).padStart(2, "0")}`,
     block: "A",
     floor,
     floorLabel: floorLabel(floor),
     type,
     gross,
     net: Math.round(gross * 0.82),
-    facade,
-    corner,
-    listPrice: round5k(gross * 44000 * (1 + floor * 0.01) * (k < 4 ? 1.02 : 1)),
+    facade: ["Güney-Doğu", "Güney", "Doğu", "Batı", "Kuzey-Batı"][k],
+    corner: k === 0 || k === 4,
+    listPrice: round5k(gross * 74000 * (1 + floor * 0.012)),
   };
 }
 
-/** Yerleşik projelerin daireleri (VERDORA 60, Sane Time 92, Bulvar Park II 48). */
+/** Yerleşik projelerin bağımsız bölümleri (Ağva 1, Çengilli 8, Nergis Park 38). */
 export const units: Unit[] = [
-  ...Array.from({ length: 60 }, (_, i) => verdoraUnit(i + 1)),
-  ...Array.from({ length: 92 }, (_, i) => sanetimeUnit(i + 1)),
-  ...Array.from({ length: 48 }, (_, i) => bulvarparkUnit(i + 1)),
+  agvaUnit(),
+  ...Array.from({ length: 8 }, (_, i) => cengilliUnit(i + 1)),
+  ...Array.from({ length: 38 }, (_, i) => nergisUnit(i + 1)),
 ];
 // Katalog çalışma anında genişletilebilir (lib/catalog.ts): dizi ve dizin yerinde güncellenir.
 const byId = new Map(units.map((u) => [u.id, u]));
@@ -117,18 +113,23 @@ export function rebuildUnitIndex() {
 export const unitById = (id: string) => byId.get(id);
 export const unitLabel = (id: string) => byId.get(id)?.label ?? id;
 
-/** Okunur daire konumu: "A Blok · 5. Kat · Daire 43". Teknik kod (A-43) ve kimlik (verdora-33) değişmez. */
+/** Okunur daire konumu: "A Blok · 5. Kat · Daire 43". Teknik kod (A-43) ve kimlik (cengilli-33) değişmez. */
 export function unitPlace(id: string): string {
   const u = byId.get(id);
   if (!u) return id;
+  if (u.type === "Triplex villa" || u.block === "Villa" || u.block === "Parsel") return `Villa ${u.label} · triplex`;
+  if (u.type === "Dükkân") return `Zemin Kat · Dükkân ${u.label}`;
   const floor = u.floor === 0 ? "Zemin Kat" : `${u.floor}. Kat`;
   return `${u.block} Blok · ${floor} · Daire ${u.no}`;
 }
-/** Satış kaydının daire kimliği: müşteri/sözleşme kimliği ile aynıdır (verdora-33 → verdora-33). */
+/** Satış kaydının daire kimliği: müşteri/sözleşme kimliği ile aynıdır (cengilli-33 → cengilli-33). */
 export const unitPlaceFor = (customerId: string, fallback = "") =>
   byId.has(customerId) ? unitPlace(customerId) : fallback;
 /** Kısa okunur konum: "A Blok · Daire 43". */
 export function unitShort(id: string): string {
   const u = byId.get(id);
-  return u ? `${u.block} Blok · Daire ${u.no}` : id;
+  if (!u) return id;
+  if (u.type === "Triplex villa" || u.block === "Villa" || u.block === "Parsel") return `Villa ${u.label}`;
+  if (u.type === "Dükkân") return `Dükkân ${u.label}`;
+  return `${u.block} Blok · Daire ${u.no}`;
 }

@@ -14,7 +14,7 @@ export { Badge, Panel, Progress };
 export function Logo() {
   return (
     <div className="official-logo">
-      <img src="/images/sane-logo.png" alt="SANE İnşaat resmî logosu" />
+      <img src="/images/falcon-lockup-black-gold.svg" alt="BŞ Falcon Group resmî logosu" />
     </div>
   );
 }
@@ -50,7 +50,7 @@ export function Drawer({
     >
       <div className="drawer-head">
         <div>
-          <span className="eyebrow">{eyebrow ?? "SANE YÖNETİM MERKEZİ"}</span>
+          <span className="eyebrow">{eyebrow ?? "BŞ Falcon YÖNETİM MERKEZİ"}</span>
           <h2>{title}</h2>
         </div>
         <button
@@ -142,7 +142,7 @@ export function SectionTitle({
   title,
   description,
   actions,
-  kicker = "SANE · OPERASYON MERKEZİ",
+  kicker = "BŞ Falcon · OPERASYON MERKEZİ",
 }: {
   title: string;
   description: string;
@@ -208,7 +208,7 @@ export function AuditTrail({
             <i />
             <span>
               <b>{a.message}</b>
-              <small>SANE Yönetici · {a.time}</small>
+              <small>BŞ Falcon Yönetici · {a.time}</small>
             </span>
           </div>
         ))

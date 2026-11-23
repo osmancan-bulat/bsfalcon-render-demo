@@ -170,8 +170,8 @@ export default function ArchiveView() {
         ...[
           {
             id: "sample-proj-ruhsat",
-            project: "verdora",
-            name: "verdora-yapi-ruhsati-ozeti.txt",
+            project: "cengilli",
+            name: "cengilli-yapi-ruhsati-ozeti.txt",
             kind: "Proje belgesi",
             date: "2025-12-05",
             expiry: "2026-12-05",
@@ -179,7 +179,7 @@ export default function ArchiveView() {
           },
           {
             id: "sample-proj-sigorta",
-            project: "verdora",
+            project: "cengilli",
             name: "santiye-sigorta-policesi-ozeti.txt",
             kind: "Proje belgesi",
             date: "2025-11-01",

@@ -49,13 +49,13 @@ test("Archiving the selected project invalidates it as scope; reactivation makes
   assert.equal(resolveScope(id), id);
   assert(visibleProjects().some((p) => p.id === id));
   // Tamamlanan proje kapsam olarak seçilebilir (salt görüntüleme)
-  s = applyAction(s, { type: "project-status", id: "sanetime", status: "Tamamlandı" });
+  s = applyAction(s, { type: "project-status", id: "nergis", status: "Tamamlandı" });
   syncCatalog(s);
-  assert(isScopeValid("sanetime"));
+  assert(isScopeValid("nergis"));
   // Yerleşik proje arşivlenirse eski adresi de geçersiz olur
-  s = applyAction(s, { type: "project-status", id: "verdora", status: "Arşiv" });
+  s = applyAction(s, { type: "project-status", id: "cengilli", status: "Arşiv" });
   syncCatalog(s);
-  assert.equal(scopeProblem("verdora"), "archived");
+  assert.equal(scopeProblem("cengilli"), "archived");
 });
 
 test("Renaming a project updates the catalog used by the scope picker immediately", () => {
@@ -71,13 +71,13 @@ test("Renaming a project updates the catalog used by the scope picker immediatel
 
 test("Stored or linked scopes that do not exist resolve safely (reload and old links)", () => {
   syncCatalog(seed());
-  for (const bad of [null, undefined, "", "p99", "verdora-kozyatagi", "ALL", "silinmis"]) {
+  for (const bad of [null, undefined, "", "p99", "cengilli-villa-sitesi", "ALL", "silinmis"]) {
     assert.equal(resolveScope(bad), "all", String(bad));
   }
   assert.equal(scopeProblem("p99"), "missing");
   assert.equal(scopeProblem(""), "missing");
-  for (const ok of ["all", "verdora", "sanetime", "bulvarpark"]) assert.equal(resolveScope(ok), ok);
-  assert.equal(scopeProblem("verdora"), null);
+  for (const ok of ["all", "cengilli", "nergis", "agva"]) assert.equal(resolveScope(ok), ok);
+  assert.equal(scopeProblem("cengilli"), null);
 });
 
 test("Deleting a project changes no other project's customers, contracts, finances or reports", () => {
@@ -85,7 +85,7 @@ test("Deleting a project changes no other project's customers, contracts, financ
   let [s, id] = create(base);
   s = applyAction(s, { type: "block-create", project: id, block: "A", floors: 1, perFloor: 4, startFloor: 0, unitType: "1+1", gross: 70, listPrice: 1500000, facade: "Doğu" });
   const before = {};
-  for (const p of ["all", "verdora", "sanetime", "bulvarpark"]) {
+  for (const p of ["all", "cengilli", "nergis", "agva"]) {
     const f = { project: p };
     before[p] = JSON.stringify([
       summary(s, p),
@@ -103,7 +103,7 @@ test("Deleting a project changes no other project's customers, contracts, financ
   const records = (x) => JSON.stringify([x.contracts, x.drafts, x.receipts, x.depositPayments, x.barters, x.offsets, x.requests, x.reminders, x.paidOrders, x.approved]);
   const recordsBefore = records(s);
   s = applyAction(s, { type: "project-delete", id });
-  for (const p of ["all", "verdora", "sanetime", "bulvarpark"]) {
+  for (const p of ["all", "cengilli", "nergis", "agva"]) {
     const f = { project: p };
     const after = JSON.stringify([
       summary(s, p),

@@ -1434,12 +1434,12 @@
 .performance-project h3 {
   font-size: 13px;
 }
-.e-project-cover.verdora > div > span {
+.e-project-cover.cengilli > div > span {
   font-size: var(--fs-micro);
   letter-spacing: 1.5px;
   color: var(--bronze-300);
 }
-.e-project-cover.verdora p {
+.e-project-cover.cengilli p {
   font-size: var(--fs-micro);
   letter-spacing: 1.5px;
   color: var(--forest-300);

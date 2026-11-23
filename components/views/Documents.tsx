@@ -187,7 +187,7 @@ export default function Documents() {
           <div className="e-note">
             <Badge tone="neutral">Örnek gündem</Badge>
             <p>
-              Haftalık toplantıda VERDORA Kozyatağı tahsilat planı, Sane Time
+              Haftalık toplantıda Çengilli Villa Sitesi tahsilat planı, Nergis Park
               sevkiyat tarihi ve hakediş onayları birlikte değerlendirilecek.
             </p>
             <small>15 Kasım 2026 · Proje yönetimi</small>
@@ -212,7 +212,7 @@ export default function Documents() {
                   </button>
                 </div>
                 <p>{n.text}</p>
-                <small>SANE Yönetici · Bu oturumda eklendi</small>
+                <small>BŞ Falcon Yönetici · Bu oturumda eklendi</small>
               </div>
             ))}
         </div>
@@ -226,7 +226,7 @@ export default function Documents() {
         {d && (
           <>
             <div className="document-sheet">
-              <span>SANE / EVRAK KONTROL FÖYÜ</span>
+              <span>BŞ Falcon / EVRAK KONTROL FÖYÜ</span>
               <h3>{d.name}</h3>
               <p>Proje: {pname(d.project)}</p>
               <div>

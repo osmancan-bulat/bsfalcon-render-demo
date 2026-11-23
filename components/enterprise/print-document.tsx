@@ -43,7 +43,7 @@ export default function PrintDocument() {
     setP({
       tur: q.get("tur") ?? "",
       id: q.get("id") ?? "",
-      project: q.get("project") ?? "verdora",
+      project: q.get("project") ?? "cengilli",
       rapor: q.get("rapor") ?? "yonetici",
       from: q.get("from") ?? undefined,
       to: q.get("to") ?? undefined,
@@ -85,7 +85,7 @@ export default function PrintDocument() {
               <tbody>
                 <tr>
                   <th>Satıcı</th>
-                  <td>SANE İnşaat (temsili demo kaydı)</td>
+                  <td>BŞ Falcon Group (temsili demo kaydı)</td>
                 </tr>
                 <tr>
                   <th>Alıcı</th>
@@ -387,7 +387,7 @@ export default function PrintDocument() {
             <tbody>
               <tr>
                 <th>Daireyi veren</th>
-                <td>SANE İnşaat (temsili demo kaydı)</td>
+                <td>BŞ Falcon Group (temsili demo kaydı)</td>
               </tr>
               <tr>
                 <th>İşi yapan firma</th>
@@ -449,7 +449,7 @@ export default function PrintDocument() {
           </p>
           <div className="doc-signatures">
             <div>
-              <span>SANE İnşaat adına</span>
+              <span>BŞ Falcon Group adına</span>
               <i />
             </div>
             <div>
@@ -480,7 +480,7 @@ export default function PrintDocument() {
             <tbody>
               <tr>
                 <th>İşveren</th>
-                <td>SANE İnşaat (temsili demo kaydı)</td>
+                <td>BŞ Falcon Group (temsili demo kaydı)</td>
               </tr>
               <tr>
                 <th>Yüklenici</th>
@@ -533,7 +533,7 @@ export default function PrintDocument() {
           </p>
           <div className="doc-signatures">
             <div>
-              <span>SANE İnşaat adına</span>
+              <span>BŞ Falcon Group adına</span>
               <i />
             </div>
             <div>
@@ -553,7 +553,7 @@ export default function PrintDocument() {
         <>
           <DocMeta
             items={[
-              ["Kapsam", p.project === "all" ? "SANE İnşaat · şirket geneli" : pname(p.project)],
+              ["Kapsam", p.project === "all" ? "BŞ Falcon Group · şirket geneli" : pname(p.project)],
               ["Dönem", periodLabel(f)],
               ["Rapor tarihi", date(SNAPSHOT)],
               ["Kaynak", "Tarayıcıdaki demo kayıtları"],
@@ -677,7 +677,7 @@ export default function PrintDocument() {
           TEMSİLİ DEMO BELGESİ · HUKUKİ GEÇERLİLİĞİ YOKTUR
         </div>
         <header className="doc-header">
-          <img src="/images/sane-logo.png" alt="SANE İnşaat" />
+          <img src="/images/falcon-lockup-black-gold.svg" alt="BŞ Falcon Group" />
           <div>
             <span>Yönetim Merkezi</span>
             <h1>{title}</h1>

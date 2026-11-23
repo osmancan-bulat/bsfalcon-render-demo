@@ -36,12 +36,12 @@ export function Provider({ children }: { children: ReactNode }) {
   syncCatalog(state);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("sane-enterprise-v1");
+      const raw = localStorage.getItem("bsfalcon-enterprise-v1");
       const loaded = raw ? migrateSaved(raw) : null;
       if (raw && !loaded) {
         // Okunamayan kayıt silinmez: yedeklenir, uygulama örnek veriyle açılır.
         try {
-          localStorage.setItem("sane-enterprise-v1-yedek-okunamayan", raw);
+          localStorage.setItem("bsfalcon-enterprise-v1-yedek-okunamayan", raw);
         } catch {}
         notify(
           "Tarayıcıdaki kayıtlar okunamadı; yedeklendi ve örnek veriyle başlatıldı.",
@@ -49,9 +49,9 @@ export function Provider({ children }: { children: ReactNode }) {
       }
       if (loaded && loaded.repaired > 0) {
         try {
-          localStorage.setItem("sane-enterprise-v1-yedek-onarim", raw!);
+          localStorage.setItem("bsfalcon-enterprise-v1-yedek-onarim", raw!);
           localStorage.setItem(
-            "sane-onarim-raporu",
+            "bsfalcon-onarim-raporu",
             JSON.stringify({
               at: new Date().toISOString(),
               repaired: loaded.repaired,
@@ -59,7 +59,7 @@ export function Provider({ children }: { children: ReactNode }) {
             }),
           );
           localStorage.setItem(
-            "sane-enterprise-v1",
+            "bsfalcon-enterprise-v1",
             JSON.stringify(loaded.state),
           );
         } catch {}
@@ -71,9 +71,9 @@ export function Provider({ children }: { children: ReactNode }) {
         if (loaded.migrated) {
           // Önceki kayıt silinmez: yedeği saklanır, ardından kurgusal adlarla yeniden yazılır.
           try {
-            localStorage.setItem("sane-enterprise-v1-yedek-v1", raw!);
+            localStorage.setItem("bsfalcon-enterprise-v1-yedek-v1", raw!);
             localStorage.setItem(
-              "sane-enterprise-v1",
+              "bsfalcon-enterprise-v1",
               JSON.stringify(loaded.state),
             );
           } catch {}
@@ -81,13 +81,13 @@ export function Provider({ children }: { children: ReactNode }) {
         current.current = loaded.state;
         setState(loaded.state);
       }
-      const saved = localStorage.getItem("sane-project");
+      const saved = localStorage.getItem("bsfalcon-project");
       syncCatalog(current.current);
       // Yenilemede mevcut olmayan veya arşivdeki proje seçimi korunmaz; kayıt da düzeltilir.
       const valid = resolveScope(saved);
       setP(valid);
       if (saved !== null && saved !== valid)
-        localStorage.setItem("sane-project", valid);
+        localStorage.setItem("bsfalcon-project", valid);
     } catch {
       notify("Kayıtlar okunamadı; örnek veriyle başlatıldı.");
     }
@@ -113,7 +113,7 @@ export function Provider({ children }: { children: ReactNode }) {
       current.current = next;
       setState(next);
       try {
-        localStorage.setItem("sane-enterprise-v1", JSON.stringify(next));
+        localStorage.setItem("bsfalcon-enterprise-v1", JSON.stringify(next));
       } catch {
         notify(
           "İşlem bu oturumda kaydedildi; tarayıcı depolaması kullanılamıyor.",
@@ -135,7 +135,7 @@ export function Provider({ children }: { children: ReactNode }) {
     const v = resolveScope(id);
     setP(v);
     try {
-      localStorage.setItem("sane-project", v);
+      localStorage.setItem("bsfalcon-project", v);
     } catch {}
   };
   // Kapsam her çizimde katalogla doğrulanır: seçili proje silinir veya arşivlenirse alt bileşenler
@@ -146,7 +146,7 @@ export function Provider({ children }: { children: ReactNode }) {
     const why = scopeProblem(project);
     setP(effective);
     try {
-      localStorage.setItem("sane-project", effective);
+      localStorage.setItem("bsfalcon-project", effective);
     } catch {}
     notify(
       why === "archived"

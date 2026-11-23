@@ -113,7 +113,7 @@ export default function Operations({ mode = "operasyon" }: { mode?: string }) {
                       r.due,
                     ]),
                   ],
-                  "sane-islemler.csv",
+                  "bsfalcon-islemler.csv",
                 )
               }
             >

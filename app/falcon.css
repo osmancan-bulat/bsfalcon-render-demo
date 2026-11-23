@@ -1,4 +1,4 @@
-/* SANE İnşaat kurumsal katmanı (saneinsaat.net kimliği): koyu yeşil #173d29 / #0d291a,
+/* BŞ Falcon Group kurumsal katmanı (saneinsaat.net kimliği): koyu yeşil #173d29 / #0d291a,
    kırık beyaz #f2f0e9, turuncu vurgu #e75b38, Manrope + Newsreader başlık yazısı. En son yüklenir. */
 .e-brand {
   background: #f2f0e9;
@@ -19,11 +19,11 @@
 .e-brand .official-logo img {
   object-position: center;
 }
-/* Giriş: resmî VERDORA görseli üzerinde kurumsal yeşil örtü */
+/* Giriş: resmî Çengilli görseli üzerinde kurumsal yeşil örtü */
 .lv-visual {
   background:
     linear-gradient(160deg, rgb(13 41 26 / 0.9) 0%, rgb(13 41 26 / 0.78) 45%, rgb(10 32 21 / 0.94) 100%),
-    url("/images/verdora-hero.webp") center / cover no-repeat,
+    url("/images/cengilli-hero.webp") center / cover no-repeat,
     var(--forest-900);
 }
 .lv-brand {

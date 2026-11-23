@@ -71,9 +71,9 @@ test("A new project starts empty and is included everywhere automatically", () =
   assert(managerReport(s, { project: "all" }).rows.some((r) => r.project === id && r.fin.contracted === 0));
   assert(!JSON.stringify(reportCsv(s, "yonetici", { project: "all" })).includes("NaN"));
   // Yerleşik projelerin kimlikleri ve numaraları değişmez
-  assert.equal(contractNumber("verdora-33"), "SZL-VK-033");
-  assert.equal(contractNumber("sanetime-49"), "SZL-ST-049");
-  assert.deepEqual(workContracts(s, "verdora").map((w) => w.id), ["IS-VK-01", "IS-VK-02", "IS-VK-03"]);
+  assert.equal(contractNumber("agva-1"), "SZL-AG-001");
+  assert.equal(contractNumber("nergis-12"), "SZL-NP-012");
+  assert.deepEqual(workContracts(s, "cengilli").map((w) => w.id), ["IS-CV-01", "IS-CV-02", "IS-CV-03"]);
 });
 
 test("Project validation: unique name and code, code format, edits and built-in protection", () => {
@@ -81,13 +81,13 @@ test("Project validation: unique name and code, code format, edits and built-in 
   assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "Başka", code: "KV" }) }), /kodu/);
   assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "kuzey vadi konutları", code: "ZZ" }) }), /adla/);
   assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "X Proje", code: "K1" }) }), /kodu/);
-  assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "Y Proje", code: "VK" }) }), /kodu/);
+  assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "Y Proje", code: "CV" }) }), /kodu/);
   const id = newProjectId(s);
   s = applyAction(s, { type: "project-update", id, patch: { name: "Kuzey Vadi Evleri", location: "Mudanya", delivery: "2029", description: "" } });
   syncCatalog(s);
   assert.equal(projects.find((p) => p.id === id).name, "Kuzey Vadi Evleri");
   assert.equal(projects.find((p) => p.id === id).code, "KV");
-  assert.throws(() => applyAction(s, { type: "project-delete", id: "verdora" }), /silinemez/);
+  assert.throws(() => applyAction(s, { type: "project-delete", id: "cengilli" }), /silinemez/);
 });
 
 test("Blocks generate correctly numbered units; numbering continues; duplicates and bad input are rejected", () => {
@@ -107,11 +107,11 @@ test("Blocks generate correctly numbered units; numbering continues; duplicates 
   assert.throws(() => applyAction(s, block(id, { block: "C", floors: 0 })), /Kat/);
   assert.throws(() => applyAction(s, block(id, { block: "C", listPrice: 0 })), /fiyat/);
   // Yerleşik projeye blok eklenince numaralar kaldığı yerden devam eder, mevcut daireler değişmez
-  const c = applyAction(seed(), block("verdora", { block: "C" }));
+  const c = applyAction(seed(), block("nergis", { block: "C" }));
   syncCatalog(c);
-  assert.equal(unitById("verdora-61").label, "C-61");
-  assert.equal(unitById("verdora-33").label, "A-33");
-  assert.equal(summary(c, "verdora").total, 66);
+  assert.equal(unitById("nergis-39").label, "C-39");
+  assert.equal(unitById("nergis-12").label, "3-12");
+  assert.equal(summary(c, "nergis").total, 44);
 });
 
 test("Full flow in a new project: sale → contract → plan → receipts → reports, isolated from other projects", () => {
@@ -141,11 +141,11 @@ test("Full flow in a new project: sale → contract → plan → receipts → re
   assert.equal(f.inflow, 630000);
   assert.equal(salesReport(s, { project: id }).total.sold, 1);
   assert.equal(salesReport(s, { project: id }).total.available, 5);
-  // Şirket toplamı = önceki toplam + yeni proje; VERDORA ve Sane Time hiç değişmez
+  // Şirket toplamı = önceki toplam + yeni proje; Çengilli ve Nergis Park hiç değişmez
   assert.equal(financialReport(s, { project: "all" }).contracted, r2(financialReport(s0, { project: "all" }).contracted + 2900000));
-  assert.deepEqual(financialReport(s, { project: "verdora" }), financialReport(s0, { project: "verdora" }));
-  assert.deepEqual(installmentReport(s, { project: "sanetime" }), installmentReport(s0, { project: "sanetime" }));
-  assert(!JSON.stringify(reportCsv(s, "taksit", { project: "verdora" })).includes("SZL-KV"));
+  assert.deepEqual(financialReport(s, { project: "cengilli" }), financialReport(s0, { project: "cengilli" }));
+  assert.deepEqual(installmentReport(s, { project: "nergis" }), installmentReport(s0, { project: "nergis" }));
+  assert(!JSON.stringify(reportCsv(s, "taksit", { project: "cengilli" })).includes("SZL-KV"));
 });
 
 test("Unit edits apply only to unsold units and never change an existing sale price", () => {
@@ -159,11 +159,11 @@ test("Unit edits apply only to unsold units and never change an existing sale pr
   assert.equal(unitById(`${id}-2`).listPrice, 4100000);
   assert.equal(unitById(`${id}-2`).type, "3+1");
   // Yerleşik müsait daire düzenlenir; örnek satış bedelleri değişmez
-  const before = customerList(s).find((c) => c.id === "verdora-1").price;
-  const free = units.find((u) => u.project === "verdora" && !unitTaken(s, u.id));
+  const before = customerList(s).find((c) => c.id === "nergis-1").price;
+  const free = units.find((u) => u.project === "nergis" && !unitTaken(s, u.id));
   s = applyAction(s, { type: "unit-update", id: free.id, patch: { type: free.type, gross: free.gross, listPrice: free.listPrice + 100000, facade: free.facade } });
-  assert.equal(customerList(s).find((c) => c.id === "verdora-1").price, before);
-  assert.throws(() => applyAction(s, { type: "unit-update", id: "verdora-33", patch: { type: "2+1", gross: 1, listPrice: 1, facade: "" } }), /düzenlenemez/);
+  assert.equal(customerList(s).find((c) => c.id === "nergis-1").price, before);
+  assert.throws(() => applyAction(s, { type: "unit-update", id: "agva-1", patch: { type: "2+1", gross: 1, listPrice: 1, facade: "" } }), /düzenlenemez/);
 });
 
 test("Archiving keeps financial records, blocks new sales and barter; reactivation and safe deletion", () => {
@@ -194,10 +194,10 @@ test("Archiving keeps financial records, blocks new sales and barter; reactivati
   assert(!projects.some((p) => p.id === eid));
   assert(!units.some((u) => u.project === eid));
   // Tamamlanan proje görünür kalır ama yeni satış almaz
-  let t = applyAction(seed(), { type: "project-status", id: "sanetime", status: "Tamamlandı" });
+  let t = applyAction(seed(), { type: "project-status", id: "nergis", status: "Tamamlandı" });
   syncCatalog(t);
-  assert(visibleProjects().some((p) => p.id === "sanetime"));
-  assert.throws(() => applyAction(t, { type: "contract", record: { ...sale("verdora-54"), id: "sanetime-87", project: "sanetime", unit: "C-87" } }), /aktif projede|satılmış/);
+  assert(visibleProjects().some((p) => p.id === "nergis"));
+  assert.throws(() => applyAction(t, { type: "contract", record: { ...sale("nergis-35"), id: "nergis-35", project: "nergis", unit: "7-35" } }), /aktif projede|satılmış/);
 });
 
 test("Receipts: duplicate reference and double submit are rejected; amounts are rounded to the kuruş", () => {
@@ -246,7 +246,7 @@ test("Corrupt or partial browser data opens safely and reports what was skipped"
   const cases = [
     [{ ...base, customerEdits: null }, 1],
     [{ ...base, barters: null }, 1],
-    [{ ...base, contracts: [...base.contracts, { id: "verdora-45", project: "verdora" }] }, 1],
+    [{ ...base, contracts: [...base.contracts, { id: "cengilli-45", project: "cengilli" }] }, 1],
     [{ ...base, receipts: [...base.receipts, { id: "X", installmentId: "nope", amount: "abc" }] }, 1],
     [{ ...base, unitsCustom: [{ id: "bad" }], projectsCustom: "x" }, 2],
   ];

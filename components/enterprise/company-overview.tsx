@@ -1,5 +1,5 @@
 "use client";
-// Şirket genel bakışı: SANE İnşaat'ın bütün projeleri. Rakamlar raporlama motorundan hesaplanır.
+// Şirket genel bakışı: BŞ Falcon Group'ın bütün projeleri. Rakamlar raporlama motorundan hesaplanır.
 import Link from "next/link";
 import {
   ArrowRight,
@@ -46,7 +46,7 @@ export default function CompanyOverview() {
       <header className="home-head">
         <div>
           <span className="eyebrow">{date(SNAPSHOT)} · Şirket genel bakışı</span>
-          <h1>SANE İnşaat</h1>
+          <h1>BŞ Falcon Group</h1>
           <p>
             {projects.filter((p) => p.status === "Aktif").length} aktif proje · {sales.total.total} bağımsız
             bölüm · {sales.total.sold} satış · tutarlar temsilidir
@@ -126,7 +126,7 @@ export default function CompanyOverview() {
                 </div>
               )}
               <header>
-                <span className={`project-dot ${p.id === "verdora" ? "bronze" : ""}`} />
+                <span className={`project-dot ${p.id === "cengilli" ? "bronze" : ""}`} />
                 <div>
                   <h2>{p.name}</h2>
                   <p>
