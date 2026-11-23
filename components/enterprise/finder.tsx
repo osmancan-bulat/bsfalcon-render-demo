@@ -1,4 +1,5 @@
 "use client";
+import { m2 } from "@/lib/units";
 // Genel arama, bildirimler ve dosya açıcı. Arama ve bildirim sonuçları ilgili modern dosyayı
 // (müşteri/daire, imza süreci, barter, hakediş, müsait daire) sayfadan ayrılmadan açar.
 import Link from "next/link";
@@ -108,7 +109,7 @@ export function useSearch(query: string): Hit[] {
         key: `u-${u.id}`,
         icon: <Building2 size={18} />,
         title: `${unitShort(u.id)} · disponible`,
-        detail: `${pname(u.project)} · ${u.type} · ${u.gross} m² · ${money(u.listPrice)}`,
+        detail: `${pname(u.project)} · ${u.type} · ${m2(u.gross)} m² · ${money(u.listPrice)}`,
         tag: "Unidad disponible",
         file: { type: "unit", id: u.id },
       });

@@ -179,3 +179,5 @@ export function unitShort(id: string): string {
   if (!u) return id;
   return isOffice(u) ? `Oficina ${u.label}` : `Unidad ${u.label}`;
 }
+/** Superficie con formato paraguayo: 72,2 → "72,2"; 28.82 → "28,82". */
+export const m2 = (n: number) => n.toLocaleString("es-PY", { maximumFractionDigits: 2 });

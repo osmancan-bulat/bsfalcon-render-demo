@@ -87,7 +87,7 @@ test("Partial receipt updates customer balance, overdue, cash, and totals", () =
 });
 test("Approval creates payable; payment reduces cash exactly once without doubling cost", () => {
   let s = seed();
-  const r = requestList(s).find((r) => r.id === "HAK-024"),
+  const r = requestList(s).find((r) => r.id === "CER-024"),
     before = summary(s);
   assert.throws(() => applyAction(s, { type: "pay-order", id: r.id }));
   s = applyAction(s, { type: "approve", id: r.id });
@@ -104,31 +104,31 @@ test("Approval creates payable; payment reduces cash exactly once without doubli
 });
 test("Purchase revision, reapproval and delivery lifecycle", () => {
   let s = seed();
-  s = applyAction(s, { type: "reject", id: "SAT-018" });
+  s = applyAction(s, { type: "reject", id: "OC-018" });
   assert.equal(
     requestStatus(
       s,
-      requestList(s).find((r) => r.id === "SAT-018"),
+      requestList(s).find((r) => r.id === "OC-018"),
     ),
     "Devuelto",
   );
   s = applyAction(s, {
     type: "edit-request",
-    id: "SAT-018",
+    id: "OC-018",
     patch: { amount: 900000 },
   });
   assert.equal(
     requestStatus(
       s,
-      requestList(s).find((r) => r.id === "SAT-018"),
+      requestList(s).find((r) => r.id === "OC-018"),
     ),
     "Pendiente de aprobación",
   );
-  assert.throws(() => applyAction(s, { type: "deliver", id: "SAT-018" }));
-  s = applyAction(s, { type: "approve", id: "SAT-018" });
-  s = applyAction(s, { type: "deliver", id: "SAT-018" });
-  assert(s.delivered.includes("SAT-018"));
-  assert.throws(() => applyAction(s, { type: "deliver", id: "SAT-018" }));
+  assert.throws(() => applyAction(s, { type: "deliver", id: "OC-018" }));
+  s = applyAction(s, { type: "approve", id: "OC-018" });
+  s = applyAction(s, { type: "deliver", id: "OC-018" });
+  assert(s.delivered.includes("OC-018"));
+  assert.throws(() => applyAction(s, { type: "deliver", id: "OC-018" }));
 });
 test("Reservations and new sale reconcile inventory, cash and 36 installments", () => {
   let s = seed();

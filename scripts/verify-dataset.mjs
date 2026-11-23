@@ -48,13 +48,13 @@ test("Every person is unique and keeps one identity across files, contracts, pay
   for (const id of ["business-5", "alion-25", "vtower-9"]) {
     const docs = systemDocuments(s, id);
     assert(docs.length >= 3);
-    for (const d of docs) assert(d.href.includes(`id=${id}`) || d.href.includes("THS-"), d.href);
+    for (const d of docs) assert(d.href.includes(`id=${id}`) || d.href.includes("REC-"), d.href);
   }
   // Ad, aynı kayıt numarasından her yerde aynı üretilir
   assert.equal(s.contracts.find((c) => c.id === "alion-25").name, personName(81));
   assert.equal(customers.find((c) => c.id === "alion-1").name, personName(21));
   // Hatırlatma, ilgili taslağın müşteri adını taşır
-  const noter = s.reminders.find((r) => r.id === "HTR-D01");
+  const noter = s.reminders.find((r) => r.id === "AGD-D01");
   assert(noter.title.includes(s.drafts.find((d) => d.id === "business-6").name));
 });
 

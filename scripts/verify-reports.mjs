@@ -150,12 +150,12 @@ test("A partial receipt reduces the aging bucket by the paid part only", () => {
 
 test("A barter offset changes only barter and progress-payment figures, never cash or receivables", () => {
   let s0 = seed();
-  // HAK-025 (ALION · fachada) está aprobado en el escenario; se registra un canje de prueba con el mismo proveedor
-  const hak = requestList(s0).find((r) => r.id === "HAK-025");
-  s0 = applyAction(s0, { type: "barter", record: { id: "BRT-T", project: "alion", unitId: "alion-40", company: hak.company, work: "Fachada", amount: 15000, start: "2026-11-01", end: "2027-03-01", progress: 20, transfer: "Pendiente" } });
+  // CER-025 (ALION · fachada) está aprobado en el escenario; se registra un canje de prueba con el mismo proveedor
+  const hak = requestList(s0).find((r) => r.id === "CER-025");
+  s0 = applyAction(s0, { type: "barter", record: { id: "CNJ-T", project: "alion", unitId: "alion-40", company: hak.company, work: "Fachada", amount: 15000, start: "2026-11-01", end: "2027-03-01", progress: 20, transfer: "Pendiente" } });
   assert.equal(requestStatus(s0, hak), "Aprobado");
   const b = s0.barters.find((x) => x.company === hak.company && x.project === hak.project);
-  const s1 = applyAction(s0, { type: "barter-offset", barterId: b.id, requestId: "HAK-025", amount: 5000 });
+  const s1 = applyAction(s0, { type: "barter-offset", barterId: b.id, requestId: "CER-025", amount: 5000 });
   const [a0, a1] = [financialReport(s0, P), financialReport(s1, P)];
   for (const k of ["contracted", "collected", "balance", "overdue", "inflow", "outflow"]) assert.equal(a1[k], a0[k], k);
   assert.equal(a1.barterOffset, r2(a0.barterOffset + 5000));
@@ -170,7 +170,7 @@ test("A barter offset changes only barter and progress-payment figures, never ca
   assert.equal(w1.cashDue, r2(w0.cashDue - 5000));
   assert.equal(w1.hakedis, w0.hakedis);
   assert.deepEqual(financialReport(s1, C), financialReport(s0, C));
-  assert.equal(netPayable(s1, requestList(s1).find((r) => r.id === "HAK-025")), r2(netPayable(s0, requestList(s0).find((r) => r.id === "HAK-025")) - 5000));
+  assert.equal(netPayable(s1, requestList(s1).find((r) => r.id === "CER-025")), r2(netPayable(s0, requestList(s0).find((r) => r.id === "CER-025")) - 5000));
 });
 
 test("Date filters work: inflow by period equals ledger credits in that period", () => {
@@ -225,10 +225,10 @@ test("CSV export produces a real Excel-compatible file for every report", () => 
 
 test("Cash outflow uses the recorded payment date, never the due date; undated payments are not assigned to a period", () => {
   let s = seed();
-  // Seed: HAK-026 vadesi 8 Kasım, ödeme 8 Kasım olarak kayıtlı
-  assert.equal(paidDate(s, "HAK-026"), "2026-11-08");
+  // Seed: CER-026 vadesi 8 Kasım, ödeme 8 Kasım olarak kayıtlı
+  assert.equal(paidDate(s, "CER-026"), "2026-11-08");
   // Vadesi Aralık olan onaylı talep 15 Kasım'da ödenir → Kasım dönemi çıkışıdır, Aralık değil
-  s = applyAction(s, { type: "request", record: { id: "HAK-900", project: "vtower", company: "Karataş Yapı Taahhüt", name: "Test hakedişi", type: "Certificado de obra", amount: 100000, due: "2026-12-20", status: "Pendiente de aprobación" } });
+  s = applyAction(s, { type: "request", record: { id: "CER-900", project: "vtower", company: "Karataş Yapı Taahhüt", name: "Test hakedişi", type: "Certificado de obra", amount: 100000, due: "2026-12-20", status: "Pendiente de aprobación" } });
   const id = s.requests.find((r) => r.name === "Test hakedişi").id;
   s = applyAction(s, { type: "approve", id });
   s = applyAction(s, { type: "pay-order", id });
@@ -252,7 +252,7 @@ test("Cash outflow uses the recorded payment date, never the due date; undated p
   assert.equal(all.outflow, summary(legacy, "vtower").paid);
   // Önceki sürümden aktarılan veride seed ödeme tarihi korunur
   const raw = JSON.stringify({ ...seed(), paidDates: undefined, dataset: undefined, basePricing: undefined });
-  assert.equal(paidDate(migrateSaved(raw).state, "HAK-026"), "2026-11-08");
+  assert.equal(paidDate(migrateSaved(raw).state, "CER-026"), "2026-11-08");
 });
 
 test("Available units equal units that are neither sold, in signing, bartered nor reserved", () => {

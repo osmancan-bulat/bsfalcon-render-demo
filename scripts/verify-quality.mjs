@@ -54,7 +54,7 @@ test("Deposit payment reversal is traceable and restores the deposit balance exa
   assert(ledger.some((e) => e.kind === "Anulado" && e.credit === -1000));
   assert.equal(ledger.at(-1).balance, after.balance);
   // İmzada alınan peşinat satırı değişmez
-  assert.equal(ledger.find((e) => e.ref === "PSN-0").credit, ledger.find((e) => e.ref === "PSN-0").credit);
+  assert.equal(ledger.find((e) => e.ref === "ANT-0").credit, ledger.find((e) => e.ref === "ANT-0").credit);
   assert.equal(financialReport(s, { project: "alion" }).inflow, before.fin.inflow);
   assert.equal(financialReport(s, { project: "alion" }).overdue, before.fin.overdue);
   assert.throws(() => applyAction(s, { type: "deposit-reverse", id: pid, reason: "Tekrar" }), /ya /);

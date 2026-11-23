@@ -69,7 +69,7 @@ export default function Projects() {
                 <div>
                   <h2>{p.name}</h2>
                   <p>
-                    {p.location || "Konum girilmedi"} · código {p.code}
+                    {p.location || "Sin ubicación"} · código {p.code}
                     {p.delivery ? `· entrega ${p.delivery}` : ""}
                   </p>
                 </div>
@@ -240,7 +240,7 @@ function ProjectDrawer({
           <p className="muted">Código del proyecto: {project.code} (no se puede cambiar porque se usa en la numeración de contratos)</p>
         )}
         <label>
-          Konum
+          Ubicación
           <input name="location" maxLength={80} defaultValue={project?.location} placeholder="Ciudad / departamento" />
         </label>
         <label>

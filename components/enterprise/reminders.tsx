@@ -98,7 +98,7 @@ export default function RemindersView() {
         kind: r.type,
         due: r.due,
         amount: r.amount,
-        href: r.type === "Certificado de obra" ? "/operasyon" : "/satinalma",
+        href: "/caja",
       })),
     ...state.barters
       .filter((b) => b.progress < 100)
@@ -108,7 +108,7 @@ export default function RemindersView() {
         title: `${b.company} · ${b.work}`,
         kind: "Fin de canje",
         due: b.end,
-        href: "/barter",
+        href: "/unidades",
       })),
     ...files
       .filter((f) => f.expiry)

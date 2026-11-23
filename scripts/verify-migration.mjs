@@ -60,7 +60,7 @@ function legacyBrowserData() {
   s.basePricing = "v3.1";
   const legacyIns = baseInstallments("v3.1");
   s.receipts = s.receipts.map((r) =>
-    r.id.startsWith("THS-00")
+    r.id.startsWith("REC-00")
       ? { ...r, amount: legacyIns.find((i) => i.id === r.installmentId).amount, reference: `DEMO-2026-${r.id.slice(-1)}` }
       : r,
   );
@@ -201,7 +201,7 @@ test("Names, contract numbers, unit codes and totals agree across every view (bo
     for (const a of agenda(s, "all", 30))
       if (a.ref.type === "customer") assert(a.title.startsWith(people.get(a.ref.id).name), a.id);
     for (const id of ["business-5", "vtower-1"])
-      for (const d of systemDocuments(s, id)) assert(d.name.startsWith(contractNumber(id)) || d.name.startsWith("THS-"), d.name);
+      for (const d of systemDocuments(s, id)) assert(d.name.startsWith(contractNumber(id)) || d.name.startsWith("REC-"), d.name);
     // Portföy toplamları kişi hesaplarının toplamıdır
     const sum = (f) => Math.round([...people.values()].reduce((a, c) => a + f(accountOf(s, c)), 0) * 100) / 100;
     const total = summary(s);

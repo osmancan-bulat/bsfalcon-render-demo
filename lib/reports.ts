@@ -373,15 +373,15 @@ export function managerReport(s: EnterpriseState, f: ReportFilter) {
       alerts.push({ tone: "warning", project: p.id, title: `${drafts.length} contratos en proceso de firma`, detail: drafts.map((d) => `${contractNumber(d.id)} · ${d.name}`).join(", "), amount: sum(drafts, (d) => d.price), href: "/contratos" });
     const pending = requestList(s).filter((r) => r.project === p.id && requestStatus(s, r) === "Pendiente de aprobación");
     if (pending.length)
-      alerts.push({ tone: "info", project: p.id, title: `${pending.length} solicitudes pendientes de aprobación`, detail: pending.map((r) => `${r.id} · ${r.company}`).join(", "), amount: sum(pending, (r) => r.amount), href: "/operasyon" });
+      alerts.push({ tone: "info", project: p.id, title: `${pending.length} solicitudes pendientes de aprobación`, detail: pending.map((r) => `${r.id} · ${r.company}`).join(", "), amount: sum(pending, (r) => r.amount), href: "/caja" });
     const approved = requestList(s).filter((r) => r.project === p.id && requestStatus(s, r) === "Aprobado");
     if (approved.length)
-      alerts.push({ tone: "info", project: p.id, title: `${approved.length} pagos aprobados pendientes`, detail: approved.map((r) => `${r.id} · ${r.company}`).join(", "), amount: sum(approved, (r) => netPayable(s, r)), href: "/operasyon" });
+      alerts.push({ tone: "info", project: p.id, title: `${approved.length} pagos aprobados pendientes`, detail: approved.map((r) => `${r.id} · ${r.company}`).join(", "), amount: sum(approved, (r) => netPayable(s, r)), href: "/caja" });
     for (const b of s.barters.filter((b) => b.project === p.id)) {
       const days = daysBetween(SNAPSHOT, b.end);
       const rem = r2(b.amount - barterOffset(s, b.id));
       if (rem > 0 && days <= 90)
-        alerts.push({ tone: "warning", project: p.id, title: `El canje ${b.id} debe finalizar en ${days} días`, detail: `${b.company} · obligación pendiente`, amount: rem, href: "/barter" });
+        alerts.push({ tone: "warning", project: p.id, title: `El canje ${b.id} debe finalizar en ${days} días`, detail: `${b.company} · obligación pendiente`, amount: rem, href: "/unidades" });
     }
   }
   return { rows, alerts };

@@ -99,7 +99,7 @@ function Row({ r, open, onToggle, act, rate }: { r: BillingRow; open: boolean; o
   const [day, setDay] = useState(r.date > SNAPSHOT ? SNAPSHOT : SNAPSHOT);
   const [reason, setReason] = useState("");
   const shownRate = r.record?.rate ?? rate;
-  const isReceipt = r.source.startsWith("THS-");
+  const isReceipt = r.source.startsWith("REC-");
   return (
     <>
       <tr className={open ? "open" : ""}>

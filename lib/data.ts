@@ -229,16 +229,16 @@ export const workItems = [
   wp("w10", "business", "Estructura Torres 01 y 02", FIRM.yapi, 0, 60, 1900000, "Planificado", "Planificación"),
 ];
 export const approvals = [
-  { id: "HAK-024", project: "alion", company: FIRM.yapi, name: "Certificado de obra · estructura planta 12", type: "Certificado de obra", amount: 48500, due: "2026-11-18", status: "Pendiente de aprobación" },
-  { id: "SAT-018", project: "lofty", company: FIRM.demir, name: "Acero para losas · 24 t", type: "Compra", amount: 26400, due: "2026-11-18", status: "Pendiente de aprobación" },
-  { id: "SAT-019", project: "business", company: FIRM.teknik, name: "Tableros eléctricos provisorios de obra", type: "Compra", amount: 9800, due: "2026-11-22", status: "Pendiente de aprobación" },
-  { id: "HAK-021", project: "alion", company: FIRM.yapi, name: "Certificado de obra · estructura planta 11", type: "Certificado de obra", amount: 47200, due: "2026-11-20", status: "Aprobado" },
+  { id: "CER-024", project: "alion", company: FIRM.yapi, name: "Certificado de obra · estructura planta 12", type: "Certificado de obra", amount: 48500, due: "2026-11-18", status: "Pendiente de aprobación" },
+  { id: "OC-018", project: "lofty", company: FIRM.demir, name: "Acero para losas · 24 t", type: "Compra", amount: 26400, due: "2026-11-18", status: "Pendiente de aprobación" },
+  { id: "OC-019", project: "business", company: FIRM.teknik, name: "Tableros eléctricos provisorios de obra", type: "Compra", amount: 9800, due: "2026-11-22", status: "Pendiente de aprobación" },
+  { id: "CER-021", project: "alion", company: FIRM.yapi, name: "Certificado de obra · estructura planta 11", type: "Certificado de obra", amount: 47200, due: "2026-11-20", status: "Aprobado" },
 ];
 export const documents = [
-  { id: "EVR-001", project: "business", name: "Planos de oficinas · versión brochure (superficies a verificar)", type: "Técnico", date: "2026-11-20", owner: "Proyectos", status: "Pendiente de revisión" },
-  { id: "EVR-002", project: "alion", name: "Modelo de contrato de compraventa · revisión legal", type: "Contrato", date: "2026-11-18", owner: "Legal", status: "En revisión" },
-  { id: "EVR-003", project: "vtower", name: "Reglamento de cocheras y bauleras", type: "Comercial", date: "2026-11-30", owner: "Comercial", status: "Borrador" },
-  { id: "EVR-004", project: "lofty", name: "Acta de reunión de obra · noviembre", type: "Acta", date: "2026-11-16", owner: "Dirección de obra", status: "Listo" },
+  { id: "DOC-001", project: "business", name: "Planos de oficinas · versión brochure (superficies a verificar)", type: "Técnico", date: "2026-11-20", owner: "Proyectos", status: "Pendiente de revisión" },
+  { id: "DOC-002", project: "alion", name: "Modelo de contrato de compraventa · revisión legal", type: "Contrato", date: "2026-11-18", owner: "Legal", status: "En revisión" },
+  { id: "DOC-003", project: "vtower", name: "Reglamento de cocheras y bauleras", type: "Comercial", date: "2026-11-30", owner: "Comercial", status: "Borrador" },
+  { id: "DOC-004", project: "lofty", name: "Acta de reunión de obra · noviembre", type: "Acta", date: "2026-11-16", owner: "Dirección de obra", status: "Listo" },
 ];
 
 // ---------------------------------------------------------------------------------------------

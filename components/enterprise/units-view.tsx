@@ -1,4 +1,5 @@
 "use client";
+import { m2 } from "@/lib/units";
 // Daireler: kat bazında daire haritası. Daireye tıklamak ilgili dosyayı açar
 // (satılmış → müşteri dosyası, imza sürecinde → sözleşme, barter → barter dosyası, müsait → daire kartı).
 import Link from "next/link";
@@ -185,7 +186,7 @@ function ProjectUnits({ projectId }: { projectId: string }) {
                     className={`cc-unit u-${st}`}
                     onClick={() => openUnit(u, st)}
                     aria-label={`${u.label} · ${u.type} · ${UNIT_STATE_LABEL[st]}`}
-                    title={`${u.label} · ${u.type} · ${u.gross} m² · ${UNIT_STATE_LABEL[st]}`}
+                    title={`${u.label} · ${u.type} · ${m2(u.gross)} m² · ${UNIT_STATE_LABEL[st]}`}
                   >
                     <b>{u.label}</b>
                     <small>{u.type}</small>
@@ -292,7 +293,7 @@ export function UnitDrawer({
             </label>
             <label>
               Superficie m²
-              <input name="gross" type="number" min={10} max={2000} required defaultValue={u.gross} />
+              <input name="gross" type="number" min={10} max={2000} required defaultValue={m2(u.gross)} />
             </label>
           </div>
           <div className="form-row">
@@ -345,15 +346,15 @@ export function UnitDrawer({
         <>
           <dl className="file-summary cols-3">
             <div>
-              <dt>Konum</dt>
+              <dt>Ubicación</dt>
               <dd>
-                {u.block} torre · {u.floorLabel} · código {u.label}
+                {u.block} · {u.floorLabel} · código {u.label}
               </dd>
             </div>
             <div>
               <dt>Tipología</dt>
               <dd>
-                {u.type} · {u.gross}/{u.net} m²
+                {u.type} · {m2(u.gross)} m²
               </dd>
             </div>
             <div>

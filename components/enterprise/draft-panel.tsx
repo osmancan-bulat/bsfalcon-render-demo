@@ -1,4 +1,5 @@
 "use client";
+import { m2 } from "@/lib/units";
 // İmza sürecindeki sözleşme: daire ve müşteri bilgisi, planlanan ödeme takvimi, durum geçmişi ve imza/iptal işlemleri.
 // İmza onayı bir doğrulama adımıyla yapılır; imzadan sonra müşteri dosyası oluşturulmuş ödeme planıyla açılır.
 import Link from "next/link";
@@ -58,7 +59,7 @@ export default function DraftPanel({
         <div>
           <dt>Tipología · superficie</dt>
           <dd>
-            {u?.type} · {u?.gross}/{u?.net} m²
+            {u?.type} · {m2(u?.gross ?? 0)} m²
           </dd>
         </div>
         <div>

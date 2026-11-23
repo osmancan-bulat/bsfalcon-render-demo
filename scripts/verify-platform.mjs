@@ -178,7 +178,7 @@ test("Archiving keeps financial records, blocks new sales and barter; reactivati
   assert.equal(summary(s).revenue, totalBefore);
   assert.equal(financialReport(s, { project: id }).contracted, 2900000);
   assert.throws(() => applyAction(s, { type: "contract", record: sale(`${id}-2`, "Ece Demir") }), /proyectos activos/);
-  assert.throws(() => applyAction(s, { type: "barter", record: { id: "BRT-X", project: id, unitId: `${id}-3`, company: "Atlas Mekanik Elektrik", work: "Trabajo", amount: 100000, start: "2026-11-01", end: "2027-01-01", progress: 0, transfer: "Pendiente" } }), /proyectos activos/);
+  assert.throws(() => applyAction(s, { type: "barter", record: { id: "CNJ-X", project: id, unitId: `${id}-3`, company: "Atlas Mekanik Elektrik", work: "Trabajo", amount: 100000, start: "2026-11-01", end: "2027-01-01", progress: 0, transfer: "Pendiente" } }), /proyectos activos/);
   assert.throws(() => applyAction(s, block(id, { block: "B" })), /archivado/);
   assert.throws(() => applyAction(s, { type: "project-delete", id }), /eliminarse/);
   assert.throws(() => applyAction(s, { type: "project-status", id, status: "Archivado" }), /ya /);
@@ -238,7 +238,7 @@ test("Receipt reversal is traceable: balance and overdue restored, ledger keeps 
   // Aynı dekont iptalden sonra doğru taksite yeniden girilebilir; makbuz numarası çakışmaz
   s = applyAction(s, { type: "receipt", installmentId: row.installmentId, amount: 500, method: "Transferencia bancaria", reference: "HVL-YANLIS" });
   assert.equal(new Set(s.receipts.map((r) => r.id)).size, s.receipts.length);
-  assert.equal(nextReceiptId({ receipts: [{ id: "THS-0010" }, { id: "THS-D01" }] }), "THS-0011");
+  assert.equal(nextReceiptId({ receipts: [{ id: "REC-0010" }, { id: "REC-D01" }] }), "REC-0011");
 });
 
 test("Corrupt or partial browser data opens safely and reports what was skipped", () => {
@@ -282,15 +282,15 @@ test("Work packages link firm → work contract → progress payment → barter 
   assert.equal(wc.length, 1);
   assert.equal(wc[0].id, "IS-KV-01");
   assert.equal(wc[0].value, 12000000);
-  s = applyAction(s, { type: "request", record: { id: "HAK-KV1", project: id, company: "Toprak Yapı İnşaat", name: "Kaba inşaat 1. hakediş", type: "Certificado de obra", amount: 800000, due: "2026-12-01", status: "Pendiente de aprobación" } });
+  s = applyAction(s, { type: "request", record: { id: "CER-KV1", project: id, company: "Toprak Yapı İnşaat", name: "Kaba inşaat 1. hakediş", type: "Certificado de obra", amount: 800000, due: "2026-12-01", status: "Pendiente de aprobación" } });
   const hid = s.requests.find((r) => r.name === "Kaba inşaat 1. hakediş").id;
   s = applyAction(s, { type: "approve", id: hid });
-  s = applyAction(s, { type: "barter", record: { id: "BRT-KV-01", project: id, unitId: id + "-5", company: "Toprak Yapı İnşaat", work: "Kaba inşaat karşılığı daire", amount: 3000000, start: "2026-11-01", end: "2027-06-01", progress: 10, transfer: "Pendiente" } });
-  s = applyAction(s, { type: "barter-offset", barterId: "BRT-KV-01", requestId: hid, amount: 300000 });
+  s = applyAction(s, { type: "barter", record: { id: "CNJ-KV-01", project: id, unitId: id + "-5", company: "Toprak Yapı İnşaat", work: "Kaba inşaat karşılığı daire", amount: 3000000, start: "2026-11-01", end: "2027-06-01", progress: 10, transfer: "Pendiente" } });
+  s = applyAction(s, { type: "barter-offset", barterId: "CNJ-KV-01", requestId: hid, amount: 300000 });
   const w = workContracts(s, id)[0];
   assert.equal(w.hakedisTotal, 800000);
   assert.equal(w.offset, 300000);
-  assert.equal(w.barterId, "BRT-KV-01");
+  assert.equal(w.barterId, "CNJ-KV-01");
   const f = financialReport(s, { project: id });
   assert.equal(f.barterRemaining, 2700000);
   assert.equal(f.payableApproved, 500000);
@@ -300,7 +300,7 @@ test("Work packages link firm → work contract → progress payment → barter 
   assert.equal(salesReport(s, { project: id }).total.barter, 1);
   assert.equal(salesReport(s, { project: id }).total.available, 5);
   // Kalan hakedişi aşan ikinci mahsup reddedilir
-  assert.throws(() => applyAction(s, { type: "barter-offset", barterId: "BRT-KV-01", requestId: hid, amount: 600000 }), /superar/);
+  assert.throws(() => applyAction(s, { type: "barter-offset", barterId: "CNJ-KV-01", requestId: hid, amount: 600000 }), /superar/);
 });
 
 console.log(`${checks} platform suites passed.`);

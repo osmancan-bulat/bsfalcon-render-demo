@@ -136,7 +136,7 @@ test("Billing register: format, uniqueness, dates, exchange rate snapshot, voidi
   assert.equal(s.billing[pending.source].rate, 7450);
   s = applyAction(s, { type: "fx-set", rate: 7600, date: "2026-11-15" });
   assert.equal(s.billing[pending.source].rate, 7450);
-  assert.equal(s.billing["THS-D01"].rate, 7300);
+  assert.equal(s.billing["REC-D01"].rate, 7300);
   assert.throws(() => applyAction(s, { type: "invoice-issue", source: pending.source, number: "001-001-0000301", date: "2026-11-15" }), /ya tiene una factura/);
   // Anulación con motivo; luego puede registrarse una nueva factura
   assert.throws(() => applyAction(s, { type: "invoice-void", source: pending.source, reason: " " }), /motivo/);
@@ -145,10 +145,10 @@ test("Billing register: format, uniqueness, dates, exchange rate snapshot, voidi
   s = applyAction(s, { type: "invoice-issue", source: pending.source, number: "001-001-0000302", date: "2026-11-15" });
   assert.equal(billingRows(s).find((r) => r.source === pending.source).status, "Emitida");
   // Si se anula el cobro de una factura emitida, la factura queda "Revisar"
-  s = applyAction(s, { type: "receipt-reverse", id: "THS-D01", reason: "Cobro imputado por error" });
-  assert.equal(billingRows(s).find((r) => r.source === "THS-D01").status, "Revisar");
+  s = applyAction(s, { type: "receipt-reverse", id: "REC-D01", reason: "Cobro imputado por error" });
+  assert.equal(billingRows(s).find((r) => r.source === "REC-D01").status, "Revisar");
   assert.equal(billingSummary(s).review.length, 1);
-  assert.throws(() => applyAction(s, { type: "invoice-issue", source: "THS-D01", number: "001-001-0000303", date: "2026-11-15" }), /anulado/);
+  assert.throws(() => applyAction(s, { type: "invoice-issue", source: "REC-D01", number: "001-001-0000303", date: "2026-11-15" }), /anulado/);
 });
 
 test("Currency: USD is the recorded currency; guaraníes use only the defined reference rate", () => {

@@ -201,13 +201,13 @@ export const demoContractMeta: Record<string, Meta> = {
 
 /** Cobros de cuotas (imputados a filas del plan). Los cobros anteriores a noviembre están en la caja de apertura. */
 export const demoReceipts = [
-  { id: "THS-D01", installmentId: "alion-25-1", amount: 1400, date: "2026-07-10", method: "Transferencia bancaria", reference: "TRF-260710-ALN25" },
-  { id: "THS-D02", installmentId: "alion-25-2", amount: 1400, date: "2026-08-10", method: "Transferencia bancaria", reference: "TRF-260810-ALN25" },
-  { id: "THS-D03", installmentId: "alion-25-3", amount: 1400, date: "2026-09-10", method: "Tarjeta de crédito", reference: "POS-260910-ALN25" },
-  { id: "THS-D04", installmentId: "alion-25-4", amount: 700, date: "2026-10-12", method: "Transferencia bancaria", reference: "TRF-261012-ALN25 · parcial" },
-  { id: "THS-D05", installmentId: "lofty-15-1", amount: 3200, date: "2026-09-25", method: "Transferencia bancaria", reference: "TRF-260925-LCH15" },
-  { id: "THS-D06", installmentId: "lofty-15-2", amount: 3200, date: "2026-10-24", method: "Transferencia bancaria", reference: "TRF-261024-LCH15" },
-  { id: "THS-D07", installmentId: "vtower-9-1", amount: 4060, date: "2026-10-15", method: "Transferencia bancaria", reference: "TRF-261015-VTL9" },
+  { id: "REC-D01", installmentId: "alion-25-1", amount: 1400, date: "2026-07-10", method: "Transferencia bancaria", reference: "TRF-260710-ALN25" },
+  { id: "REC-D02", installmentId: "alion-25-2", amount: 1400, date: "2026-08-10", method: "Transferencia bancaria", reference: "TRF-260810-ALN25" },
+  { id: "REC-D03", installmentId: "alion-25-3", amount: 1400, date: "2026-09-10", method: "Tarjeta de crédito", reference: "POS-260910-ALN25" },
+  { id: "REC-D04", installmentId: "alion-25-4", amount: 700, date: "2026-10-12", method: "Transferencia bancaria", reference: "TRF-261012-ALN25 · parcial" },
+  { id: "REC-D05", installmentId: "lofty-15-1", amount: 3200, date: "2026-09-25", method: "Transferencia bancaria", reference: "TRF-260925-LCH15" },
+  { id: "REC-D06", installmentId: "lofty-15-2", amount: 3200, date: "2026-10-24", method: "Transferencia bancaria", reference: "TRF-261024-LCH15" },
+  { id: "REC-D07", installmentId: "vtower-9-1", amount: 4060, date: "2026-10-15", method: "Transferencia bancaria", reference: "TRF-261015-VTL9" },
 ];
 
 /** Canjes por obra: no se usan en la demo de EDIFICA. */
@@ -219,7 +219,7 @@ export const demoBarters = [] as {
 /** Solicitudes de pago a proveedores (egresos de caja). */
 export const demoRequests = [
   {
-    id: "HAK-025",
+    id: "CER-025",
     project: "alion",
     company: FIRM.cephe,
     name: "Certificado de obra · mampostería pisos 3–6",
@@ -230,7 +230,7 @@ export const demoRequests = [
     description: "Avance certificado por la dirección de obra (ejemplo).",
   },
   {
-    id: "HAK-026",
+    id: "CER-026",
     project: "lofty",
     company: FIRM.yapi,
     name: "Certificado de obra · estructura piso 11",
@@ -241,7 +241,7 @@ export const demoRequests = [
     description: "Pagado por transferencia el 8 de noviembre (ejemplo).",
   },
   {
-    id: "HAK-027",
+    id: "CER-027",
     project: "business",
     company: FIRM.yapi,
     name: "Instalación eléctrica provisoria de obra",
@@ -252,7 +252,7 @@ export const demoRequests = [
     description: "Tableros y cableado provisorio.",
   },
   {
-    id: "SAT-020",
+    id: "OC-020",
     project: "alion",
     company: FIRM.aluminyum,
     name: "Aberturas de aluminio · pisos 3–6",
@@ -263,7 +263,7 @@ export const demoRequests = [
   },
   {
     // Gasto de obra pagado directamente: impacta caja e informes
-    id: "GDR-001",
+    id: "GTO-001",
     project: "vtower",
     company: "Alquiler de equipos (ejemplo)",
     name: "Alquiler de grúa · período octubre",
@@ -278,17 +278,17 @@ export const demoRequests = [
 export const demoOffsets = [] as { id: string; barterId: string; requestId: string; amount: number; date: string }[];
 
 export const demoReminders = [
-  { id: "HTR-D01", project: "business", title: `Firma en escribanía · ${personName(86)} · Oficina T1-202`, due: "2026-11-20", done: false },
-  { id: "HTR-D02", project: "alion", title: `Gestión de cobro · cuotas vencidas · ${personName(81)} · Unidad 601D`, due: "2026-11-18", done: false },
-  { id: "HTR-D03", project: "business", title: `Aprobar certificado HAK-027 · ${FIRM.yapi}`, due: "2026-11-26", done: false },
-  { id: "HTR-D04", project: "vtower", title: "Enviar estados de cuenta de noviembre a los clientes", due: "2026-11-25", done: false },
+  { id: "AGD-D01", project: "business", title: `Firma en escribanía · ${personName(86)} · Oficina T1-202`, due: "2026-11-20", done: false },
+  { id: "AGD-D02", project: "alion", title: `Gestión de cobro · cuotas vencidas · ${personName(81)} · Unidad 601D`, due: "2026-11-18", done: false },
+  { id: "AGD-D03", project: "business", title: `Aprobar certificado CER-027 · ${FIRM.yapi}`, due: "2026-11-26", done: false },
+  { id: "AGD-D04", project: "vtower", title: "Enviar estados de cuenta de noviembre a los clientes", due: "2026-11-25", done: false },
 ];
 
 export const demoAudit = [
   { id: "AUD-D01", entity: "alion-26", message: "Contrato firmado; plan de pagos y cuentas por cobrar generados", time: "20 oct", project: "alion" },
   { id: "AUD-D02", entity: "business-6", message: "Contrato enviado a firma", time: "13 nov", project: "business" },
   { id: "AUD-D03", entity: "business-5", message: "Venta de oficina firmada; plan de pagos y cuentas por cobrar generados", time: "5 nov", project: "business" },
-  { id: "AUD-D04", entity: "HAK-026", message: "Pago registrado; caja y plan de pagos actualizados", time: "8 nov", project: "lofty" },
+  { id: "AUD-D04", entity: "CER-026", message: "Pago registrado; caja y plan de pagos actualizados", time: "8 nov", project: "lofty" },
   { id: "AUD-D05", entity: "alion-25", message: "Cobro parcial registrado (US$ 700)", time: "12 oct", project: "alion" },
 ];
 
@@ -302,13 +302,13 @@ const issued = (number: string, date: string) => ({
 });
 export const demoBilling = {
   "ANT-alion-25": issued("001-001-0000101", "2026-06-10"),
-  "THS-D01": issued("001-001-0000104", "2026-07-10"),
-  "THS-D02": issued("001-001-0000109", "2026-08-10"),
+  "REC-D01": issued("001-001-0000104", "2026-07-10"),
+  "REC-D02": issued("001-001-0000109", "2026-08-10"),
   "ANT-lofty-15": issued("001-001-0000110", "2026-08-25"),
-  "THS-D03": issued("001-001-0000112", "2026-09-10"),
+  "REC-D03": issued("001-001-0000112", "2026-09-10"),
   "ANT-vtower-9": issued("001-001-0000113", "2026-09-15"),
-  "THS-D05": issued("001-001-0000116", "2026-09-25"),
-  "THS-D04": issued("001-001-0000118", "2026-10-12"),
-  "THS-D07": issued("001-001-0000119", "2026-10-15"),
+  "REC-D05": issued("001-001-0000116", "2026-09-25"),
+  "REC-D04": issued("001-001-0000118", "2026-10-12"),
+  "REC-D07": issued("001-001-0000119", "2026-10-15"),
   "ANT-alion-26": issued("001-001-0000121", "2026-10-20"),
 };

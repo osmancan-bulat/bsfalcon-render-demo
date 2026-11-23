@@ -138,7 +138,7 @@ export default function EdificaHome() {
           <small>{d.units.sold} vendidas · {d.units.signing} en firma · {d.units.reserved} reservadas · {d.units.available} disponibles</small>
         </Kpi>
         <Kpi icon={<FileSignature size={16} />} label="Monto contratado" value={compact(d.all.revenue)}>
-          <small>{d.all.sold} contratos activos · ticket medio {compact(d.all.revenue / Math.max(1, d.all.sold))}</small>
+          <small>{d.all.sold} contratos activos · ticket medio {compact(Math.round(d.all.revenue / Math.max(1, d.all.sold)))}</small>
         </Kpi>
         <Kpi icon={<Wallet size={16} />} label="Cobrado" value={compact(d.all.collected)} tone="good">
           <span className="ed-bar"><i style={{ width: `${(d.all.collected / Math.max(1, d.all.revenue)) * 100}%` }} /></span>

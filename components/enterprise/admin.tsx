@@ -95,7 +95,7 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
             <thead>
               <tr>
                 <th>Proyecto</th>
-                <th>Konum</th>
+                <th>Ubicación</th>
                 <th className="numeric">Unidades</th>
                 <th className="numeric">Vendidas</th>
                 <th>Entrega</th>

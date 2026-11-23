@@ -269,7 +269,7 @@ test("Contract transfer changes the owner but keeps balance and plan", () => {
 test("Barter offset settles an approved progress payment without cash", () => {
   let s = seed();
   const barter = {
-    id: "BRT-1",
+    id: "CNJ-1",
     project: "alion",
     unitId: "alion-32",
     company: "Constructora Ejemplo del Este",
@@ -285,17 +285,17 @@ test("Barter offset settles an approved progress payment without cash", () => {
   assert.throws(() =>
     applyAction(s, {
       type: "barter-offset",
-      barterId: "BRT-1",
-      requestId: "HAK-024",
+      barterId: "CNJ-1",
+      requestId: "CER-024",
       amount: 1000,
     }),
   );
-  s = applyAction(s, { type: "approve", id: "HAK-024" });
+  s = applyAction(s, { type: "approve", id: "CER-024" });
   const before = summary(s, "alion");
   s = applyAction(s, {
     type: "barter-offset",
-    barterId: "BRT-1",
-    requestId: "HAK-024",
+    barterId: "CNJ-1",
+    requestId: "CER-024",
     amount: 20000,
   });
   const mid = summary(s, "alion");
@@ -303,36 +303,36 @@ test("Barter offset settles an approved progress payment without cash", () => {
   assert.equal(mid.payable, before.payable - 20000);
   assert.equal(mid.offset, before.offset + 20000);
   // Kalan 850.000 TL nakit ödenir; kasa yalnızca net tutar kadar azalır
-  const paid = applyAction(s, { type: "pay-order", id: "HAK-024" });
+  const paid = applyAction(s, { type: "pay-order", id: "CER-024" });
   assert.equal(summary(paid, "alion").cash, before.cash - 28500);
   assert.equal(summary(paid, "alion").paid, before.paid + 28500);
   // Barter bakiyesi ve hakediş bakiyesi aşılamaz; farklı firma reddedilir
   assert.throws(() =>
     applyAction(s, {
       type: "barter-offset",
-      barterId: "BRT-1",
-      requestId: "HAK-024",
+      barterId: "CNJ-1",
+      requestId: "CER-024",
       amount: 20001,
     }),
   );
   const full = applyAction(s, {
     type: "barter-offset",
-    barterId: "BRT-1",
-    requestId: "HAK-024",
+    barterId: "CNJ-1",
+    requestId: "CER-024",
     amount: 20000,
   });
   assert.equal(
     requestStatus(
       full,
-      requestList(full).find((r) => r.id === "HAK-024"),
+      requestList(full).find((r) => r.id === "CER-024"),
     ),
     "Aprobado",
   );
   assert.throws(() =>
     applyAction(full, {
       type: "barter-offset",
-      barterId: "BRT-1",
-      requestId: "HAK-024",
+      barterId: "CNJ-1",
+      requestId: "CER-024",
       amount: 1,
     }),
   );
@@ -340,12 +340,12 @@ test("Barter offset settles an approved progress payment without cash", () => {
     type: "barter",
     record: { ...barter, company: "Başka Firma" },
   });
-  other = applyAction(other, { type: "approve", id: "HAK-024" });
+  other = applyAction(other, { type: "approve", id: "CER-024" });
   assert.throws(() =>
     applyAction(other, {
       type: "barter-offset",
-      barterId: "BRT-1",
-      requestId: "HAK-024",
+      barterId: "CNJ-1",
+      requestId: "CER-024",
       amount: 1000,
     }),
   );
@@ -356,7 +356,7 @@ test("Full barter offset closes a progress payment as settled", () => {
   s = applyAction(s, {
     type: "barter",
     record: {
-      id: "BRT-2",
+      id: "CNJ-2",
       project: "alion",
       unitId: "alion-38",
       company: "CONSTRUCTORA EJEMPLO DEL ESTE ",
@@ -368,23 +368,23 @@ test("Full barter offset closes a progress payment as settled", () => {
       transfer: "Pendiente",
     },
   });
-  s = applyAction(s, { type: "approve", id: "HAK-024" });
+  s = applyAction(s, { type: "approve", id: "CER-024" });
   const cash = summary(s).cash;
   s = applyAction(s, {
     type: "barter-offset",
-    barterId: "BRT-2",
-    requestId: "HAK-024",
+    barterId: "CNJ-2",
+    requestId: "CER-024",
     amount: 48500,
   });
   assert.equal(
     requestStatus(
       s,
-      requestList(s).find((r) => r.id === "HAK-024"),
+      requestList(s).find((r) => r.id === "CER-024"),
     ),
     "Compensado",
   );
   assert.equal(summary(s).cash, cash);
-  assert.throws(() => applyAction(s, { type: "pay-order", id: "HAK-024" }));
+  assert.throws(() => applyAction(s, { type: "pay-order", id: "CER-024" }));
 });
 
 test("Unit catalogue covers every unit with consistent attributes", () => {
@@ -476,13 +476,13 @@ test("Demo seed is internally consistent and reconciles", () => {
   assert.equal(
     requestStatus(
       s,
-      requestList(s).find((r) => r.id === "HAK-026"),
+      requestList(s).find((r) => r.id === "CER-026"),
     ),
     "Pagada",
   );
   // Kasa: Kasım öncesi peşinatlar açılış kasasına dahil, yalnızca Kasım hareketleri eklenir
   // Apertura (Lofty 420.000 + ALION 310.000 + V Tower 260.000 + Business One 150.000) + cobros de noviembre
-  // + anticipo cobrado en la firma en noviembre (oficina T1-201: 49.800) − pagos de noviembre (HAK-026 39.800 + GDR-001 4.800)
+  // + anticipo cobrado en la firma en noviembre (oficina T1-201: 49.800) − pagos de noviembre (CER-026 39.800 + GTO-001 4.800)
   assert.equal(vk.cash, 1140000 + vk.received + 49800 - 44600);
   // Toplamlar ve cari hesaplar tutarlı
   const tot = summary(s);
@@ -553,7 +553,7 @@ test("Payment statuses classify every row and reconcile with portfolio totals", 
 test("Agenda lists signature, progress payment, barter and payment dates in order", () => {
   const items = agenda(seed(), "alion");
   assert(items.some((i) => i.ref.type === "draft" && i.ref.id === "alion-27"));
-  assert(items.some((i) => i.ref.type === "request" && i.ref.id === "HAK-025"));
+  assert(items.some((i) => i.ref.type === "request" && i.ref.id === "CER-025"));
   assert(items.some((i) => i.kind === "Anticipo" && i.ref.focus === "deposit"));
   assert(items.every((i) => i.project === "alion"));
   for (let k = 1; k < items.length; k++)
@@ -696,7 +696,7 @@ test("Document structure: every contract and barter has exactly one contract doc
   s = applyAction(s, {
     type: "barter",
     record: {
-      id: "BRT-T",
+      id: "CNJ-T",
       project: "alion",
       unitId: "alion-28",
       company: "Örnek Firma",
@@ -708,7 +708,7 @@ test("Document structure: every contract and barter has exactly one contract doc
       transfer: "Pendiente",
     },
   });
-  assert.equal(systemDocuments(s, "BRT-T")[0].kind, "Contrato de canje");
+  assert.equal(systemDocuments(s, "CNJ-T")[0].kind, "Contrato de canje");
   assert.equal(documentValidity(""), "Sin vencimiento");
   assert.equal(documentValidity("2026-11-01"), "Vencido");
   assert.equal(documentValidity("2026-12-05"), "Por vencer");
@@ -732,7 +732,7 @@ test("Work (subcontractor) contracts are derived from work packages and progress
   assert.equal(yapi.paid, 0);
   // Lofty: certificado pagado de la constructora
   const lf = workContracts(s, "lofty").find((w) => w.company === "Constructora Ejemplo del Este");
-  assert.equal(lf.paid, netPayable(s, requestList(s).find((r) => r.id === "HAK-026")));
+  assert.equal(lf.paid, netPayable(s, requestList(s).find((r) => r.id === "CER-026")));
   assert.equal(
     workContracts(s).length,
     ["lofty", "alion", "vtower", "business"].reduce((a, p) => a + workContracts(s, p).length, 0),

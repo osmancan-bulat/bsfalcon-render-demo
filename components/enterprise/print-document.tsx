@@ -1,4 +1,5 @@
 "use client";
+import { m2 } from "@/lib/units";
 // Yazdırılabilir belgeler: sözleşme özeti, ödeme planı, cari ekstre, tahsilat makbuzu ve proje yönetici raporu.
 // Tüm belgeler tarayıcıdaki demo verisinden üretilir ve "temsili" filigranı taşır.
 import { useEffect, useState, type ReactNode } from "react";
@@ -105,7 +106,7 @@ export default function PrintDocument() {
                 </tr>
                 <tr>
                   <th>Alan</th>
-                  <td>Bruto {contract.gross} m²</td>
+                  <td>Superficie {m2(contract.gross ?? 0)} m²</td>
                 </tr>
                 <tr>
                   <th>Precio de venta</th>
@@ -401,7 +402,7 @@ export default function PrintDocument() {
                 <th>Unidad entregada</th>
                 <td>
                   {pname(b.project)} · {unitPlace(b.unitId)} · {u?.type} ·{" "}
-                  {u?.gross} m² · {u?.facade} orientación
+                  {m2(u?.gross ?? 0)} m² · {u?.facade} orientación
                 </td>
               </tr>
               <tr>
@@ -585,7 +586,7 @@ export default function PrintDocument() {
           <DocMeta
             items={[
               ["Fecha del informe", date(SNAPSHOT)],
-              ["Konum", pr.location],
+              ["Ubicación", pr.location],
               ["Entrega prevista", pr.delivery || "No publicada"],
               ["Avance de obra", `%${s.progress}`],
             ]}

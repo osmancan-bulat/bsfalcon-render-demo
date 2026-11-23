@@ -96,13 +96,13 @@ export type Receipt = {
    */
   reversal?: { date: string; reason: string };
 };
-/** Çakışmasız makbuz numarası: mevcut THS-#### numaralarının en büyüğünden devam eder. */
+/** Çakışmasız makbuz numarası: mevcut REC-#### numaralarının en büyüğünden devam eder. */
 export function nextReceiptId(s: { receipts: { id: string }[] }) {
   const max = Math.max(
     s.receipts.length,
-    ...s.receipts.map((r) => Number(/^THS-(\d{4})$/.exec(r.id)?.[1] ?? 0)),
+    ...s.receipts.map((r) => Number(/^REC-(\d{4})$/.exec(r.id)?.[1] ?? 0)),
   );
-  return `THS-${String(max + 1).padStart(4, "0")}`;
+  return `REC-${String(max + 1).padStart(4, "0")}`;
 }
 /** Geçerli (iptal edilmemiş) tahsilatlar: bütün bakiye ve rapor hesapları bunları kullanır. */
 export const activeReceipts = (s: { receipts: Receipt[] }) =>
@@ -239,7 +239,7 @@ export const seedState: EnterpriseState = {
       .filter((i) => i.due.startsWith("2026-11") && i.due.slice(-2) === "10")
       .slice(0, 1)
       .map((i, n) => ({
-        id: `THS-00${n + 1}`,
+        id: `REC-00${n + 1}`,
         installmentId: i.id,
         amount: i.amount,
         date: "2026-11-10",
@@ -248,13 +248,13 @@ export const seedState: EnterpriseState = {
       })),
     ...demoReceipts,
   ],
-  // SAT-019: onaylı, malzeme teslim alındı, ödemesi vadeli (ödeme planında)
-  approved: ["SAT-019", "GDR-001"],
+  // OC-019: onaylı, malzeme teslim alındı, ödemesi vadeli (ödeme planında)
+  approved: ["OC-019", "GTO-001"],
   rejected: [],
-  paidOrders: ["HAK-026", "GDR-001"],
-  // HAK-026 vadesi 8 Kasım; ödeme aynı gün kaydedildi (işlem geçmişi AUD-D04)
-  paidDates: { "HAK-026": "2026-11-08", "GDR-001": "2026-11-06" },
-  delivered: ["SAT-019"],
+  paidOrders: ["CER-026", "GTO-001"],
+  // CER-026 vadesi 8 Kasım; ödeme aynı gün kaydedildi (işlem geçmişi AUD-D04)
+  paidDates: { "CER-026": "2026-11-08", "GTO-001": "2026-11-06" },
+  delivered: ["OC-019"],
   requests: demoRequests,
   requestEdits: {},
   customerEdits: {},
@@ -849,9 +849,9 @@ export function applyAction(
     if (!Number.isFinite(r.amount) || r.amount <= 0) throw Error("El monto del gasto debe ser positivo.");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(r.date) || r.date > SNAPSHOT) throw Error("La fecha del gasto debe ser válida y no puede ser futura.");
     const all = requestList(s);
-    let n = all.filter((x) => x.id.startsWith("GDR-")).length + 1;
-    while (all.some((x) => x.id === `GDR-${String(n).padStart(3, "0")}`)) n++;
-    const gid = `GDR-${String(n).padStart(3, "0")}`;
+    let n = all.filter((x) => x.id.startsWith("GTO-")).length + 1;
+    while (all.some((x) => x.id === `GTO-${String(n).padStart(3, "0")}`)) n++;
+    const gid = `GTO-${String(n).padStart(3, "0")}`;
     next.requests = [
       ...s.requests,
       { id: gid, project: r.project, company: r.company.trim(), name: r.name.trim(), type: "Gasto de obra", amount: r2(r.amount), due: r.date, status: "Pagada", description: r.category },
@@ -1790,7 +1790,7 @@ export function customerLedger(
       date: c.depositDate ?? signed,
       kind: "Anticipo",
       label: "Cobro de anticipo (en la firma)",
-      ref: "PSN-0",
+      ref: "ANT-0",
       debit: 0,
       credit: atSigning,
     });
@@ -1799,7 +1799,7 @@ export function customerLedger(
       date: d.date,
       kind: "Anticipo",
       label: "Cobro de anticipo",
-      ref: `PSN-${n + 1}`,
+      ref: `ANT-${n + 1}`,
       debit: 0,
       credit: d.amount,
       sourceId: d.id,

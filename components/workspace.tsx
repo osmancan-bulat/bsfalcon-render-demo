@@ -422,7 +422,7 @@ function Shell({ section }: { section: string }) {
                 ? "Restablecer demo"
                 : overlay === "demo"
                   ? "Esta es una demostración del producto"
-                  : "Bildirim merkezi"
+                  : "Centro de notificaciones"
         }
       >
         {overlay === "search" && (

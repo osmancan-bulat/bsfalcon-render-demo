@@ -1,4 +1,5 @@
 "use client";
+import { m2 } from "@/lib/units";
 // Müşteri / daire dosyası. Önce özet (müşteri, daire, durum, bedel, ödenen, kalan, sonraki ödeme),
 // ardından beş sekme: Ödeme planı · Tahsilatlar · Sözleşme · Belgeler · İşlem geçmişi.
 // Tahsilat tek düğmeyle açılır; form kaydetmeden önce bakiye ve kasa etkisini gösterir.
@@ -35,9 +36,9 @@ import { money, date } from "@/lib/data";
 
 const TABS = [
   "Plan de pagos",
-  "Tahsilatlar",
+  "Cobros",
   "Contrato",
-  "Belgeler",
+  "Documentos",
   "Historial",
 ] as const;
 const TONE: Record<string, string> = {
@@ -100,7 +101,7 @@ export default function CustomerPanel({
   const lateTotal = late.reduce((a, r) => a + r.remaining, 0);
   const priorPaid =
     c.paidMonths > 0 ? c.deposit + c.paidMonths * c.installment : 0;
-  const ledger = tab === "Tahsilatlar" ? customerLedger(state, c.id) : [];
+  const ledger = tab === "Cobros" ? customerLedger(state, c.id) : [];
   const receipts = state.receipts.filter((r) =>
     rows.some((x) => x.installmentId === r.installmentId),
   );
@@ -122,7 +123,7 @@ export default function CustomerPanel({
             reference,
           });
     if (ok) {
-      // Makbuz no, applyAction ile aynı kuralla: THS-<sıra>
+      // Makbuz no, applyAction ile aynı kuralla: REC-<sıra>
       setJustPaid({
         amount,
         receipt: row.kind === "Anticipo" ? undefined : nextReceiptId(state),
@@ -152,7 +153,7 @@ export default function CustomerPanel({
           <dd>
             {u ? unitShort(c.id) : c.unit} · {u?.type}
             <small>
-              {u?.floorLabel} · {u?.gross} m² · {u?.facade} · código {c.unit}
+              {u?.floorLabel} · {m2(u?.gross ?? 0)} m² · {u?.facade} · código {c.unit}
             </small>
           </dd>
         </div>
@@ -227,7 +228,7 @@ export default function CustomerPanel({
             <b>{money(justPaid.amount)} cobrado</b>
             <small>
               Saldo pendiente {money(acc.balance)} · ingresaron a caja{" "}
-              {money(justPaid.amount)} girdi
+              {money(justPaid.amount)}
             </small>
           </div>
           {justPaid.receipt && (
@@ -399,7 +400,7 @@ export default function CustomerPanel({
         </section>
       )}
 
-      {tab === "Tahsilatlar" && (
+      {tab === "Cobros" && (
         <section className="acct-section">
           <div className="file-actions">
             <span className="muted">
@@ -420,7 +421,7 @@ export default function CustomerPanel({
               <thead>
                 <tr>
                   <th>Fecha</th>
-                  <th>Hareket</th>
+                  <th>Movimiento</th>
                   <th className="numeric">Monto</th>
                   <th className="numeric">Saldo</th>
                   <th aria-label="Recibo" />
@@ -731,7 +732,7 @@ export default function CustomerPanel({
         </section>
       )}
 
-      {tab === "Belgeler" && (
+      {tab === "Documentos" && (
         <RecordDocuments
           records={[c.id, `unit:${c.id}`]}
           project={c.project}

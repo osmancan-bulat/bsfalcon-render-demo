@@ -1,4 +1,5 @@
 "use client";
+import { m2 } from "@/lib/units";
 import { useEffect, useState } from "react";
 import { Upload, Files, HardDrive, Link2, FilePlus2 } from "lucide-react";
 import { useApp } from "./context";
@@ -119,7 +120,7 @@ export default function ArchiveView() {
           const text = [
             "DOCUMENTO DE DEMOSTRACIÓN — sin validez legal",
             `Resumen del contrato de compraventa · ${c.number}`,
-            `Proyecto: ${pname(c.project)} · Unidad ${c.unitLabel} (${c.type}, ${c.gross} m²)`,
+            `Proyecto: ${pname(c.project)} · Unidad ${c.unitLabel} (${c.type}, ${m2(c.gross ?? 0)} m²)`,
             `Comprador: ${c.name} (ficticio)`,
             `Precio: ${money(c.price)} · Plan: ${c.planLabel}`,
           ].join("\n");

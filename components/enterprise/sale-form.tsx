@@ -1,4 +1,5 @@
 "use client";
+import { m2 } from "@/lib/units";
 // Yeni satış sözleşmesi: kademeli peşinat, esnek vade, ara ödemeler ve canlı ödeme planı önizlemesi.
 import { useMemo, useState } from "react";
 import { Plus, Trash2, Check, FileSignature } from "lucide-react";
@@ -25,8 +26,8 @@ export default function NewSaleForm({
   const p = projects.find((p) => p.id === u.project)!;
   const [name, setName] = useState("");
   const [price, setPrice] = useState(String(u.listPrice));
-  // Önerilen peşinat: liste fiyatının yaklaşık %25'i (50.000 TL'ye yuvarlı); kullanıcı değiştirebilir.
-  const suggested = String(Math.max(0, Math.round((u.listPrice * 0.25) / 50000) * 50000));
+  // Anticipo sugerido: ~20 % del precio de lista (redondeado a US$ 500); el usuario puede cambiarlo.
+  const suggested = String(Math.max(0, Math.round((u.listPrice * 0.2) / 500) * 500));
   const [deposits, setDeposits] = useState<Row[]>([
     { amount: suggested, due: SNAPSHOT },
   ]);
@@ -96,7 +97,7 @@ export default function NewSaleForm({
             Unidad {u.label} · {u.type}
           </b>
           <small>
-            Bruto {u.gross} m² · {u.net} m² · {u.floorLabel} · {u.facade}
+            Superficie {m2(u.gross)} m² · {u.floorLabel} · {u.facade}
             {u.corner ? "· esquina" : ""}
           </small>
         </div>

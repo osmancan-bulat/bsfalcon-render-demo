@@ -1,4 +1,5 @@
 "use client";
+import { m2 } from "@/lib/units";
 // Proje ana ekranı. İlk bakışta yalnızca: geciken ödemeler, yaklaşan ödemeler, bekleyen sözleşmeler,
 // bugün yapılacaklar ve hızlı işlemler. Finansal özet ikinci sırada; daire haritası, sözleşme listesi
 // ve inşaat programı kendi bölümlerinde (Daireler, Sözleşmeler, Şantiye).
@@ -211,7 +212,7 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
         : `anticipo (${r.label})`
       : r.kind === "Pago intermedio"
         ? "pago intermedio"
-        : `${MONTHS[Number(r.due.slice(5, 7)) - 1]} taksiti`;
+        : `cuota de ${MONTHS[Number(r.due.slice(5, 7)) - 1]}`;
   const tasks: Task[] = [
     ...late.map(([id, v]) => {
       const c = names.get(id);
@@ -297,8 +298,8 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
           <Link className="btn" href="/unidades">
             <Plus size={15} /> Nueva venta
           </Link>
-          <Link className="btn" href="/barter">
-            <Handshake size={15} /> Canje
+          <Link className="btn" href="/facturacion">
+            <ReceiptText size={15} /> Facturación
           </Link>
           <Link
             className="btn ghost"
@@ -556,7 +557,7 @@ export function ContractTable({
                 <td>
                   <b>{unitShort(c.unitId)}</b>
                   <small>
-                    {c.floor} · {c.type} · {c.gross} m² · {c.unitLabel}
+                    {c.floor} · {c.type} · {m2(c.gross ?? 0)} m² · {c.unitLabel}
                   </small>
                 </td>
                 <td>
