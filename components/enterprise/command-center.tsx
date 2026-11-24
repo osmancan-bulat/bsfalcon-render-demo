@@ -1,4 +1,5 @@
 "use client";
+import { useAuthOptional } from "../security/auth";
 // Proje ana ekranı. İlk bakışta yalnızca: geciken ödemeler, yaklaşan ödemeler, bekleyen sözleşmeler,
 // bugün yapılacaklar ve hızlı işlemler. Finansal özet ikinci sırada; daire haritası, sözleşme listesi
 // ve inşaat programı kendi bölümlerinde (Daireler, Sözleşmeler, Şantiye).
@@ -69,6 +70,8 @@ type Open =
 
 export default function CommandCenter({ projectId }: { projectId: string }) {
   const { state } = useApp();
+  const auth = useAuthOptional();
+  const showFin = !auth || auth.can("finans", "view");
   const p = projects.find((p) => p.id === projectId)!;
   const [open, setOpen] = useState<Open>(null);
   const [allTasks, setAllTasks] = useState(false);
@@ -452,7 +455,7 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
         </section>
       </div>
 
-      <section className="home-finance" aria-label="Finansal durum">
+      {showFin && <section className="home-finance" aria-label="Finansal durum">
         <h2>Finansal durum</h2>
         <dl>
           <div>
@@ -484,7 +487,7 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
         <Link className="e-text-link" href="/finans">
           Finans ayrıntısı <ChevronRight size={13} />
         </Link>
-      </section>
+      </section>}
 
       {open?.type === "customer" && (
         <CustomerPanel

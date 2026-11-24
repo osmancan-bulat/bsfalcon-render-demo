@@ -51,6 +51,7 @@ import {
   demoReminders,
   demoAudit,
 } from "./demo-seed.ts";
+import { applyFleetAction, seedFleet, type FleetAction, type FleetState } from "./fleet.ts";
 /** Ay başı: bu tarihten önceki tahsilatlar demo açılış kasasına dahildir. */
 export const MONTH_START = "2026-11-01";
 export { projects, customers, installments, workItems, documents, SNAPSHOT };
@@ -111,6 +112,8 @@ export type Audit = {
   message: string;
   time: string;
   project: string;
+  /** İşlemi yapan kullanıcı (demo oturumu; sunucu doğrulaması yoktur). */
+  user?: string;
 };
 export type Barter = {
   id: string;
@@ -203,6 +206,8 @@ export type EnterpriseState = {
   landshare?: LandShareState;
   /** BŞ Falcon: proje süreci adımları ve güvence belge takibi (temsili). */
   process?: ProcessState;
+  /** Araç ve filo yönetimi (temsili). */
+  fleet?: FleetState;
 };
 export type WorkItem = {
   id: string;
@@ -267,6 +272,7 @@ export const seedState: EnterpriseState = {
   workCustom: [],
   landshare: seedLandShare,
   process: seedProcess,
+  fleet: seedFleet,
 };
 /**
  * Tarayıcıda kayıtlı durumu güvenle okur. Önceki demo sürümünün jenerik adları
@@ -409,6 +415,7 @@ export type Action =
       amount: number;
     }
   | { type: "reset" }
+  | FleetAction
   | { type: "share-assign"; unit: string; owner: string; note?: string }
   | { type: "share-step"; project: string; key: string; status: StepStatus }
   | { type: "obligation-toggle"; project: string; id: string }
@@ -755,7 +762,13 @@ export function applyAction(
     : null;
   if (targetUnit && isLandownerUnit(s, targetUnit))
     throw Error("Bu bağımsız bölüm arsa sahibi payında; yüklenici satışı, rezervasyonu veya barteri yapılamaz.");
-  if (action.type === "share-assign") {
+  if (action.type.startsWith("vehicle-")) {
+    const r = applyFleetAction(s.fleet ?? seedFleet, action as FleetAction);
+    next.fleet = r.fleet;
+    entity = r.entity;
+    project = "all";
+    message = r.message;
+  } else if (action.type === "share-assign") {
     const u = unitById(action.unit);
     const ls = s.landshare ?? seedLandShare;
     const ag = u && ls.agreements.find((a) => a.project === u.project);

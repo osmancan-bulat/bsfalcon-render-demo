@@ -1,4 +1,5 @@
 "use client";
+import { useAuth } from "../security/auth";
 import { useEffect, useState } from "react";
 import { Upload, Files, HardDrive, Link2, FilePlus2 } from "lucide-react";
 import { useApp } from "./context";
@@ -44,6 +45,18 @@ const VALIDITY_TONE: Record<string, string> = {
 };
 export default function ArchiveView() {
   const { state, project, notify } = useApp();
+  const auth = useAuth();
+  // Hassas belge: açmadan önce yetki + yeniden doğrulama; görüntüleme kaydı (DEMO · tarayıcı içi)
+  const openFile = async (f: ArchiveFile) => {
+    if (!auth.perms?.flags.sensitiveDocs) {
+      auth.logDoc(f.name, "arşiv dosyası", "denied", "Hassas belge yetkisi yok");
+      notify("Bu belgeyi açma yetkiniz yok; deneme kaydedildi.");
+      return;
+    }
+    if (!(await auth.requireReauth(f.name, "arşiv dosyası"))) return;
+    auth.logDoc(f.name, "arşiv dosyası", "view");
+    setSelected(f);
+  };
   const [files, setFiles] = useState<ArchiveFile[]>([]),
     [q, setQ] = useState(""),
     [kind, setKind] = useState("all"),
@@ -466,7 +479,7 @@ export default function ArchiveView() {
                     <tr
                       key={f.id}
                       className="clickable"
-                      onClick={() => setSelected(f)}
+                      onClick={() => openFile(f)}
                     >
                       <td>
                         <b>{f.name}</b>
@@ -682,7 +695,13 @@ export default function ArchiveView() {
         wide
       >
         {selected && (
-          <DocumentDetail f={selected} info={docInfo(selected)} url={url} />
+          <DocumentDetail
+            f={selected}
+            info={docInfo(selected)}
+            url={url}
+            canDownload={!!auth.perms?.flags.download}
+            onDownload={() => auth.logDoc(selected.name, "arşiv dosyası", "download")}
+          />
         )}
       </Drawer>
     </>
@@ -690,10 +709,14 @@ export default function ArchiveView() {
 }
 
 function DocumentDetail({
+  canDownload = true,
+  onDownload,
   f,
   info,
   url,
 }: {
+  canDownload?: boolean;
+  onDownload?: () => void;
   f: ArchiveFile;
   info: { contract: string; party: string; unit: string };
   url: string;
@@ -751,9 +774,13 @@ function DocumentDetail({
         sunucuya yüklenmez, yedeklenmez ve kurumsal belge arşivi yerine geçmez.
       </p>
       <div className="form-actions">
-        <a className="btn primary" href={url} download={f.name}>
-          Dosyayı indir · {fileSize(f.size)}
-        </a>
+        {canDownload ? (
+          <a className="btn primary" href={url} download={f.name} onClick={onDownload}>
+            Dosyayı indir · {fileSize(f.size)}
+          </a>
+        ) : (
+          <span className="muted">İndirme yetkiniz yok · yalnızca görüntüleme</span>
+        )}
       </div>
       {text ? (
         <pre className="doc-text">{text}</pre>

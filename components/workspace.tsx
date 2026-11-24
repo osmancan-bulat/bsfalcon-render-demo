@@ -30,6 +30,14 @@ import {
   Settings2,
 } from "lucide-react";
 import Login from "./login";
+import { AuthProvider, useAuth } from "./security/auth";
+import { AccessDenied, useSessionGuard } from "./security/guard";
+import SecurityCenter from "./security/security-center";
+import FleetView from "./fleet/fleet-view";
+import { Truck, LockKeyhole } from "lucide-react";
+import { roleLabel } from "@/lib/security";
+import { setExportGate } from "@/lib/export";
+import { fleetReminders, seedFleet } from "@/lib/fleet";
 import { Provider, useApp } from "./enterprise/context";
 import {
   Logo,
@@ -160,6 +168,18 @@ const GROUPS: Group[] = [
     tabs: [["raporlar", "Raporlar"]],
   },
   {
+    id: "araclar",
+    title: "Araç ve Filo",
+    icon: Truck,
+    tabs: [["araclar", "Araçlar, hatırlatmalar ve giderler"]],
+  },
+  {
+    id: "guvenlik",
+    title: "Güvenlik Merkezi",
+    icon: LockKeyhole,
+    tabs: [["guvenlik", "Güvenlik ve denetim"]],
+  },
+  {
     id: "yonetim",
     title: "Yönetim & Ayarlar",
     icon: Settings2,
@@ -174,13 +194,33 @@ const groupOf = (section: string) =>
   );
 export default function Workspace({ section }: { section: string }) {
   return (
-    <Provider>
-      {section === "giris" ? <Login /> : <Shell section={section} />}
-    </Provider>
+    <AuthProvider>
+      <Provider>
+        {section === "giris" ? <Login /> : <Shell section={section} />}
+      </Provider>
+    </AuthProvider>
   );
 }
 function Shell({ section }: { section: string }) {
   const { state, ready, project, setProject, act, toast, notify } = useApp();
+  const auth = useAuth();
+  const signedIn = useSessionGuard();
+  const visibleTabs = (g: Group) => g.tabs.filter(([id]) => auth.canSection(id));
+  // CSV ve rapor dışa aktarımı: indirme yetkisi + yeniden doğrulama + belge erişim kaydı
+  useEffect(() => {
+    setExportGate(async (name) => {
+      if (!auth.perms?.flags.download) {
+        auth.logDoc(name, "CSV dışa aktarma", "denied", "İndirme yetkisi yok");
+        notify("Dışa aktarma (indirme) yetkiniz yok; deneme kaydedildi.");
+        return false;
+      }
+      const ok = await auth.requireReauth(name, "CSV dışa aktarma");
+      if (ok) auth.logDoc(name, "CSV dışa aktarma", "download");
+      return ok;
+    });
+    return () => setExportGate(null);
+  }, [auth.perms, auth.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const navGroups = GROUPS.filter((g) => (g.id === "home" ? auth.canSection("genel-bakis") : visibleTabs(g).length > 0));
   const [mobile, setMobile] = useState(false),
     [overlay, setOverlay] = useState(""),
     [search, setSearch] = useState(""),
@@ -320,12 +360,12 @@ function Shell({ section }: { section: string }) {
         </Link>
         <ScopePicker scope={scope} onChoose={choose} />
         <nav aria-label="Ana menü">
-          {GROUPS.map((g) => (
+          {navGroups.map((g) => (
             <Link
               key={g.id}
               aria-current={group?.id === g.id ? "page" : undefined}
               className={group?.id === g.id ? "active" : ""}
-              href={g.id === "home" ? homeHref : `/${g.tabs[0][0]}`}
+              href={g.id === "home" ? homeHref : `/${visibleTabs(g)[0][0]}`}
               onClick={() => setMobile(false)}
             >
               <g.icon size={18} />
@@ -341,12 +381,12 @@ function Shell({ section }: { section: string }) {
           </button>
           <div className="e-profile demo">
             <div>
-              <b>Demo ortamı</b>
-              <small>Kullanıcı girişi ve yetkilendirme yok</small>
+              <b>{auth.user?.name ?? "Oturum yok"}</b>
+              <small>{auth.user ? roleLabel(auth.user.role) : ""} · DEMO oturumu</small>
             </div>
-            <Link href="/" aria-label="Giriş ekranına dön">
+            <button type="button" className="icon-button" aria-label="Oturumu kapat" title="Oturumu kapat" onClick={() => auth.logout("Oturum kapatıldı.")}>
               <LogOut size={16} />
-            </Link>
+            </button>
           </div>
           <div className="e-powered">
             BŞ Falcon<span> · </span>
@@ -403,6 +443,7 @@ function Shell({ section }: { section: string }) {
               <Bell size={19} />
               {(lateCount > 0 ||
                 draftCount > 0 ||
+                (auth.can("arac") && fleetReminders(state.fleet ?? seedFleet).within30.length + fleetReminders(state.fleet ?? seedFleet).overdue.length > 0) ||
                 pending.some(
                   (r) => scope === "all" || r.project === scope,
                 )) && <i className="notification-dot" />}
@@ -410,12 +451,12 @@ function Shell({ section }: { section: string }) {
           </div>
         </header>
         <main className="e-content">
-          {group && group.tabs.length > 1 && (
+          {group && visibleTabs(group).length > 1 && (
             <nav
               className="section-tabs"
               aria-label={`${group.title} bölümleri`}
             >
-              {group.tabs.map(([id, title]) => (
+              {visibleTabs(group).map(([id, title]) => (
                 <Link
                   key={id}
                   href={`/${id}`}
@@ -428,8 +469,10 @@ function Shell({ section }: { section: string }) {
               ))}
             </nav>
           )}
-          {!ready ? (
-            <div className="e-loading">Çalışma alanı hazırlanıyor…</div>
+          {!ready || !signedIn ? (
+            <div className="e-loading">{auth.ready && !auth.user ? "Oturum doğrulanıyor…" : "Çalışma alanı hazırlanıyor…"}</div>
+          ) : !auth.canSection(section) ? (
+            <AccessDenied what={section} />
           ) : (
             <>
               {section === "genel-bakis" && <FalconHome />}
@@ -437,6 +480,8 @@ function Shell({ section }: { section: string }) {
               {section === "surec" && <ProcessView />}
               {section === "butce" && <BudgetView />}
               {section === "raporlar" && <ReportsView />}
+              {section === "araclar" && <FleetView />}
+              {section === "guvenlik" && <SecurityCenter />}
               {section === "yonetim" && (
                 <AdminView onReset={() => setOverlay("reset")} />
               )}

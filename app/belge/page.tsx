@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Provider } from "@/components/enterprise/context";
-import PrintDocument from "@/components/enterprise/print-document";
+import { AuthProvider } from "@/components/security/auth";
+import DocumentGate from "@/components/security/document-gate";
 
 export const metadata: Metadata = {
   title: "BŞ Falcon Group | Belge önizleme",
@@ -9,8 +10,10 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <Provider>
-      <PrintDocument />
-    </Provider>
+    <AuthProvider>
+      <Provider>
+        <DocumentGate />
+      </Provider>
+    </AuthProvider>
   );
 }

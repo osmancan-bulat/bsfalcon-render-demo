@@ -1,4 +1,5 @@
 "use client";
+import { useAuthOptional } from "../security/auth";
 // Müşteri / daire dosyası. Önce özet (müşteri, daire, durum, bedel, ödenen, kalan, sonraki ödeme),
 // ardından beş sekme: Ödeme planı · Tahsilatlar · Sözleşme · Belgeler · İşlem geçmişi.
 // Tahsilat tek düğmeyle açılır; form kaydetmeden önce bakiye ve kasa etkisini gösterir.
@@ -68,6 +69,21 @@ export default function CustomerPanel({
   } | null>(null);
   const [reschedule, setReschedule] = useState("");
   const [panel, setPanel] = useState<"" | "transfer" | "edit">("");
+  const auth = useAuthOptional();
+  // Müşteri kişisel bilgileri hassas içeriktir: yetki + yeniden doğrulama + erişim kaydı (DEMO · tarayıcı içi)
+  const openPersonal = async () => {
+    if (panel === "edit") return setPanel("");
+    if (auth) {
+      const label = `${c?.name ?? id} · kişisel bilgiler`;
+      if (!auth.perms?.flags.sensitiveDocs || !auth.can("satis", "edit")) {
+        auth.logDoc(label, "müşteri kişisel bilgisi", "denied", "Yetki yok");
+        return;
+      }
+      if (!(await auth.requireReauth(label, "müşteri kişisel bilgisi"))) return;
+      auth.logDoc(label, "müşteri kişisel bilgisi", "view");
+    }
+    setPanel("edit");
+  };
   const [fullPlan, setFullPlan] = useState(false);
   const [reversing, setReversing] = useState<{ kind: "receipt" | "deposit"; id: string; ref: string } | null>(null);
   if (!c) return null;
@@ -566,7 +582,7 @@ export default function CustomerPanel({
             <span className="spacer" />
             <button
               className="btn compact ghost"
-              onClick={() => setPanel(panel === "edit" ? "" : "edit")}
+              onClick={openPersonal}
             >
               <PenLine size={14} /> Müşteri bilgileri
             </button>

@@ -33,3 +33,16 @@ npm run build     # statik çıktı: out/
 
 Ayrı Vercel projesi: `bsfalcon-yonetim-merkezi`.
 `vercel.json` statik `out/` klasörünü yayınlar; tüm yanıtlarda `noindex`.
+
+## Güvenlik katmanı ve Araç/Filo modülü (DEMO)
+
+- **Giriş (DEMO):** İlk açılışta tarayıcıda yönetici hesabı oluşturulur (şifreyi kullanıcı belirler; kaynak kodda
+  şifre yoktur). Şifreler PBKDF2-SHA256 (210.000 tekrar, tuzlu) özetiyle saklanır; hatalı girişte kilitleme,
+  hareketsizlikte oturum kapanışı, isteğe bağlı TOTP iki adımlı doğrulama, hassas belgelerde yeniden doğrulama.
+- **Roller:** sistem yöneticisi, üst yönetim, muhasebe, satış, şantiye, yalnızca görüntüleme; kişiye özel yetki.
+- **Güvenlik Merkezi (`/guvenlik`):** kullanıcılar, oturumlar, giriş ve belge erişim kayıtları, kritik finansal
+  değişiklikler, yedekleme, ayarlar ve üretim mimarisi.
+- **Araç ve Filo (`/araclar`):** MTV, trafik sigortası, kasko, muayene, bakım, lastik, yakıt, servis ve evrak;
+  30/15/7 gün ve gecikmiş hatırlatmaları uygulama içinde (e-posta/SMS/WhatsApp gönderimi yok).
+- **Sınır:** Statik sitede kontroller yalnızca tarayıcıda çalışır ve atlatılabilir; gerçek şirket verisi için
+  sunucu tarafı kimlik doğrulama, merkezî veritabanı ve rol bazlı erişim gerekir.

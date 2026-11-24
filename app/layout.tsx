@@ -11,6 +11,7 @@ import "./simple.css";
 import "./platform.css";
 import "./polish.css";
 import "./falcon.css";
+import "./security.css";
 export const metadata: Metadata = {
   title: "BŞ Falcon Group | Yönetim Merkezi",
   description:

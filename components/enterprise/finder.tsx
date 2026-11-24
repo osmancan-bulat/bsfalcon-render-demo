@@ -35,6 +35,9 @@ import {
 } from "@/lib/enterprise";
 import { units } from "@/lib/units";
 import { money, date } from "@/lib/data";
+import { fleetReminders, seedFleet } from "@/lib/fleet";
+import { useAuthOptional } from "../security/auth";
+import { Truck } from "lucide-react";
 
 export type FileRef = {
   type: "customer" | "draft" | "barter" | "request" | "unit";
@@ -215,7 +218,13 @@ export function Notifications({
   const pending = requestList(state).filter(
     (r) => inScope(r.project) && requestStatus(state, r) === "Onay bekliyor",
   );
-  const empty = !late.size && !drafts.length && !pending.length;
+  // Araç hatırlatmaları (uygulama içi; e-posta/SMS gönderimi yok): gecikmiş ve 30 gün içindeki işlemler
+  const auth = useAuthOptional();
+  const fleet = state.fleet ?? seedFleet;
+  const fr = fleetReminders(fleet);
+  const fleetDue = auth && !auth.can("arac", "view") ? [] : fr.open.filter((o) => o.days <= 30);
+  const plate = (id: string) => fleet.vehicles.find((v) => v.id === id)?.plate ?? id;
+  const empty = !late.size && !drafts.length && !pending.length && !fleetDue.length;
   return (
     <div className="notify">
       <p className="drawer-intro">
@@ -270,6 +279,23 @@ export function Notifications({
               </span>
               <span className="cc-amount num">{money(d.price)}</span>
             </button>
+          ))}
+        </section>
+      )}
+      {fleetDue.length > 0 && (
+        <section>
+          <h3 className="subheading">Araç işlemleri · {fr.counts["Gecikmiş"]} gecikmiş · {fleetDue.length - fr.counts["Gecikmiş"]} yaklaşan (30 gün)</h3>
+          {fleetDue.map((o) => (
+            <Link key={o.id} className="alert-row" href="/araclar" onClick={() => onPick(null)}>
+              <span className={`cc-task-icon ${o.days < 0 ? "t-danger" : "t-info"}`}>
+                <Truck size={15} />
+              </span>
+              <span className="cc-list-main">
+                <b>{plate(o.vehicleId)} · {o.kind}</b>
+                <small>{o.days < 0 ? `${-o.days} gün gecikti` : o.days === 0 ? "Bugün" : `${o.days} gün kaldı`} · {date(o.due)}</small>
+              </span>
+              <span className="cc-amount num">{o.amount ? money(o.amount) : ""}</span>
+            </Link>
           ))}
         </section>
       )}

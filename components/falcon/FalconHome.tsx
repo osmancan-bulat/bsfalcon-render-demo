@@ -1,4 +1,6 @@
 "use client";
+import { fleetReminders, seedFleet } from "@/lib/fleet";
+import { useAuthOptional } from "../security/auth";
 // BŞ Falcon Group Yönetim Merkezi açılış ekranı. Bütün sayılar aynı motor ve raporlardan gelir:
 // financialReport / salesReport / managerReport (lib/reports), budgetReport / shareSummary / processOf
 // (lib/falcon-reports), paymentRows ve requestList (lib/enterprise). Portföy bilgileri resmî sitedendir.
@@ -48,6 +50,31 @@ export default function FalconHome() {
   const todos = state.reminders.filter((r) => !r.done).sort((a, b) => a.due.localeCompare(b.due));
 
   const featured = ["agva", "cengilli"];
+  // Araç hatırlatmaları (uygulama içi bildirim; e-posta/SMS yok)
+  const auth = useAuthOptional();
+  const fr = fleetReminders(state.fleet ?? seedFleet);
+  const fleetPlate = (id: string) => (state.fleet ?? seedFleet).vehicles.find((v) => v.id === id)?.plate ?? id;
+  // Şirket geneli mali göstergeler yalnızca finans görüntüleme yetkisi olan kullanıcılara (DEMO · tarayıcı içi)
+  const showFin = !auth || auth.can("finans", "view");
+  const fleetBox = auth && !auth.can("arac") ? null : (
+    <section className="fh-fleet" aria-label="Araç hatırlatmaları">
+      <div className="fh-fleet-head">
+        <b>Araç ve filo · yaklaşan işlemler</b>
+        <span>
+          <em className="red">{fr.counts["Gecikmiş"]} gecikmiş</em> · {fr.counts["7 gün"]} işlem 7 gün · {fr.counts["15 gün"]} işlem 15 gün · {fr.counts["30 gün"]} işlem 30 gün içinde
+        </span>
+        <Link href="/araclar">Filo yönetimi →</Link>
+      </div>
+      <ul>
+        {[...fr.overdue, ...fr.within30.filter((o) => o.days >= 0)].slice(0, 4).map((o) => (
+          <li key={o.id} className={o.days < 0 ? "late" : ""}>
+            <b>{fleetPlate(o.vehicleId)}</b> {o.kind}
+            <small>{o.days < 0 ? `${-o.days} gün gecikti` : `${o.days} gün kaldı`}</small>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
   return (
     <div className="fh">
       <header className="fh-head">
@@ -75,14 +102,17 @@ export default function FalconHome() {
         <div className="fh-demo-note">Satış, tahsilat ve finans değerleri <b>temsili demo verisidir</b>.</div>
       </section>
 
-      <section className="fh-kpis">
+      {!showFin && (
+        <p className="sec-info">Şirket geneli mali göstergeler (satış toplamı, tahsilat, alacak, bütçe) rolünüzde gizlidir. Yetkiniz olan ekranlar menüde listelenir.</p>
+      )}
+      {showFin && <section className="fh-kpis">
         <Link href="/sozlesmeler" className="fh-kpi"><span>Sözleşmeli satış</span><b>{compact(fin.contracted)}</b><small>{sales.sold} aktif satış sözleşmesi</small></Link>
         <Link href="/odemeler" className="fh-kpi"><span>Tahsil edilen</span><b>{compact(fin.collected)}</b><small>Tahsilat oranı %{Math.round(fin.collectionRate * 100)}</small><div className="progress"><i style={{ width: `${fin.collectionRate * 100}%` }} /></div></Link>
         <Link href="/odemeler" className="fh-kpi"><span>Kalan alacak</span><b>{compact(fin.balance)}</b><small>{upcoming.length} ödeme önümüzdeki 30 günde</small></Link>
         <Link href="/odemeler?durum=Gecikti" className="fh-kpi danger"><span>Geciken alacak</span><b>{money(fin.overdue)}</b><small>{new Set(overdue.map((r) => r.customerId)).size} müşteri · {overdue.length} ödeme</small></Link>
         <Link href="/operasyon" className="fh-kpi"><span>Yaklaşan yükümlülük</span><b>{compact(obligations)}</b><small>Onaylı, ödenmemiş hakediş ve satın alma</small></Link>
         <Link href="/butce" className="fh-kpi"><span>Bütçe kullanımı</span><b>%{Math.round(budget.usedRate * 100)}</b><small>{compact(budget.spent)} / {compact(budget.budget)} (temsili)</small><div className="progress"><i style={{ width: `${Math.min(100, budget.usedRate * 100)}%` }} /></div></Link>
-      </section>
+      </section>}
 
       <section className="fh-alerts" aria-label="Kritik uyarılar">
         {[
@@ -105,6 +135,7 @@ export default function FalconHome() {
         })}
       </section>
 
+      {fleetBox}
       <section className="fh-featured">
         {featured.map((id) => {
           const p = projects.find((x) => x.id === id)!;
@@ -151,7 +182,7 @@ export default function FalconHome() {
         })}
       </section>
 
-      <div className="fh-row">
+      {showFin && <div className="fh-row">
         <Panel title="Proje bazlı ilerleme, bütçe ve gelir-gider" subtitle="Aynı rapor motorundan · bütçe ve önceki dönem maliyeti temsili" className="fh-budget">
           <div className="e-table-wrap">
             <table>
@@ -197,7 +228,7 @@ export default function FalconHome() {
             );
           })()}
         </Panel>
-      </div>
+      </div>}
 
       <section className="fh-bottom">
         <Panel title="Yaklaşan ödemeler" subtitle="30 gün · müşteri tahsilatları">

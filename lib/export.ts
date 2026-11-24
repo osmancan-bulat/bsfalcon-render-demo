@@ -21,7 +21,13 @@ export function toCsv(rows: (string | number)[][]): string {
       .join("\r\n")
   );
 }
-export function csvDownload(rows: (string | number)[][], name: string) {
+/** Dışa aktarma kapısı (Güvenlik katmanı ayarlar): indirme yetkisi + yeniden doğrulama + kayıt. */
+let exportGate: ((name: string) => Promise<boolean>) | null = null;
+export const setExportGate = (g: typeof exportGate) => {
+  exportGate = g;
+};
+export async function csvDownload(rows: (string | number)[][], name: string) {
+  if (exportGate && !(await exportGate(name))) return;
   const url = URL.createObjectURL(
     new Blob([toCsv(rows)], { type: "text/csv;charset=utf-8;" }),
   );

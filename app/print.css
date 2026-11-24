@@ -272,3 +272,9 @@
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
+
+/* Yazdırma yetkisi olmayan kullanıcı: tarayıcı yazdırma komutunda belge içeriği basılmaz (DEMO · istemci tarafı). */
+@media print {
+  .doc-noprint .doc-page { display: none !important; }
+  .doc-noprint::after { content: "Bu belgeyi yazdırma yetkiniz yok (BŞ Falcon · DEMO)."; display: block; padding: 40px; font: 16px sans-serif; }
+}

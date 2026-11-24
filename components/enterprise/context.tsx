@@ -16,6 +16,8 @@ import {
   projects,
 } from "@/lib/enterprise";
 import { syncCatalog, resolveScope, scopeProblem } from "@/lib/catalog";
+import { useAuthOptional } from "../security/auth";
+import { roleLabel } from "@/lib/security";
 type AppContext = {
   state: EnterpriseState;
   ready: boolean;
@@ -32,6 +34,7 @@ export function Provider({ children }: { children: ReactNode }) {
     [project, setP] = useState("all"),
     [toast, notify] = useState("");
   const current = useRef(state);
+  const auth = useAuthOptional();
   // Katalog (projeler ve daireler) her çizimde bu durumla eşitlenir; alt bileşenler güncel listeyi görür.
   syncCatalog(state);
   useEffect(() => {
@@ -108,8 +111,19 @@ export function Provider({ children }: { children: ReactNode }) {
     if (a.type !== "reset" && last.current?.key === key && now - last.current.at < 1000)
       return true;
     last.current = { key, at: now };
+    // Yetki denetimi (DEMO · tarayıcı içi): yetkisiz işlem uygulanmaz ve Güvenlik Merkezi kaydına yazılır.
+    if (auth) {
+      const denied = auth.checkAction(a.type);
+      if (denied) {
+        auth.logDenied(`İşlem: ${a.type}`);
+        notify(denied);
+        return false;
+      }
+    }
     try {
-      const next = applyAction(current.current, a);
+      let next = applyAction(current.current, a);
+      if (auth?.user && next.audit.length && next.audit[0] !== current.current.audit[0])
+        next = { ...next, audit: [{ ...next.audit[0], user: `${auth.user.name} · ${roleLabel(auth.user.role)}` }, ...next.audit.slice(1)] };
       current.current = next;
       setState(next);
       try {

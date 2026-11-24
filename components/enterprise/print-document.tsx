@@ -35,7 +35,7 @@ type Params = {
   to?: string;
 };
 
-export default function PrintDocument() {
+export default function PrintDocument({ canPrint = true, onPrint }: { canPrint?: boolean; onPrint?: () => boolean } = {}) {
   const { state, ready } = useApp();
   const [p, setP] = useState<Params | null>(null);
   useEffect(() => {
@@ -668,9 +668,13 @@ export default function PrintDocument() {
     <div className="doc-shell">
       <div className="doc-toolbar">
         <span>Belge önizleme · tarayıcıdaki demo verisinden üretildi</span>
-        <button className="btn primary" onClick={() => window.print()}>
-          <Printer size={15} /> Yazdır / PDF kaydet
-        </button>
+        {canPrint ? (
+          <button className="btn primary" onClick={() => { if (!onPrint || onPrint()) window.print(); }}>
+            <Printer size={15} /> Yazdır / PDF kaydet
+          </button>
+        ) : (
+          <span className="doc-noprint-note">Yazdırma / PDF yetkiniz yok · yalnızca görüntüleme</span>
+        )}
       </div>
       <article className="doc-page">
         <div className="doc-stamp" aria-label="Temsili demo belgesi">
