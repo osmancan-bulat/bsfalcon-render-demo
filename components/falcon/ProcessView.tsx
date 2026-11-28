@@ -1,5 +1,5 @@
 "use client";
-// Proje süreci ve güvence takibi: bsfalcongroup.com/proje-sureci sayfasındaki 8 adım proje bazında izlenir.
+// Proje süreci ve güvence takibi: byguzel.com/proje-sureci sayfasındaki 8 adım proje bazında izlenir.
 // Güvence alanı yalnızca belge takibidir; poliçe doğrulaması, sigorta entegrasyonu veya hukuki güvence sunulmaz.
 import Link from "next/link";
 import { ShieldCheck, ArrowRight } from "lucide-react";
@@ -20,7 +20,7 @@ export default function ProcessView() {
           <span className="eyebrow">Proje süreci ve güvence takibi</span>
           <h1>Keşiften teslime 8 adım</h1>
           <p>
-            Adımlar BŞ Falcon Group'un yayımladığı proje sürecidir. Her projede hangi aşamada olunduğu, tarihler ve
+            Adımlar By Güzel'un yayımladığı proje sürecidir. Her projede hangi aşamada olunduğu, tarihler ve
             güvence belgelerinin arşiv durumu izlenir.
           </p>
         </div>

@@ -8,6 +8,8 @@ import {
   projects,
   pname,
   customerList,
+  allCustomers,
+  draftsInView,
   accountOf,
   customerLedger,
   contractSignedAt,
@@ -141,12 +143,14 @@ export function financialReport(s: EnterpriseState, f: ReportFilter) {
 export function salesReport(s: EnterpriseState, f: ReportFilter) {
   syncCatalog(s);
   const cs = customerList(s).filter((c) => inScope(f, c.project));
+  // Tutarlar etkin para birimindeki satışlardan; stok durumu ise para biriminden bağımsız tüm satışlardan hesaplanır
   const sold = new Map(cs.map((c) => [c.id, c]));
+  const soldAll = new Set(allCustomers(s).map((c) => c.id));
   const drafts = new Set((s.drafts ?? []).map((d) => d.id));
   const barter = new Set(s.barters.map((b) => b.unitId));
   const reserved = new Set(scopeProjects(f).flatMap((p) => reservedUnits(s, p.id)));
   const status = (id: string) =>
-    sold.has(id) ? "Satıldı" : drafts.has(id) ? "İmza sürecinde" : barter.has(id) ? "Barter" : reserved.has(id) ? "Rezerve" : isLandownerUnit(s, id) ? "Arsa sahibi" : "Müsait";
+    soldAll.has(id) ? "Satıldı" : drafts.has(id) ? "İmza sürecinde" : barter.has(id) ? "Barter" : reserved.has(id) ? "Rezerve" : isLandownerUnit(s, id) ? "Arsa sahibi" : "Müsait";
   const scopeUnits = units.filter((u) => inScope(f, u.project));
   const row = (list: typeof scopeUnits) => {
     const soldList = list.filter((u) => sold.has(u.id)).map((u) => sold.get(u.id)!);
@@ -154,7 +158,7 @@ export function salesReport(s: EnterpriseState, f: ReportFilter) {
     const collected = sum(soldList, (c) => acct(s, c).collected);
     return {
       total: list.length,
-      sold: soldList.length,
+      sold: list.filter((u) => soldAll.has(u.id)).length,
       inSigning: list.filter((u) => status(u.id) === "İmza sürecinde").length,
       barter: list.filter((u) => status(u.id) === "Barter").length,
       reserved: list.filter((u) => status(u.id) === "Rezerve").length,
@@ -368,7 +372,7 @@ export function managerReport(s: EnterpriseState, f: ReportFilter) {
         amount: inst.overdueTotal,
         href: "/odemeler?durum=Gecikti",
       });
-    const drafts = (s.drafts ?? []).filter((d) => d.project === p.id);
+    const drafts = draftsInView(s).filter((d) => d.project === p.id);
     if (drafts.length)
       alerts.push({ tone: "warning", project: p.id, title: `${drafts.length} sözleşme imza sürecinde`, detail: drafts.map((d) => `${contractNumber(d.id)} · ${d.name}`).join(", "), amount: sum(drafts, (d) => d.price), href: "/sozlesmeler" });
     const pending = requestList(s).filter((r) => r.project === p.id && requestStatus(s, r) === "Onay bekliyor");
@@ -394,7 +398,7 @@ export type ReportKind = "finans" | "satis" | "taksit" | "barter" | "taseron" | 
 export function reportCsv(s: EnterpriseState, kind: ReportKind, f: ReportFilter): (string | number)[][] {
   syncCatalog(s);
   const head: (string | number)[][] = [
-    [`BŞ Falcon Group · ${REPORT_TITLES[kind]}`],
+    [`By Güzel · ${REPORT_TITLES[kind]}`],
     ["Kapsam", f.project === "all" ? "Tüm projeler" : pname(f.project)],
     ["Dönem", periodLabel(f)],
     ["Senaryo tarihi", fmt(SNAPSHOT)],

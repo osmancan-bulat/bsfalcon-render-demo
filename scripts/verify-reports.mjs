@@ -139,36 +139,37 @@ test("A full installment receipt flows into every report of its project only", (
 test("A partial receipt reduces the aging bucket by the paid part only", () => {
   const s0 = seed();
   const row = paymentRows(s0).find((r) => r.status === "Gecikti" && r.kind === "Taksit" && r.paid === 0);
-  const s1 = applyAction(s0, { type: "receipt", installmentId: row.installmentId, amount: 10000, method: "Banka havalesi", reference: "HVL-KISMI" });
+  const s1 = applyAction(s0, { type: "receipt", installmentId: row.installmentId, amount: 1000, method: "Banka havalesi", reference: "HVL-KISMI" });
   const f = { project: row.project };
   const [c0, c1] = [installmentReport(s0, f), installmentReport(s1, f)];
-  assert.equal(c1.overdueTotal, r2(c0.overdueTotal - 10000));
+  assert.equal(c1.overdueTotal, r2(c0.overdueTotal - 1000));
   assert.equal(c1.overdueCount, c0.overdueCount);
   const who = c1.perCustomer.find((x) => x.id === row.customerId);
-  assert.equal(who.partialPaid, r2((c0.perCustomer.find((x) => x.id === row.customerId).partialPaid) + 10000));
+  assert.equal(who.partialPaid, r2((c0.perCustomer.find((x) => x.id === row.customerId).partialPaid) + 1000));
 });
 
 test("A barter offset changes only barter and progress-payment figures, never cash or receivables", () => {
-  let s0 = seed();
-  // HAK-025 (Nergis Park · cephe) seed durumunda onaylı; aynı firmanın barteri BRT-NP-01
+  // By Güzel senaryosunda barter yok: motor yine de destekler. Guzel Nature kaba yapı firmasıyla örnek barter kurulur.
+  // HAK-025 (Guzel Nature · kaba yapı) seed durumunda onaylı.
+  let s0 = applyAction(seed(), { type: "barter", record: { id: "BRT-T1", project: "cengilli", unitId: "cengilli-35", company: "Karataş Yapı Taahhüt", work: "Kaba yapı", amount: 600000, start: "2026-11-01", end: "2027-03-01", progress: 50, transfer: "Bekliyor" } });
   const hak = requestList(s0).find((r) => r.id === "HAK-025");
   assert.equal(requestStatus(s0, hak), "Onaylandı");
   const b = s0.barters.find((x) => x.company === hak.company && x.project === hak.project);
   const s1 = applyAction(s0, { type: "barter-offset", barterId: b.id, requestId: "HAK-025", amount: 300000 });
-  const [a0, a1] = [financialReport(s0, P), financialReport(s1, P)];
+  const [a0, a1] = [financialReport(s0, C), financialReport(s1, C)];
   for (const k of ["contracted", "collected", "balance", "overdue", "inflow", "outflow"]) assert.equal(a1[k], a0[k], k);
   assert.equal(a1.barterOffset, r2(a0.barterOffset + 300000));
   assert.equal(a1.barterRemaining, r2(a0.barterRemaining - 300000));
   assert.equal(a1.payableApproved, r2(a0.payableApproved - 300000));
-  const [d0, d1] = [barterReport(s0, P), barterReport(s1, P)];
+  const [d0, d1] = [barterReport(s0, C), barterReport(s1, C)];
   assert.equal(d1.rows.find((x) => x.id === b.id).remaining, r2(d0.rows.find((x) => x.id === b.id).remaining - 300000));
   for (const other of d1.rows.filter((x) => x.id !== b.id)) assert.deepEqual(other, d0.rows.find((x) => x.id === other.id));
-  const [e0, e1] = [subcontractorReport(s0, P), subcontractorReport(s1, P)];
+  const [e0, e1] = [subcontractorReport(s0, C), subcontractorReport(s1, C)];
   const w0 = e0.rows.find((x) => x.company === hak.company), w1 = e1.rows.find((x) => x.company === hak.company);
   assert.equal(w1.barterOffset, r2(w0.barterOffset + 300000));
   assert.equal(w1.cashDue, r2(w0.cashDue - 300000));
   assert.equal(w1.hakedis, w0.hakedis);
-  assert.deepEqual(financialReport(s1, C), financialReport(s0, C));
+  assert.deepEqual(financialReport(s1, P), financialReport(s0, P));
   assert.equal(netPayable(s1, requestList(s1).find((r) => r.id === "HAK-025")), r2(netPayable(s0, requestList(s0).find((r) => r.id === "HAK-025")) - 300000));
 });
 
@@ -203,7 +204,8 @@ test("Date filters work: inflow by period equals ledger credits in that period",
 
 test("CSV export produces a real Excel-compatible file for every report", () => {
   const s = seed();
-  for (const kind of ["finans", "satis", "taksit", "barter", "taseron", "yonetici"]) {
+  // Barter raporu By Güzel menüsünde yok (senaryoda barter kaydı bulunmaz); diğer raporlar dışa aktarılır
+  for (const kind of ["finans", "satis", "taksit", "taseron", "yonetici"]) {
     for (const f of [ALL, C, { project: "nergis", from: "2026-11-01", to: "2026-11-30" }]) {
       const rows = reportCsv(s, kind, f);
       assert(rows.length > 6, kind);
@@ -236,14 +238,14 @@ test("Cash outflow uses the recorded payment date, never the due date; undated p
   const dec = financialReport(s, { project: "cengilli", from: "2026-12-01", to: "2026-12-31" });
   assert(nov.outflowRows.some((r) => r.id === id && r.paidAt === SNAPSHOT && r.due === "2026-12-20"));
   assert(!dec.outflowRows.some((r) => r.id === id));
-  assert.equal(nov.outflow, r2(560000 + 100000));
+  assert.equal(nov.outflow, r2(185000 + 100000));
   // Ödeme tarihi kaydı olmayan (önceki sürüm) ödeme: dönemlere dağıtılmaz, tüm dönem toplamında kalır
   const legacy = structuredClone(s);
   delete legacy.paidDates[id];
   const all = financialReport(legacy, { project: "cengilli" });
   const novL = financialReport(legacy, { project: "cengilli", from: "2026-11-01", to: "2026-11-30" });
-  assert.equal(all.outflow, r2(660000));
-  assert.equal(novL.outflow, 560000);
+  assert.equal(all.outflow, r2(285000));
+  assert.equal(novL.outflow, 185000);
   assert.equal(all.undatedPaidCount, 1);
   assert.equal(all.undatedPaidAmount, 100000);
   assert(all.outflowRows.some((r) => r.id === id && !r.paidAt));
@@ -262,9 +264,10 @@ test("Available units equal units that are neither sold, in signing, bartered no
     assert.equal(salesReport(s, { project: p }).total.available, free, p);
   }
   // Taslak sözleşme daireyi müsait listesinden çıkarır
-  // Nergis Park: 38 − 12 satış − 1 imza sürecinde − 1 barter − 2 rezerve − 17 arsa sahibi payı = 5
-  assert.equal(salesReport(s, P).total.available, 5);
-  assert.equal(salesReport(s, P).total.landowner, 17);
+  // Guzel Life Premium: 90 − 47 satış (44 örnek + 3 sözleşme) − 1 imza sürecinde − 3 rezerve = 39; kat karşılığı yok
+  assert.equal(salesReport(s, P).total.available, 39);
+  assert.equal(salesReport(s, P).total.sold, 47);
+  assert.equal(salesReport(s, P).total.landowner, 0);
 });
 
 console.log(`${checks} reporting & multi-project suites passed.`);

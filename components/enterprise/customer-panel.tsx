@@ -1,4 +1,5 @@
 "use client";
+import { viewCode } from "@/lib/currency";
 import { useAuthOptional } from "../security/auth";
 // Müşteri / daire dosyası. Önce özet (müşteri, daire, durum, bedel, ödenen, kalan, sonraki ödeme),
 // ardından beş sekme: Ödeme planı · Tahsilatlar · Sözleşme · Belgeler · İşlem geçmişi.
@@ -834,7 +835,7 @@ function ReceiptForm({
       </div>
       <div className="form-grid">
         <label>
-          Tahsil edilen tutar (TL)
+          Tahsil edilen tutar ({viewCode()})
           <input
             type="number"
             min="0.01"

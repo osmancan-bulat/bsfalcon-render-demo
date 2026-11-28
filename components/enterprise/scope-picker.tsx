@@ -1,5 +1,5 @@
 "use client";
-// Çalışma kapsamı seçici: BŞ Falcon Group (şirket geneli) veya şirketin projelerinden biri.
+// Çalışma kapsamı seçici: By Güzel (şirket geneli) veya şirketin projelerinden biri.
 // Proje sayısı arttıkça menüyü doldurmaz: tek satırlık bir seçici, açılınca arama ve
 // durumlara göre gruplanmış liste. Arşivdeki projeler Proje portföyünden açılır.
 import Link from "next/link";
@@ -57,7 +57,7 @@ export default function ScopePicker({
         <span className={`project-dot ${scope === "all" ? "company" : scope === "cengilli" ? "bronze" : ""}`} />
         <span className="scope-text">
           <b>{current ? current.name : "Tüm projeler"}</b>
-          <small>{current ? `BŞ Falcon Group · ${current.code}` : "BŞ Falcon Group · şirket geneli"}</small>
+          <small>{current ? `By Güzel · ${current.code}` : "By Güzel · şirket geneli"}</small>
         </span>
         <ChevronsUpDown size={15} />
       </button>
@@ -79,7 +79,7 @@ export default function ScopePicker({
             <span className="project-dot company" />
             <span className="scope-text">
               <b>Tüm projeler</b>
-              <small>BŞ Falcon Group · şirket geneli</small>
+              <small>By Güzel · şirket geneli</small>
             </span>
             {scope === "all" && <Check size={14} />}
           </button>

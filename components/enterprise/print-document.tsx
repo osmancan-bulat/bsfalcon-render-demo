@@ -20,7 +20,9 @@ import {
   workContracts,
   offsetFor,
   requestStatus,
+  contractCurrency,
 } from "@/lib/enterprise";
+import { currencyView, setCurrencyView, CURRENCY_LABEL, type Currency } from "@/lib/currency";
 import { money, date } from "@/lib/data";
 import { unitById, unitPlace, unitShort } from "@/lib/units";
 import ReportBody from "./report-body";
@@ -52,6 +54,17 @@ export default function PrintDocument({ canPrint = true, onPrint }: { canPrint?:
   if (!ready || !p)
     return <div className="doc-loading">Belge hazırlanıyor…</div>;
 
+  // Belge para birimi: müşteri belgeleri sözleşmenin kendi para biriminde, hakediş / barter / iş belgeleri TL,
+  // raporlar seçili görünümde. Tutarlar dönüştürülmez.
+  const docCur: Currency =
+    ["sozlesme", "plan", "ekstre"].includes(p.tur)
+      ? contractCurrency(state, p.id)
+      : p.tur === "makbuz"
+        ? contractCurrency(state, (state.receipts.find((x) => x.id === p.id)?.installmentId ?? "").replace(/-[^-]+$/, ""))
+        : ["is", "barter"].includes(p.tur)
+          ? "TRY"
+          : (currencyView() ?? "EUR");
+  setCurrencyView(docCur);
   let body: ReactNode = null;
   let title = "Belge";
   if (p.tur === "sozlesme" || p.tur === "plan" || p.tur === "ekstre") {
@@ -85,7 +98,7 @@ export default function PrintDocument({ canPrint = true, onPrint }: { canPrint?:
               <tbody>
                 <tr>
                   <th>Satıcı</th>
-                  <td>BŞ Falcon Group (temsili demo kaydı)</td>
+                  <td>By Güzel (temsili demo kaydı)</td>
                 </tr>
                 <tr>
                   <th>Alıcı</th>
@@ -387,7 +400,7 @@ export default function PrintDocument({ canPrint = true, onPrint }: { canPrint?:
             <tbody>
               <tr>
                 <th>Daireyi veren</th>
-                <td>BŞ Falcon Group (temsili demo kaydı)</td>
+                <td>By Güzel (temsili demo kaydı)</td>
               </tr>
               <tr>
                 <th>İşi yapan firma</th>
@@ -449,7 +462,7 @@ export default function PrintDocument({ canPrint = true, onPrint }: { canPrint?:
           </p>
           <div className="doc-signatures">
             <div>
-              <span>BŞ Falcon Group adına</span>
+              <span>By Güzel adına</span>
               <i />
             </div>
             <div>
@@ -480,7 +493,7 @@ export default function PrintDocument({ canPrint = true, onPrint }: { canPrint?:
             <tbody>
               <tr>
                 <th>İşveren</th>
-                <td>BŞ Falcon Group (temsili demo kaydı)</td>
+                <td>By Güzel (temsili demo kaydı)</td>
               </tr>
               <tr>
                 <th>Yüklenici</th>
@@ -533,7 +546,7 @@ export default function PrintDocument({ canPrint = true, onPrint }: { canPrint?:
           </p>
           <div className="doc-signatures">
             <div>
-              <span>BŞ Falcon Group adına</span>
+              <span>By Güzel adına</span>
               <i />
             </div>
             <div>
@@ -553,7 +566,7 @@ export default function PrintDocument({ canPrint = true, onPrint }: { canPrint?:
         <>
           <DocMeta
             items={[
-              ["Kapsam", p.project === "all" ? "BŞ Falcon Group · şirket geneli" : pname(p.project)],
+              ["Kapsam", p.project === "all" ? "By Güzel · şirket geneli" : pname(p.project)],
               ["Dönem", periodLabel(f)],
               ["Rapor tarihi", date(SNAPSHOT)],
               ["Kaynak", "Tarayıcıdaki demo kayıtları"],
@@ -681,9 +694,9 @@ export default function PrintDocument({ canPrint = true, onPrint }: { canPrint?:
           TEMSİLİ DEMO BELGESİ · HUKUKİ GEÇERLİLİĞİ YOKTUR
         </div>
         <header className="doc-header">
-          <img src="/images/falcon-lockup-black-gold.svg" alt="BŞ Falcon Group" />
+          <img src="/images/byguzel/logo-white.png" alt="By Güzel" />
           <div>
-            <span>Yönetim Merkezi</span>
+            <span>Yönetim Merkezi · tutarlar: {CURRENCY_LABEL[docCur]}</span>
             <h1>{title}</h1>
           </div>
         </header>

@@ -1,9 +1,11 @@
 "use client";
+import { currencyView, setCurrencyView } from "@/lib/currency";
+import { isDelivered } from "@/lib/aftersales";
 // Daireler: kat bazında daire haritası. Daireye tıklamak ilgili dosyayı açar
 // (satılmış → müşteri dosyası, imza sürecinde → sözleşme, barter → barter dosyası, müsait → daire kartı).
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Handshake, Plus, Pencil } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { useApp } from "./context";
 import NewSaleForm from "./sale-form";
 import { Drawer } from "./shared";
@@ -16,13 +18,14 @@ import {
   reservedUnits,
   paymentRows,
   pname,
+  contractCurrency,
 } from "@/lib/enterprise";
 import { units, unitShort, type Unit } from "@/lib/units";
 import { floorLabel } from "@/lib/catalog";
-import { money } from "@/lib/data";
+import { moneyIn } from "@/lib/data";
 
 export type UnitState =
-  "sold" | "late" | "draft" | "barter" | "reserved" | "available";
+  "sold" | "late" | "draft" | "barter" | "reserved" | "available" | "delivered";
 export const UNIT_STATE_LABEL: Record<UnitState, string> = {
   sold: "Satıldı",
   late: "Ödemesi geciken",
@@ -30,11 +33,15 @@ export const UNIT_STATE_LABEL: Record<UnitState, string> = {
   barter: "Barter",
   reserved: "Rezerve",
   available: "Müsait",
+  delivered: "Teslim edildi",
 };
 
 export function useUnitStates(projectId: string) {
   const { state } = useApp();
   return useMemo(() => {
+    // Daire durumu fiziksel stoktur: bütün para birimlerindeki sözleşmeler birlikte değerlendirilir
+    const prevView = currencyView();
+    setCurrencyView(null);
     const contracts = contractList(state).filter(
       (c) => c.project === projectId && c.status !== "İptal",
     );
@@ -47,7 +54,7 @@ export function useUnitStates(projectId: string) {
     const barters = state.barters.filter((b) => b.project === projectId);
     const stateOf = (u: Unit): UnitState => {
       const c = contracts.find((c) => c.unitId === u.id);
-      if (c?.account) return late.has(c.id) ? "late" : "sold";
+      if (c?.account) return late.has(c.id) ? "late" : isDelivered(state.aftersales, u.id) ? "delivered" : "sold";
       if (c) return "draft";
       if (barters.some((b) => b.unitId === u.id)) return "barter";
       if (reserved.includes(u.id)) return "reserved";
@@ -56,6 +63,7 @@ export function useUnitStates(projectId: string) {
     const map = units
       .filter((u) => u.project === projectId)
       .map((u) => ({ unit: u, state: stateOf(u) }));
+    setCurrencyView(prevView);
     const counts = map.reduce<Record<string, number>>(
       (a, m) => ((a[m.state] = (a[m.state] ?? 0) + 1), a),
       {},
@@ -67,9 +75,12 @@ export function useUnitStates(projectId: string) {
 export default function UnitsView() {
   const { project } = useApp();
   // Şirket genelinde arşivdeki projeler listelenmez; arşivdeki proje seçiliyse yalnızca o gösterilir.
+  // Guzel Life Premium (5 blok) önce gösterilir
+  const ORDER = ["nergis", "cengilli", "agva"];
+  const rank = (id: string) => (ORDER.indexOf(id) + 1 || 99);
   const ids =
     project === "all"
-      ? projects.filter((p) => p.status !== "Arşiv").map((p) => p.id)
+      ? projects.filter((p) => p.status !== "Arşiv").map((p) => p.id).sort((a, b) => rank(a) - rank(b))
       : projects.some((p) => p.id === project)
         ? [project]
         : [];
@@ -79,9 +90,9 @@ export default function UnitsView() {
         <div>
           <h1>Daireler</h1>
           <p>
-            Daireye tıklayın: müşteri, sözleşme, ödeme planı ve belgeler tek
-            dosyada açılır. Yeni satış veya barter için müsait (beyaz) bir
-            daire seçin.
+            Blok ve kat planı. Daireye tıklayın: müşteri, sözleşme, ödeme planı, tahsilatlar ve
+            bakiye tek dosyada açılır (sözleşmenin kendi para biriminde). Yeni satış için müsait
+            (beyaz) bir daire seçin. Liste fiyatları EUR ve temsilidir.
           </p>
         </div>
       </header>
@@ -94,23 +105,23 @@ export default function UnitsView() {
 
 function ProjectUnits({ projectId }: { projectId: string }) {
   const { map, counts, barters } = useUnitStates(projectId);
+  const { state, currency, setCurrency } = useApp();
+  const [block, setBlock] = useState<string>("all");
   const [open, setOpen] = useState<{
     type: "customer" | "draft" | "barter" | "unit";
     id: string;
   } | null>(null);
   const [adding, setAdding] = useState(false);
-  // Katlar aynı sütun sayısıyla tam genişliğe yayılır (bodrum katlar dahil)
-  const perFloorMap = new Map<number, number>();
-  for (const m of map) perFloorMap.set(m.unit.floor, (perFloorMap.get(m.unit.floor) ?? 0) + 1);
-  const perFloor = Math.max(1, ...perFloorMap.values());
-  const floors = [...new Set(map.map((m) => m.unit.floor))].sort(
-    (a, b) => b - a,
-  );
   const p = projects.find((p) => p.id === projectId)!;
-  const sold = (counts.sold ?? 0) + (counts.late ?? 0);
+  const sold = (counts.sold ?? 0) + (counts.late ?? 0) + (counts.delivered ?? 0);
   const blocks = [...new Set(map.map((m) => m.unit.block))];
   const openUnit = (u: Unit, st: UnitState) => {
-    if (st === "sold" || st === "late") setOpen({ type: "customer", id: u.id });
+    // Sözleşme kendi para biriminde açılır: görünüm sözleşmenin para birimine geçer (dönüştürme yapılmaz).
+    if (st === "sold" || st === "late" || st === "delivered" || st === "draft") {
+      const c = contractCurrency(state, u.id);
+      if (c !== currency) setCurrency(c);
+    }
+    if (st === "sold" || st === "late" || st === "delivered") setOpen({ type: "customer", id: u.id });
     else if (st === "draft") setOpen({ type: "draft", id: u.id });
     else if (st === "barter")
       setOpen({
@@ -139,11 +150,11 @@ function ProjectUnits({ projectId }: { projectId: string }) {
           {(
             [
               "available",
+              "reserved",
+              "draft",
               "sold",
               "late",
-              "draft",
-              "barter",
-              "reserved",
+              "delivered",
             ] as UnitState[]
           ).map((k) => (
             <li key={k}>
@@ -167,35 +178,65 @@ function ProjectUnits({ projectId }: { projectId: string }) {
           )}
         </div>
       )}
-      <div className="cc-floors">
-        {floors.map((f) => (
-          <div key={f} className="cc-floor">
-            <span className="cc-floor-label">
-              {f === 0 ? "Zemin" : f < 0 ? `B${-f}` : `${f}. kat`}
-            </span>
-            <div
-              className="cc-floor-units"
-              style={{
-                gridTemplateColumns: `repeat(${perFloor}, minmax(0, 1fr))`,
-              }}
-            >
-              {map
-                .filter((m) => m.unit.floor === f)
-                .map(({ unit: u, state: st }) => (
-                  <button
-                    key={u.id}
-                    className={`cc-unit u-${st}`}
-                    onClick={() => openUnit(u, st)}
-                    aria-label={`${u.label} · ${u.type} · ${UNIT_STATE_LABEL[st]}`}
-                    title={`${u.label} · ${u.type} · ${u.gross} m² · ${UNIT_STATE_LABEL[st]}`}
-                  >
-                    <b>{u.label}</b>
-                    <small>{u.type}</small>
-                  </button>
-                ))}
+      {blocks.length > 1 && (
+        <div className="bg-blocks-switch" role="group" aria-label="Blok seçimi">
+          <button className={block === "all" ? "active" : ""} onClick={() => setBlock("all")}>Tüm bloklar</button>
+          {blocks.map((b) => {
+            const bl = map.filter((m) => m.unit.block === b);
+            const free = bl.filter((m) => m.state === "available").length;
+            return (
+              <button key={b} className={block === b ? "active" : ""} onClick={() => setBlock(b)}>
+                {b} blok <small>{free} müsait / {bl.length}</small>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <div className={`bg-blocks ${blocks.length > 1 && block === "all" ? "multi" : "single"}`}>
+        {(blocks.length > 1 ? (block === "all" ? blocks : [block]) : [blocks[0] ?? ""]).map((b) => {
+          const inBlock = map.filter((m) => blocks.length <= 1 || m.unit.block === b);
+          const bFloors = [...new Set(inBlock.map((m) => m.unit.floor))].sort((x, y) => y - x);
+          const cols = Math.max(1, ...bFloors.map((f) => inBlock.filter((m) => m.unit.floor === f).length));
+          return (
+            <div key={b || "tek"} className="bg-block">
+              {blocks.length > 1 && (
+                <header>
+                  <b>{b} Blok</b>
+                  <small>
+                    {inBlock.length} daire · {inBlock.filter((m) => m.state === "available").length} müsait ·{" "}
+                    {inBlock.filter((m) => ["sold", "late", "delivered"].includes(m.state)).length} satıldı
+                  </small>
+                </header>
+              )}
+              <div className="cc-floors">
+                {bFloors.map((f) => {
+                  const row = inBlock.filter((m) => m.unit.floor === f);
+                  return (
+                    <div key={f} className="cc-floor">
+                      <span className="cc-floor-label">{row[0]?.unit.floorLabel ?? (f === 0 ? "Zemin" : f < 0 ? `B${-f}` : `${f}. kat`)}</span>
+                      <div className="cc-floor-units" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+                        {row.map(({ unit: u, state: st }) => (
+                          <button
+                            key={u.id}
+                            className={`cc-unit u-${st}`}
+                            style={cols > row.length && row.length === 1 ? { gridColumn: `span ${cols}` } : row.length * 2 === cols ? { gridColumn: "span 2" } : undefined}
+                            onClick={() => openUnit(u, st)}
+                            aria-label={`${u.label} · ${u.type} · ${u.gross} m² · ${UNIT_STATE_LABEL[st]}`}
+                            title={`${u.label} · ${u.type} · ${u.gross} m² · ${UNIT_STATE_LABEL[st]}`}
+                          >
+                            <b>{u.label}</b>
+                            <small>{u.type}</small>
+                            <small className="m2">{u.gross} m²</small>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {open?.type === "customer" && (
         <CustomerPanel
@@ -299,7 +340,7 @@ export function UnitDrawer({
           </div>
           <div className="form-row">
             <label>
-              Liste fiyatı (TL)
+              Liste fiyatı (EUR)
               <input name="listPrice" type="number" min={1} step="0.01" required defaultValue={u.listPrice} />
             </label>
             <label>
@@ -349,7 +390,7 @@ export function UnitDrawer({
             <div>
               <dt>Konum</dt>
               <dd>
-                {u.block} blok · {u.floorLabel} · kod {u.label}
+                {u.block.length <= 2 ? `${u.block} blok` : u.block} · {u.floorLabel} · kod {u.label}
               </dd>
             </div>
             <div>
@@ -367,7 +408,7 @@ export function UnitDrawer({
             </div>
             <div className="wide">
               <dt>Liste fiyatı (temsili)</dt>
-              <dd className="num big">{money(u.listPrice)}</dd>
+              <dd className="num big">{moneyIn(u.listPrice, "EUR")}</dd>
             </div>
           </dl>
           {projectStatus === "Aktif" ? (
@@ -375,9 +416,6 @@ export function UnitDrawer({
               <button className="btn" onClick={() => setEditing(true)}>
                 <Pencil size={15} /> Düzenle
               </button>
-              <Link className="btn" href={`/barter?unit=${u.id}`}>
-                <Handshake size={15} /> Barter anlaşması
-              </Link>
               <button className="btn primary" onClick={() => setSelling(true)}>
                 <Plus size={15} /> Satış sözleşmesi
               </button>
@@ -456,7 +494,7 @@ function BlockDrawer({
             <input type="number" min={10} max={2000} value={v.gross} onChange={set("gross", true)} required />
           </label>
           <label>
-            Liste fiyatı (TL)
+            Liste fiyatı (EUR)
             <input type="number" min={1} step="0.01" value={v.listPrice} onChange={set("listPrice", true)} required />
           </label>
           <label>

@@ -1,8 +1,9 @@
-# Render Blueprint: BŞ Falcon Group yönetim merkezi demosu (ücretsiz statik site).
+# Render Blueprint: By Güzel yönetim merkezi demosu (ücretsiz statik site, byguzel-demo dalı).
 # Next.js statik dışa aktarım (output: "export") → out/ klasörü yayımlanır.
 services:
   - type: web
-    name: bsfalcon-yonetim-merkezi
+    name: byguzel-yonetim-merkezi
+    branch: byguzel-demo
     runtime: static
     plan: free
     buildCommand: npm ci && npm run build

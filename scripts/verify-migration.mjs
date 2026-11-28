@@ -69,12 +69,12 @@ function legacyBrowserData() {
   const nextBase = paymentRows(s).find((r) => r.customerId === "nergis-2" && r.remaining > 0);
   // Kısmi tahsilat (geciken örnek taksit), tam tahsilat (gelecek taksit), peşinat parçası, vade değişikliği, imza
   LATE_ID = lateBase.customerId;
-  s = applyAction(s, { type: "receipt", installmentId: lateBase.installmentId, amount: 30000, method: "Banka havalesi", reference: "DEMO-USER-1" });
+  s = applyAction(s, { type: "receipt", installmentId: lateBase.installmentId, amount: 1000, method: "Banka havalesi", reference: "DEMO-USER-1" });
   s = applyAction(s, { type: "receipt", installmentId: nextBase.installmentId, amount: nextBase.remaining, method: "Kredi kartı", reference: "DEMO-USER-2" });
-  s = applyAction(s, { type: "deposit-receipt", id: "agva-1", amount: 150000 });
+  s = applyAction(s, { type: "deposit-receipt", id: "nergis-51", amount: 25000 });
   const later = paymentRows(s).find((r) => r.customerId === "nergis-5" && r.remaining > 0 && r.due > SNAPSHOT);
   s = applyAction(s, { type: "reschedule", id: later.installmentId, date: "2027-02-26" });
-  s = applyAction(s, { type: "contract-sign", id: "cengilli-4", depositPaid: 900000 });
+  s = applyAction(s, { type: "contract-sign", id: "cengilli-21", depositPaid: 38150 });
   // Önceki sürümün adları
   const text = JSON.stringify({ ...s, dataset: undefined, basePricing: undefined })
     .replace(/"(Demo Müşteri \d{3})"/g, '"$1"');
@@ -87,8 +87,10 @@ function legacyBrowserData() {
 
 test("Clean demo start may use catalogue prices; previous-version prices stay available unchanged", () => {
   const legacy = baseCustomers("v3.1");
-  assert(legacy.every((c) => c.price === (c.project === "cengilli" ? 14200000 : 5300000)));
-  assert(legacy.every((c) => c.deposit === (c.project === "cengilli" ? 3400000 : 1340000) && c.installment === (c.project === "cengilli" ? 300000 : 110000)));
+  // Önceki sürüm şeması (sabit örnek bedeller, EUR): GLP 210.000 €, diğerleri 120.000 €
+  assert(legacy.every((c) => c.price === (c.project === "nergis" ? 210000 : 120000)));
+  assert(legacy.every((c) => c.deposit === (c.project === "nergis" ? 73200 : 42240) && c.installment === (c.project === "nergis" ? 3800 : 2160)));
+  assert(legacy.every((c) => c.deposit + 36 * c.installment === c.price));
   assert.equal(seedState.basePricing, "katalog");
   // Kimlik, daire ve vadeler iki şemada aynıdır; yalnızca bedel farklıdır
   const cat = baseCustomers("katalog");
@@ -116,8 +118,8 @@ test("Migrating previous-version browser data never re-prices contracts or alter
   assert.deepEqual(after.bulvar, before.bulvar);
   assert.deepEqual(after.breakdown, before.breakdown);
   // Önceki sürümün tahsilat dekontları aynen korunur (yalnızca kişi/firma adı taşınır)
-  assert(after.receipts.some((r) => r.reference === "DEMO-USER-1" && r.amount === 30000));
-  assert.equal(customerList(out.state).find((c) => c.id === "cengilli-1").price, 14200000);
+  assert(after.receipts.some((r) => r.reference === "DEMO-USER-1" && r.amount === 1000));
+  assert.equal(customerList(out.state).find((c) => c.id === "cengilli-1").price, 120000);
 });
 
 test("A migrated record keeps working: new receipts reduce the preserved balance exactly once", () => {
@@ -129,7 +131,7 @@ test("A migrated record keeps working: new receipts reduce the preserved balance
   const after = accountOf(next, customerList(next).find((x) => x.id === LATE_ID));
   assert.equal(after.collected, before.collected + row.remaining);
   assert.equal(after.balance, before.balance - row.remaining);
-  assert.equal(c.price, c.project === "cengilli" ? 14200000 : 5300000);
+  assert.equal(c.price, c.project === "nergis" ? 210000 : 120000);
   assert.equal(summary(next).cash, summary(out).cash + row.remaining);
 });
 
@@ -182,8 +184,8 @@ test("Statuses follow due dates for deposits and installments across dates (both
     }
     for (const st of ["Gecikti", "Yaklaşıyor", "Gelecek dönem", "Ödendi"]) assert(seen.has(st), `${s.basePricing} has ${st}`);
     // Peşinatın geciken parçası ve gelecek parçası ayrı izlenir
-    const dep = rows.filter((r) => r.customerId === "agva-1" && r.kind === "Peşinat");
-    assert(dep.length === 2);
+    const dep = rows.filter((r) => r.customerId === "nergis-51" && r.kind === "Peşinat");
+    assert(dep.length === 3 && dep.some((r) => r.due < SNAPSHOT) && dep.some((r) => r.due > SNAPSHOT));
   }
 });
 

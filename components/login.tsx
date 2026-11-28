@@ -1,5 +1,5 @@
 "use client";
-// Giriş ekranı: BŞ Falcon kurumsal kimliği, kullanıcı adı/e-posta + şifre, şifreyi göster/gizle, 2 adımlı
+// Giriş ekranı: By Güzel kurumsal kimliği, kullanıcı adı/e-posta + şifre, şifreyi göster/gizle, 2 adımlı
 // doğrulama, kontrollü hata mesajları ve oturum süresi bildirimleri. İlk açılışta DEMO kurulumu: yönetici
 // şifresini kullanıcı belirler (kaynak kodda şifre yoktur). Bu ekran DEMO'dur: doğrulama tarayıcıda yapılır.
 import Link from "next/link";
@@ -38,28 +38,28 @@ export default function Login() {
           <Logo />
         </div>
         <div className="lv-story">
-          <span className="eyebrow">BŞ FALCON GROUP · YÖNETİM MERKEZİ</span>
+          <span className="eyebrow">BY GÜZEL · YÖNETİM MERKEZİ</span>
           <h1>
-            Güçlü temeller, yüksek yapılar;
+            Alanya'daki projeler, satıştan
             <br />
-            her projenin finansı tek merkezde.
+            tapu teslimine tek merkezde.
           </h1>
           <p>
-            Satış ve tahsilattan kat karşılığı paylaşımına, şantiye giderinden hakediş, araç filosu ve rapora;
-            BŞ Falcon Group projeleri rol bazlı erişimle tek merkezde.
+            Guzel Life Premium'un 5 bloğu, Guzel Nature ve City Prime: daire planı, EUR / USD / TL sözleşmeler,
+            taksit ve tahsilat, teslim, tapu ve satış sonrası hizmet. Proje bilgileri byguzel.com'dan; kayıtlar temsilidir.
           </p>
           <ul className="lv-facts">
             <li>
-              <b>6</b>
-              <span>Kullanıcı rolü</span>
+              <b>90</b>
+              <span>GLP dairesi · 5 blok</span>
             </li>
             <li>
-              <b>2 adım</b>
-              <span>İsteğe bağlı doğrulama</span>
+              <b>3</b>
+              <span>Para birimi · ayrı hesap</span>
             </li>
             <li>
               <b>{active.length}</b>
-              <span>Devam eden proje</span>
+              <span>Demoda yönetilen proje</span>
             </li>
           </ul>
         </div>
@@ -76,7 +76,7 @@ export default function Login() {
       <section className="lv-form">
         <div className="lv-form-inner">
           <div className="product-logo">
-            BŞ Falcon<span>·</span>Yönetim Merkezi
+            By Güzel<span>·</span>Yönetim Merkezi
           </div>
           <span className="sec-demo-badge">
             <ShieldAlert size={14} /> DEMO GİRİŞİ · tarayıcı içi doğrulama
@@ -87,8 +87,14 @@ export default function Login() {
             <CreatedList created={created} onDone={() => router.push(target)} />
           ) : auth.user ? (
             <SignedIn target={target} />
-          ) : auth.store.users.length === 0 ? (
-            <Setup onDone={() => router.push(target)} onCreated={setCreated} />
+          ) : auth.tourAllowed ? (
+            <>
+              <Tour onDone={() => router.push(target)} />
+              <details className="lv-setup">
+                <summary>Kendi yönetici hesabınızla kurulum (isteğe bağlı)</summary>
+                <Setup onDone={() => router.push(target)} onCreated={setCreated} />
+              </details>
+            </>
           ) : auth.pendingTotp ? (
             <SecondFactor onDone={() => router.push(target)} />
           ) : (
@@ -104,9 +110,52 @@ export default function Login() {
             </span>
           </p>
         </div>
-        <footer>BŞ Falcon Group için hazırlanmış özel yazılım demosu · Kartal / İstanbul</footer>
+        <footer>By Güzel için hazırlanmış özel yazılım demosu · Alanya / Antalya</footer>
       </section>
     </main>
+  );
+}
+
+const TOUR_ROLES: { role: RoleId; title: string; detail: string }[] = [
+  { role: "owner", title: "Üst yönetim", detail: "Tüm projeler, finans, raporlar" },
+  { role: "accounting", title: "Muhasebe", detail: "Tahsilat, kasa, cari" },
+  { role: "sales", title: "Satış danışmanı", detail: "Daire planı, satış, müşteri" },
+  { role: "viewer", title: "Görüntüleyici", detail: "Yalnızca okuma" },
+];
+
+/** Tanıtım modu: kurulum yapılmamış tarayıcıda şifresiz örnek rol girişi. Güvenlik sağlamaz, öyle de gösterilmez. */
+function Tour({ onDone }: { onDone: () => void }) {
+  const auth = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  return (
+    <div className="lv-tour">
+      <p className="lv-lead">
+        <b>Tanıtım modu.</b> Bir rol seçin; demo örnek verilerle açılır. Bu giriş şifresizdir ve <b>güvenlik sağlamaz</b> —
+        yalnızca ürünü incelemek içindir.
+      </p>
+      <div className="lv-tour-roles">
+        {TOUR_ROLES.map((t) => (
+          <button
+            key={t.role}
+            type="button"
+            className={t.role === "owner" ? "btn primary" : "btn"}
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              const e = await auth.startTour(t.role);
+              setBusy(false);
+              if (e) setErr(e);
+              else onDone();
+            }}
+          >
+            <b>{t.title}</b>
+            <small>{t.detail}</small>
+          </button>
+        ))}
+      </div>
+      {err && <p className="sec-error" role="alert">{err}</p>}
+    </div>
   );
 }
 

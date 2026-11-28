@@ -34,7 +34,8 @@ import { AuthProvider, useAuth } from "./security/auth";
 import { AccessDenied, useSessionGuard } from "./security/guard";
 import SecurityCenter from "./security/security-center";
 import FleetView from "./fleet/fleet-view";
-import { Truck, LockKeyhole } from "lucide-react";
+import { Truck, LockKeyhole, KeyRound } from "lucide-react";
+import AftersalesView from "./byguzel/aftersales-view";
 import { roleLabel } from "@/lib/security";
 import { setExportGate } from "@/lib/export";
 import { fleetReminders, seedFleet } from "@/lib/fleet";
@@ -56,12 +57,10 @@ import {
   pname,
   paymentRows,
 } from "@/lib/enterprise";
-import FalconHome from "./falcon/FalconHome";
-import LandShareView from "./falcon/LandShareView";
-import ProcessView from "./falcon/ProcessView";
+import ByGuzelHome from "./byguzel/home";
+import CurrencySwitch from "./byguzel/currency-switch";
 import BudgetView from "./falcon/BudgetView";
 import ProjectFocus from "./falcon/ProjectFocus";
-import { Landmark } from "lucide-react";
 import { hubHref, isScopeValid, scopeProblem } from "@/lib/catalog";
 import ScopePicker from "./enterprise/scope-picker";
 import ReportsView from "./enterprise/reports-view";
@@ -73,7 +72,6 @@ import Operations from "./views/Operations";
 import Documents from "./views/Documents";
 import Finance from "./enterprise/finance";
 import CommandCenter from "./enterprise/command-center";
-import BarterView from "./enterprise/barter";
 import ArchiveView from "./enterprise/archive";
 import RemindersView from "./enterprise/reminders";
 import UnitsView from "./enterprise/units-view";
@@ -99,61 +97,54 @@ const GROUPS: Group[] = [
     title: "Projeler & Daireler",
     icon: Building2,
     tabs: [
-      ["daireler", "Daireler"],
+      ["daireler", "Blok, kat ve daire planı"],
       ["projeler", "Proje portföyü"],
-      ["santiye", "Şantiye"],
-      ["butce", "Bütçe & giderler"],
     ],
   },
   {
-    id: "kat-karsiligi",
-    title: "Kat Karşılığı",
-    icon: Landmark,
-    tabs: [["kat-karsiligi", "Arsa sahibi paylaşımı"]],
-  },
-  {
     id: "musteriler-satislar",
-    title: "Müşteriler & Satışlar",
+    title: "Müşteriler & Sözleşmeler",
     icon: UsersRound,
     tabs: [
       ["musteriler", "Müşteriler"],
+      ["sozlesmeler", "Sözleşmeler"],
     ],
   },
   {
     id: "tahsilat-odemeler",
-    title: "Tahsilat & Ödemeler",
+    title: "Tahsilat & Cari",
     icon: Wallet,
     tabs: [
-      ["odemeler", "Ödemeler"],
-      ["finans", "Finans & kasa"],
+      ["odemeler", "Taksitler ve tahsilat"],
+      ["finans", "Kasa ve banka"],
     ],
   },
   {
-    id: "barter-taseron",
-    title: "Barter & Taşeronlar",
-    icon: Handshake,
+    id: "satis-sonrasi",
+    title: "Teslim, Tapu & Hizmet",
+    icon: KeyRound,
+    tabs: [["satis-sonrasi", "Teslim, tapu ve müşteri talepleri"]],
+  },
+  {
+    id: "insaat",
+    title: "İnşaat & Giderler",
+    icon: HardHat,
     tabs: [
-      ["barter", "Barter"],
-      ["taseronlar", "Taşeronlar"],
+      ["santiye", "Şantiye ilerlemesi"],
+      ["butce", "Bütçe ve giderler"],
       ["operasyon", "Hakediş"],
       ["satinalma", "Satın alma"],
+      ["taseronlar", "Taşeronlar"],
     ],
   },
   {
-    id: "sozlesme-belge",
-    title: "Sözleşmeler & Belgeler",
-    icon: FileSignature,
+    id: "belgeler",
+    title: "Belgeler",
+    icon: Files,
     tabs: [
-      ["sozlesmeler", "Sözleşmeler"],
       ["arsiv", "Belge arşivi"],
       ["evrak", "Proje evrakı"],
     ],
-  },
-  {
-    id: "surec",
-    title: "Süreç & Güvence",
-    icon: ShieldCheck,
-    tabs: [["surec", "Proje süreci ve güvence"]],
   },
   {
     id: "takvim",
@@ -233,11 +224,11 @@ function Shell({ section }: { section: string }) {
   }, [section]);
   // Adresin işaret ettiği proje (proje merkezleri): yerleşik adresler veya /proje/?id=…
   const urlProject =
-    section === "cengilli-villa-sitesi"
+    section === "guzel-nature"
       ? "cengilli"
-      : section === "nergis-park-evleri"
+      : section === "guzel-life-premium"
         ? "nergis"
-        : section === "agva-triplex-villa"
+        : section === "city-prime"
           ? "agva"
           : section === "proje"
           ? hubId
@@ -293,7 +284,7 @@ function Shell({ section }: { section: string }) {
   }, [ready, urlProject, urlKnown, urlValid]);
   // Kapsam değişiminde anında geçiş için şirket ve proje merkezleri önceden yüklenir.
   useEffect(() => {
-    for (const href of ["/genel-bakis", "/cengilli-villa-sitesi", "/nergis-park-evleri", "/agva-triplex-villa", "/proje"])
+    for (const href of ["/genel-bakis", "/guzel-nature", "/guzel-life-premium", "/city-prime", "/proje"])
       router.prefetch(href);
   }, [router]);
   const homeHref = hubHref(project);
@@ -340,9 +331,9 @@ function Shell({ section }: { section: string }) {
   const groupBadge = (g: Group) =>
     g.id === "tahsilat-odemeler"
       ? badge("odemeler")
-      : g.id === "sozlesme-belge"
+      : g.id === "musteriler-satislar"
         ? badge("sozlesmeler")
-        : g.id === "barter-taseron" && hakedisPending + purchasePending
+        : g.id === "insaat" && hakedisPending + purchasePending
           ? pill(
               hakedisPending + purchasePending,
               `${hakedisPending} hakediş ve ${purchasePending} satın alma onay bekliyor`,
@@ -354,7 +345,7 @@ function Shell({ section }: { section: string }) {
         <Link
           href="/genel-bakis"
           className="e-brand"
-          aria-label="BŞ Falcon yönetici özeti"
+          aria-label="By Güzel yönetim merkezi ana sayfa"
         >
           <Logo />
         </Link>
@@ -389,7 +380,7 @@ function Shell({ section }: { section: string }) {
             </button>
           </div>
           <div className="e-powered">
-            BŞ Falcon<span> · </span>
+            By Güzel<span> · </span>
             <small>YÖNETİM MERKEZİ</small>
           </div>
         </div>
@@ -411,13 +402,14 @@ function Shell({ section }: { section: string }) {
             >
               <Menu size={20} />
             </button>
-            <span className="crumb-company">BŞ Falcon Group</span>
+            <span className="crumb-company">By Güzel</span>
             <ChevronRight size={13} className="crumb-company" />
             <span>{scope === "all" ? "Tüm projeler" : pname(scope)}</span>
             <ChevronRight size={13} />
             <b>{group?.title ?? "Genel Bakış"}</b>
           </div>
           <div className="e-header-actions">
+            <CurrencySwitch />
             <button
               aria-label="Çalışma alanında ara"
               className="global-search"
@@ -475,12 +467,11 @@ function Shell({ section }: { section: string }) {
             <AccessDenied what={section} />
           ) : (
             <>
-              {section === "genel-bakis" && <FalconHome />}
-              {section === "kat-karsiligi" && <LandShareView />}
-              {section === "surec" && <ProcessView />}
+              {section === "genel-bakis" && <ByGuzelHome />}
               {section === "butce" && <BudgetView />}
               {section === "raporlar" && <ReportsView />}
               {section === "araclar" && <FleetView />}
+              {section === "satis-sonrasi" && <AftersalesView />}
               {section === "guvenlik" && <SecurityCenter />}
               {section === "yonetim" && (
                 <AdminView onReset={() => setOverlay("reset")} />
@@ -492,7 +483,6 @@ function Shell({ section }: { section: string }) {
               {["operasyon", "satinalma", "taseronlar"].includes(section) && (
                 <Operations mode={section} />
               )}{" "}
-              {section === "barter" && <BarterView />}
               {section === "daireler" && <UnitsView />}
               {section === "musteriler" && <CustomersPage />}
               {section === "odemeler" && <PaymentsPage />}
@@ -512,7 +502,7 @@ function Shell({ section }: { section: string }) {
           )}
           <footer className="e-footer">
             <span>
-              Bu platform, BŞ Falcon Group için örnek verilerle hazırlanmış özel bir yazılım demosudur.
+              Bu platform, By Güzel Construction & Real Estate için temsilî verilerle hazırlanmış bir yazılım demosudur; üretim ERP sistemi değildir.
             </span>
             <button onClick={() => setOverlay("reset")}>
               <RotateCcw size={13} /> Demoyu sıfırla
@@ -572,52 +562,43 @@ function Shell({ section }: { section: string }) {
         {overlay === "demo" && (
           <section className="acct-section demo-scope">
             <p className="drawer-intro">
-              Bu yönetim merkezi, BŞ Falcon Group için hazırlanmış bir ürün demosudur.
-              Ekrandaki tüm kişi, firma, sözleşme ve tutarlar kurgusaldır.
+              Bu yönetim merkezi, By Güzel Construction &amp; Real Estate için hazırlanmış bir ürün
+              demosudur. Ekrandaki kişi, sözleşme ve tutarlar temsilidir; gerçek müşteri verisi içermez.
             </p>
             <ul className="confirm-list">
               <li>
-                <b>Kişi ve firma adları kurgusaldır.</b> Selin Yılmaz, Kuzey
-                Cephe Sistemleri gibi adlar örnek senaryo için uydurulmuştur;
-                gerçek BŞ Falcon müşterileri, çalışanları veya yüklenicileri
-                değildir. Telefon, e-posta ve kimlik bilgisi içermez.
+                <b>Resmî kaynaktan doğrulanan bilgiler (byguzel.com, guzelinvest.com):</b> şirketin
+                2001'de emlak ofisi olarak kurulup 2003'ten beri inşaat yaptığı; "Projelerimiz"
+                listesindeki projeler, yayımlanan başlangıç fiyatları, metrekare aralıkları ve yılları;
+                Guzel Life Premium'un 5 blok ve 90 daire olduğu, daire tipleri (2+1, 3+1, 4+1 bahçe
+                dubleks, 5+1 dubleks penthouse); Guzel Nature'ın tek blok ve 6 katlı olduğu; proje
+                görselleri ve logo. "20 yıl, 30+ proje, 2.500+ satış" şirketin kendi beyanıdır.
               </li>
               <li>
-                <b>Senaryo tarihi sabittir: 15 Kasım 2026.</b> Vade, gecikme ve
-                hatırlatmalar bu tarihe göre hesaplanır; sistem saatini
-                kullanmaz.
+                <b>Temsilî olanlar:</b> blok başına daire dağılımı ve daire numaraları, Guzel Nature'daki
+                40 daire (sitede adet yayımlanmamıştır), City Prime'daki 12 daire, satış/rezerve
+                adetleri, sözleşme bedelleri, ödeme planları, tahsilatlar, kasa, bütçe, hakediş,
+                teslim ve tapu tarihleri, müşteri talepleri ve tüm kişi adları.
               </li>
               <li>
-                <b>Resmî kaynaktan (bsfalcongroup.com) doğrulanan bilgiler:</b> şirket
-                bilgileri (2010'dan beri, 2022'de kurulan BŞ Falcon İnşaat ve Dış Ticaret Ltd. Şti.,
-                300'ü aşkın daire), 12 projelik portföy, Ağva ve Çengilli'nin konum, villa/akıllı ev
-                konsepti ve teslim hedefleri, Nergis Park Evleri'nin zemin + 7 kat, 35 daire + 3 dükkân
-                kurgusu, proje süreci adımları ve proje görselleri.
+                <b>Para birimleri ayrı tutulur.</b> EUR, USD ve TL sözleşmeleri birbirine eklenmez;
+                ekranda seçili para biriminin kayıtları görünür. TL karşılığı yalnızca Yönetim &amp;
+                Ayarlar'da sizin tanımladığınız kurla, bilgi amaçlı gösterilir.
               </li>
               <li>
-                <b>Bunların dışındaki her şey temsilidir.</b> Çengilli villa adedi, metrekareler,
-                liste ve satış fiyatları, satış/rezerve adetleri, tahsilatlar, kasa, bütçe, hakediş,
-                barter tutarları, arsa sahibi paylaşımı ve güvence belgeleri demo varsayımıdır.
-                Nergis Park Evleri'nin durumu resmî kaynakta belirtilmediğinden kat karşılığı demo
-                senaryosu olarak kullanılır.
+                <b>Senaryo tarihi sabittir: 15 Kasım 2026.</b> Vade, gecikme ve hatırlatmalar bu
+                tarihe göre hesaplanır.
               </li>
               <li>
-                <b>Veriler yalnızca bu tarayıcıda saklanır.</b> Sunucu
-                veritabanı yoktur; başka cihaz veya kullanıcı aynı kayıtları
-                görmez. Tarayıcı verisi silinirse kayıtlar kaybolur.
+                <b>Veriler yalnızca bu tarayıcıda saklanır.</b> Sunucu veritabanı yoktur; başka cihaz
+                veya kullanıcı aynı kayıtları görmez.
               </li>
               <li>
-                <b>Kullanıcı girişi ve yetkilendirme yoktur.</b> Giriş ekranı
-                şifresizdir; onaylar tek bir demo yöneticisi adına kaydedilir.
+                <b>Giriş ekranı gerçek güvenlik değildir.</b> Roller ve 2 adımlı doğrulama tarayıcı
+                içinde gösterim amaçlıdır; gerçek kullanımda sunucu tarafı kimlik doğrulama gerekir.
               </li>
               <li>
-                <b>Belge arşivi demo amaçlıdır.</b> Yüklenen dosyalar yalnızca
-                bu tarayıcıda tutulur; kurumsal arşiv, yedekleme veya paylaşım
-                yoktur. Sistem belgeleri kayıtlardan anlık üretilir ve hukuki
-                metin değildir.
-              </li>
-              <li>
-                <b>Dış gönderim yoktur.</b> SMS, e-posta, banka veya muhasebe
+                <b>Dış gönderim yoktur.</b> SMS, e-posta, WhatsApp, banka, tapu veya muhasebe
                 entegrasyonu bulunmaz.
               </li>
             </ul>

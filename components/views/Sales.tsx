@@ -166,7 +166,7 @@ export default function Sales() {
           ];
         }),
       ],
-      "bsfalcon-satis-listesi.csv",
+      "byguzel-satis-listesi.csv",
     );
   }
   return (

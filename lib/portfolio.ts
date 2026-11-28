@@ -1,43 +1,43 @@
-// BŞ Falcon Group resmî proje portföyü (bsfalcongroup.com/projeler — 12 proje, 2 bölge).
-// Yalnızca sitede yayımlanan bilgiler kullanılır: ad, tür, konum ve (varsa) daire sayısı / yıl.
-// Tamamlanan projeler için yıl, sitedeki teslim yılıdır. Durumu sitede belirtilmeyen projeler
-// "Durum belirtilmemiş" olarak gösterilir; bu projelere satış veya finans verisi eklenmez.
+// By Güzel Construction & Real Estate · resmî kaynaklardan derlenen portföy (28 Kasım 2026).
+// Kaynaklar: byguzel.com (Projelerimiz, Hakkımızda, proje sayfaları) ve guzelinvest.com/en/projeler.
+// Yalnızca yayımlanan bilgiler kullanılır. "Projelerimiz" altında listelenen projeler ile yalnızca satış ilanı
+// olarak görünen mülkler ayrılır; geliştirici rolü sayfada ayrıca belirtilmemişse bu açıkça yazılır.
 export type PortfolioItem = {
   id: string;
   name: string;
   kind: string;
   location: string;
-  /** Sitede yayımlanan bilgi (daire sayısı, yıl, kat vb.). */
+  /** Sitede yayımlanan bilgi. */
   facts: string;
-  status: "Devam ediyor" | "Tamamlandı" | "Durum belirtilmemiş";
-  image: string;
-  /** Demoda operasyonel kayıtlarıyla yer alan proje kimliği (varsa). */
+  /** Yayımlanan başlangıç fiyatı (EUR). */
+  price?: number;
+  status: "Hazır" | "Yapım yılı 2025" | "Bilgi yok";
+  image?: string;
+  source: string;
+  /** Demoda operasyonel kayıtlarıyla yönetilen proje kimliği (varsa). */
   demoProject?: string;
-  delivered?: number;
 };
 
 export const PORTFOLIO: PortfolioItem[] = [
-  { id: "agva", name: "Ağva 1111 Triplex Villa", kind: "Villa · Akıllı ev", location: "Şile · Ağva", facts: "Triplex villa · teslim Aralık 2027", status: "Devam ediyor", image: "/images/portfoy/agva-triplex.webp", demoProject: "agva" },
-  { id: "cengilli", name: "Çengilli Villa Sitesi", kind: "Villa sitesi · Akıllı ev", location: "Şile · Çengilli", facts: "Müstakil triplex villalar · teslim Kasım 2027", status: "Devam ediyor", image: "/images/portfoy/cengilli-villa.webp", demoProject: "cengilli" },
-  { id: "nergis", name: "Nergis Park Evleri", kind: "Konut + ticari", location: "İstanbul", facts: "Zemin + 7 kat · 35 daire + 3 dükkân", status: "Durum belirtilmemiş", image: "/images/portfoy/nergis-park.webp", demoProject: "nergis" },
-  { id: "yesilvadi", name: "Yeşilvadi Evleri", kind: "Villa", location: "Şile · Yeşilvadi", facts: "Müstakil villalar", status: "Durum belirtilmemiş", image: "/images/portfoy/yesilvadi-evleri.webp" },
-  { id: "sedir", name: "Sedir Evleri", kind: "Konut", location: "İstanbul", facts: "2+1 ve 3+1 daire planları", status: "Durum belirtilmemiş", image: "/images/portfoy/sedir-evleri.webp" },
-  { id: "zirve", name: "Zirve İş Kulesi", kind: "Ofis", location: "İstanbul", facts: "Cam cepheli ofis kulesi", status: "Durum belirtilmemiş", image: "/images/portfoy/zirve-is.webp" },
-  { id: "camlik", name: "Çamlık Apartmanı", kind: "Konut", location: "Maltepe · İdealtepe", facts: "24 daire · 2023", status: "Tamamlandı", image: "/images/portfoy/camlik-apartmani.webp", delivered: 24 },
-  { id: "defne", name: "Defne Apartmanı", kind: "Konut", location: "Maltepe · İdealtepe", facts: "48 daire · 2022", status: "Tamamlandı", image: "/images/portfoy/defne-apartmani.webp", delivered: 48 },
-  { id: "yildiz", name: "Yıldız Apartmanı", kind: "Konut + ticari", location: "Maltepe · Bağlarbaşı", facts: "26 daire · 2020", status: "Tamamlandı", image: "/images/portfoy/yildiz-apartmani.webp", delivered: 26 },
-  { id: "girne", name: "Girne Evleri", kind: "Konut + ticari", location: "Maltepe · Girne", facts: "52 daire · 2017", status: "Tamamlandı", image: "/images/portfoy/girne-evleri.webp", delivered: 52 },
-  { id: "ortulu", name: "Örtülü Apartmanı", kind: "Konut", location: "Maltepe · İdealtepe", facts: "12 daire · 2017", status: "Tamamlandı", image: "/images/portfoy/ortulu-apartmani.webp", delivered: 12 },
-  { id: "tunc", name: "Tunç Apartmanı", kind: "Konut", location: "Maltepe · Altayçeşme", facts: "28 daire · 2017", status: "Tamamlandı", image: "/images/portfoy/tunc-apartmani.webp", delivered: 28 },
+  { id: "glp", name: "Guzel Life Premium", kind: "Konut kompleksi", location: "Oba · Alanya", facts: "5 blok · 90 daire · 2+1, 3+1, 4+1 bahçe dubleks, 5+1 dubleks penthouse · 125–230 m² · 2024", price: 215000, status: "Hazır", image: "/images/byguzel/glp-0-4.jpg", source: "byguzel.com · guzelinvest.com", demoProject: "nergis" },
+  { id: "gn", name: "Guzel Nature", kind: "Konut · tek blok", location: "Alanya", facts: "Tek blok, 6 kat · ilk kat sosyal alanlar · 1+1'den · 50–180 m² · 2025", price: 105000, status: "Yapım yılı 2025", image: "/images/byguzel/gn-4-6.jpg", source: "byguzel.com", demoProject: "cengilli" },
+  { id: "cp", name: "City Prime", kind: "Konut", location: "Alanya", facts: "2+1 · 65–122 m² · havuz, sauna, çocuk parkı · 2025", price: 185000, status: "Hazır", image: "/images/byguzel/cp-0-9.jpg", source: "byguzel.com", demoProject: "agva" },
+  { id: "bg2000", name: "By Güzel 2000", kind: "Konut", location: "Alanya", facts: "1+1'den · 50–220 m² · açık/kapalı havuz, buhar odası · 2024", price: 115000, status: "Hazır", image: "/images/byguzel/bg2000-1-7.jpg", source: "byguzel.com" },
+  { id: "medicalanya", name: "Medicalanya", kind: "Konut", location: "Alanya", facts: "1+1 · 64–104 m² · 2023", price: 280000, status: "Hazır", image: "/images/byguzel/ma-1-5.jpg", source: "byguzel.com" },
+  { id: "mahall", name: "Mahall Oba", kind: "Büyük metrekareli birimler (yatak odası belirtilmemiş)", location: "Oba · Alanya", facts: "440–595 m² · 2024", price: 550000, status: "Hazır", image: "/images/byguzel/mo-1-6.jpg", source: "byguzel.com" },
+  { id: "meva", name: "Meva City Alanya", kind: "Konut kompleksi", location: "Alanya", facts: "10 blok, 8 katlı · 2.000 m² açık havuz, aquapark, kapalı havuz, hamam, sinema, bowling", status: "Bilgi yok", source: "byguzel.com · Projelerimiz açıklaması (fiyat ve ilan sayfası yok)" },
 ];
 
-/** Kurumsal bilgiler (bsfalcongroup.com/hakkimizda). */
+/** byguzel.com'da yalnızca "Satılık" ilanı olarak görünen mülkler: geliştirici bilgisi yok, demoda yönetilmez. */
+export const LISTINGS = ["Avsallar Jasmine Boutique Life", "Oba Portakal Sities", "Mahmutlar Heaven Hills", "Olimpcity Kargıcak"];
+
+/** Kurumsal bilgiler (byguzel.com/hakkimizda). Rakamlar şirketin kendi beyanıdır. */
 export const COMPANY = {
-  name: "BŞ Falcon Group",
-  legal: "BŞ Falcon İnşaat ve Dış Ticaret Limited Şirketi",
-  since: 2010,
-  founded: 2022,
-  delivered: "300'ü aşkın daire",
-  slogan: "Güçlü temeller, yüksek yapılar.",
-  office: "Kartal / İstanbul",
+  name: "By Güzel",
+  legal: "By Güzel Construction & Real Estate",
+  since: 2001,
+  construction: 2003,
+  claims: "20 yılı aşkın deneyim · 30'dan fazla büyük proje · 2.500'den fazla mülk satışı (şirket beyanı)",
+  office: "Alanya / Antalya",
+  services: ["Yatırım danışmanlığı", "Satış ve satın alma süreci", "Oturum izni ve vatandaşlık başvurularında rehberlik", "Kiralama", "Yeniden satış", "Yenileme"],
 };

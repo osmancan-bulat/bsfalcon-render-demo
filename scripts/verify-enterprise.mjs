@@ -48,15 +48,15 @@ test("Partial receipt updates customer balance, overdue, cash, and totals", () =
   s = applyAction(s, {
     type: "receipt",
     installmentId: i.id,
-    amount: 10000,
+    amount: 1000,
     method: "Havale",
     reference: "TEST-001",
   });
-  assert.equal(outstanding(s, i), o0 - 10000);
+  assert.equal(outstanding(s, i), o0 - 1000);
   const after = summary(s);
-  assert.equal(after.collected, before.collected + 10000);
-  assert.equal(after.cash, before.cash + 10000);
-  assert.equal(after.overdue, before.overdue - 10000);
+  assert.equal(after.collected, before.collected + 1000);
+  assert.equal(after.cash, before.cash + 1000);
+  assert.equal(after.overdue, before.overdue - 1000);
   assert.equal(after.revenue, after.balance + after.collected);
   assert.throws(() =>
     applyAction(s, {
@@ -133,12 +133,12 @@ test("Purchase revision, reapproval and delivery lifecycle", () => {
 test("Reservations and new sale reconcile inventory, cash and 36 installments", () => {
   let s = seed();
   const before = summary(s, "nergis");
-  s = applyAction(s, { type: "reserve", id: "nergis-35" });
+  s = applyAction(s, { type: "reserve", id: "nergis-60" });
   assert.equal(summary(s, "nergis").reserved, before.reserved + 1);
-  s = applyAction(s, { type: "release", id: "nergis-35" });
+  s = applyAction(s, { type: "release", id: "nergis-60" });
   assert.equal(summary(s, "nergis").reserved, before.reserved);
   const c = {
-    id: "nergis-35",
+    id: "nergis-60",
     project: "nergis",
     name: "Test Müşteri",
     unit: "B-72",
@@ -165,7 +165,7 @@ test("Reservations and new sale reconcile inventory, cash and 36 installments", 
   assert.throws(() =>
     applyAction(seed(), { type: "contract", record: { ...c, price: NaN } }),
   );
-  assert.throws(() => applyAction(s, { type: "reserve", id: "nergis-35" }));
+  assert.throws(() => applyAction(s, { type: "reserve", id: "nergis-60" }));
 });
 test("Rescheduling preserves receivable and changes due bucket", () => {
   let s = seed();
@@ -181,18 +181,18 @@ test("Rescheduling preserves receivable and changes due bucket", () => {
 });
 test("Weighted progress updates all summaries", () => {
   let s = seed();
-  const before = projectProgress(s, "nergis");
+  const before = projectProgress(s, "cengilli");
   s = applyAction(s, {
     type: "work",
-    id: "w10",
+    id: "w7",
     patch: { progress: 100, note: "Tamamlandı", material: "Hazır" },
   });
-  assert(projectProgress(s, "nergis") > before);
-  assert.equal(summary(s, "nergis").progress, projectProgress(s, "nergis"));
+  assert(projectProgress(s, "cengilli") > before);
+  assert.equal(summary(s, "cengilli").progress, projectProgress(s, "cengilli"));
   assert.throws(() =>
     applyAction(s, {
       type: "work",
-      id: "w10",
+      id: "w7",
       patch: { progress: 101, note: "", material: "" },
     }),
   );
@@ -212,7 +212,7 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
   const record = {
     id: "BARTER-TEST",
     project: "nergis",
-    unitId: "nergis-34",
+    unitId: "nergis-61",
     company: "Örnek Firma",
     work: "Temsili cephe işi",
     amount: 3500000,
@@ -226,7 +226,7 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     assert.equal(summary(s)[key], before[key]);
   assert.equal(summary(s).barterCount, before.barterCount + 1);
   assert.equal(installmentList(s).length, count);
-  assert.throws(() => applyAction(s, { type: "reserve", id: "nergis-34" }));
+  assert.throws(() => applyAction(s, { type: "reserve", id: "nergis-61" }));
   assert.throws(() =>
     applyAction(s, { type: "barter", record: { ...record, id: "duplicate" } }),
   );
@@ -234,7 +234,7 @@ test("Barter reserves inventory without changing cash, receivables, cash sales o
     applyAction(s, {
       type: "contract",
       record: {
-        id: "nergis-34",
+        id: "nergis-61",
         project: "nergis",
         name: "Demo",
         unit: "A-71",
@@ -260,7 +260,7 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   let s = applyAction(base, {
     type: "contract",
     record: {
-      id: "nergis-15",
+      id: "nergis-62",
       project: "nergis",
       name: "Demo Peşinat",
       unit: "B-70",
@@ -276,7 +276,7 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   assert.equal(summary(s).balance, before.balance + 3550000);
   s = applyAction(s, {
     type: "deposit-receipt",
-    id: "nergis-15",
+    id: "nergis-62",
     amount: 250000,
   });
   assert.equal(summary(s).cash, before.cash + 250000);
@@ -284,18 +284,18 @@ test("Unpaid deposit remains receivable; partial deposit changes cash exactly on
   assert.throws(() =>
     applyAction(s, {
       type: "deposit-receipt",
-      id: "nergis-15",
+      id: "nergis-62",
       amount: 600001,
     }),
   );
   s = applyAction(s, {
     type: "deposit-receipt",
-    id: "nergis-15",
+    id: "nergis-62",
     amount: 600000,
   });
   assert.equal(summary(s).balance, before.balance + 2700000);
   assert.throws(() =>
-    applyAction(s, { type: "deposit-receipt", id: "nergis-15", amount: 1 }),
+    applyAction(s, { type: "deposit-receipt", id: "nergis-62", amount: 1 }),
   );
 });
 test("Custom reminders toggle without financial effect", () => {

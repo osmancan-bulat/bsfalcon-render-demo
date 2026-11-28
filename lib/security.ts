@@ -1,4 +1,4 @@
-// BŞ Falcon · DEMO güvenlik katmanı (istemci tarafı).
+// By Güzel · DEMO güvenlik katmanı (istemci tarafı).
 //
 // ÖNEMLİ: Bu uygulama statik bir sitedir (Render Static Site). Sunucu olmadığı için buradaki kimlik
 // doğrulama, oturum ve yetki kontrolleri YALNIZCA TARAYICIDA çalışır. Tarayıcı geliştirici araçlarına
@@ -82,7 +82,7 @@ export const ROLE_DEFAULTS: Record<RoleId, Permissions> = {
 
 /** Ekran adresi → modül. Listede olmayan adres "genel" sayılır. */
 export const SECTION_MODULE: Record<string, ModuleId> = {
-  "genel-bakis": "genel", "cengilli-villa-sitesi": "genel", "nergis-park-evleri": "genel", "agva-triplex-villa": "genel", proje: "genel",
+  "genel-bakis": "genel", "guzel-nature": "genel", "guzel-life-premium": "genel", "city-prime": "genel", proje: "genel",
   projeler: "projeler", daireler: "projeler",
   "kat-karsiligi": "kat",
   musteriler: "satis", sozlesmeler: "satis", "satis-tahsilat": "satis",
@@ -94,6 +94,7 @@ export const SECTION_MODULE: Record<string, ModuleId> = {
   hatirlatmalar: "takvim",
   raporlar: "rapor",
   araclar: "arac",
+  "satis-sonrasi": "satis",
   yonetim: "yonetim",
   guvenlik: "guvenlik",
 };
@@ -280,7 +281,7 @@ export async function verifyTotp(secret: string, code: string, at = Date.now()) 
   return false;
 }
 export const otpauthUri = (secret: string, account: string) =>
-  `otpauth://totp/${encodeURIComponent("BŞ Falcon DEMO:" + account)}?secret=${secret}&issuer=${encodeURIComponent("BS Falcon DEMO")}&digits=6&period=30`;
+  `otpauth://totp/${encodeURIComponent("By Güzel DEMO:" + account)}?secret=${secret}&issuer=${encodeURIComponent("By Guzel DEMO")}&digits=6&period=30`;
 
 /* ------------------------------ Giriş akışı (saf) ------------------------------ */
 

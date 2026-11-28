@@ -52,6 +52,8 @@ import {
   demoAudit,
 } from "./demo-seed.ts";
 import { applyFleetAction, seedFleet, type FleetAction, type FleetState } from "./fleet.ts";
+import { CURRENCIES, curOf, inView, DEFAULT_FX, type Currency, type FxTable } from "./currency.ts";
+import { applyAftersales, seedAftersales, type AftersalesAction, type AftersalesState } from "./aftersales.ts";
 /** Ay başı: bu tarihten önceki tahsilatlar demo açılış kasasına dahildir. */
 export const MONTH_START = "2026-11-01";
 export { projects, customers, installments, workItems, documents, SNAPSHOT };
@@ -81,6 +83,8 @@ export type RequestRecord = {
   due: string;
   status: string;
   description?: string;
+  /** Gider para birimi (varsayılan TRY). */
+  currency?: Currency;
 };
 export type Receipt = {
   id: string;
@@ -202,12 +206,16 @@ export type EnterpriseState = {
   unitEdits?: Record<string, Partial<Unit>>;
   /** Kullanıcının eklediği iş paketleri (taşeron firma + iş + sözleşme bedeli). */
   workCustom?: WorkItem[];
-  /** BŞ Falcon: kat karşılığı paylaşımı (arsa sahibi / yüklenici), aşamalar ve değişiklik geçmişi. */
+  /** By Güzel: kat karşılığı paylaşımı (arsa sahibi / yüklenici), aşamalar ve değişiklik geçmişi. */
   landshare?: LandShareState;
-  /** BŞ Falcon: proje süreci adımları ve güvence belge takibi (temsili). */
+  /** By Güzel: proje süreci adımları ve güvence belge takibi (temsili). */
   process?: ProcessState;
   /** Araç ve filo yönetimi (temsili). */
   fleet?: FleetState;
+  /** By Güzel: teslim, tapu ve müşteri talepleri. */
+  aftersales?: AftersalesState;
+  /** By Güzel: kullanıcı tanımlı bilgi amaçlı kur tablosu (1 birim → TRY). */
+  fx?: FxTable;
 };
 export type WorkItem = {
   id: string;
@@ -273,6 +281,8 @@ export const seedState: EnterpriseState = {
   landshare: seedLandShare,
   process: seedProcess,
   fleet: seedFleet,
+  aftersales: seedAftersales,
+  fx: DEFAULT_FX,
 };
 /**
  * Tarayıcıda kayıtlı durumu güvenle okur. Önceki demo sürümünün jenerik adları
@@ -416,6 +426,8 @@ export type Action =
     }
   | { type: "reset" }
   | FleetAction
+  | AftersalesAction
+  | { type: "fx-set"; EUR: number; USD: number; date: string }
   | { type: "share-assign"; unit: string; owner: string; note?: string }
   | { type: "share-step"; project: string; key: string; status: StepStatus }
   | { type: "obligation-toggle"; project: string; id: string }
@@ -464,11 +476,25 @@ export const customerList = (s: EnterpriseState) => {
   syncCatalog(s);
   return customerListRaw(s);
 };
-const customerListRaw = (s: EnterpriseState) =>
+const allCustomersRaw = (s: EnterpriseState) =>
   [...baseCustomers(s.basePricing), ...s.contracts].map((c) => ({
     ...c,
     ...s.customerEdits[c.id],
   }));
+/** Etkin para birimi görünümündeki müşteriler (finansal hesapların tamamı bunu kullanır). */
+const customerListRaw = (s: EnterpriseState) => allCustomersRaw(s).filter((c) => inView(curOf(c)));
+/** Para biriminden bağımsız tüm satışlar: stok ve daire durumu için (fiziksel bölüm para biriminden bağımsızdır). */
+export const allCustomers = (s: EnterpriseState) => {
+  syncCatalog(s);
+  return allCustomersRaw(s);
+};
+/** Sözleşmenin para birimi (taslaklar dahil). */
+export const contractCurrency = (s: EnterpriseState, id: string): Currency =>
+  curOf([...allCustomersRaw(s), ...s.drafts, ...s.cancelled].find((c) => c.id === id));
+/** Etkin görünümdeki imzalı sözleşmeler (kayıt sözleşmeleri; örnek müşteriler customerList ile filtrelenir). */
+export const contractsInView = (s: EnterpriseState) => s.contracts.filter((c) => inView(curOf(c)));
+/** Etkin görünümdeki taslak / imza bekleyen sözleşmeler. */
+export const draftsInView = (s: EnterpriseState) => (s.drafts ?? []).filter((d) => inView(curOf(d)));
 const scheduleCache = new WeakMap<Customer, Installment[]>();
 function planRows(c: Customer): Installment[] {
   let rows = scheduleCache.get(c);
@@ -488,6 +514,7 @@ function planRows(c: Customer): Installment[] {
 }
 export function installmentList(s: EnterpriseState): Installment[] {
   syncCatalog(s);
+  const curs = new Map(allCustomersRaw(s).map((c) => [c.id, curOf(c)]));
   return [
     ...baseInstallments(s.basePricing),
     ...s.contracts.flatMap((c) =>
@@ -501,13 +528,17 @@ export function installmentList(s: EnterpriseState): Installment[] {
             amount: c.installment,
           })),
     ),
-  ].map((i) => ({ ...i, due: s.dueEdits[i.id] ?? i.due }));
+  ]
+    .filter((i) => inView(curs.get(i.customerId) ?? "EUR"))
+    .map((i) => ({ ...i, due: s.dueEdits[i.id] ?? i.due }));
 }
 /** Kaydedilmiş gerçek ödeme tarihi; yoksa undefined (vade tarihi ödeme tarihi yerine kullanılmaz). */
 export const paidDate = (s: EnterpriseState, id: string) =>
   s.paidOrders.includes(id) ? s.paidDates?.[id] : undefined;
 export const requestList = (s: EnterpriseState): RequestRecord[] =>
-  [...approvals, ...s.requests].map((r) => ({ ...r, ...s.requestEdits[r.id] }));
+  [...approvals, ...s.requests]
+    .map((r) => ({ ...r, ...s.requestEdits[r.id] }) as RequestRecord)
+    .filter((r) => inView(curOf(r, "TRY")));
 /** Bir hakedişe barter ile mahsup edilen toplam tutar. */
 export const offsetFor = (s: EnterpriseState, requestId: string) =>
   r2(
@@ -551,7 +582,7 @@ export const unitOwner = (s: EnterpriseState, id: string) => s.landshare?.owners
 export const isLandownerUnit = (s: EnterpriseState, id: string) => unitOwner(s, id) !== CONTRACTOR;
 export const unitTaken = (s: EnterpriseState, id: string) =>
   isLandownerUnit(s, id) ||
-  customerList(s).some((c) => c.id === id) ||
+  allCustomersRaw(s).some((c) => c.id === id) ||
   s.barters.some((b) => b.unitId === id) ||
   (s.drafts ?? []).some((d) => d.id === id);
 export const workList = (s: EnterpriseState) =>
@@ -598,7 +629,16 @@ export function reservedUnits(s: EnterpriseState, id: string) {
   );
 }
 /** Temsili ay başı kasa bakiyesi (yalnızca yerleşik projeler; demo varsayımı). */
-const OPENING_CASH: Record<string, number> = { agva: 1200000, cengilli: 6500000, nergis: 9800000 };
+/** Temsili ay başı kasa / banka bakiyeleri, para birimi bazında (yalnızca yerleşik projeler). */
+const OPENING_CASH: Record<string, Partial<Record<Currency, number>>> = {
+  agva: { EUR: 180000, USD: 0, TRY: 4200000 },
+  cengilli: { EUR: 260000, USD: 0, TRY: 9800000 },
+  nergis: { EUR: 1450000, USD: 320000, TRY: 2600000 },
+};
+const openingCash = (id: string) => {
+  const o = OPENING_CASH[id] ?? {};
+  return (["EUR", "USD", "TRY"] as Currency[]).filter((c) => inView(c)).reduce((a, c) => a + (o[c] ?? 0), 0);
+};
 export function summary(s: EnterpriseState, project = "all") {
   syncCatalog(s);
   const inScope = (id: string) => project === "all" || id === project;
@@ -644,9 +684,9 @@ export function summary(s: EnterpriseState, project = "all") {
         .filter((o) => requests.some((r) => r.id === o.requestId))
         .reduce((a, o) => a + o.amount, 0),
     );
-  const drafts = (s.drafts ?? []).filter((d) => inScope(d.project));
+  const drafts = draftsInView(s).filter((d) => inScope(d.project));
   const depositOverdue = r2(
-    s.contracts
+    contractsInView(s)
       .filter((c) => inScope(c.project))
       .reduce(
         (a, c) =>
@@ -661,7 +701,7 @@ export function summary(s: EnterpriseState, project = "all") {
     .filter((i) => i.due < SNAPSHOT)
     .reduce((a, i) => a + outstanding(s, i), 0);
   const depositPending = r2(
-    s.contracts
+    contractsInView(s)
       .filter((c) => inScope(c.project))
       .reduce(
         (a, c) => a + Math.max(0, (c.depositExpected ?? c.deposit) - c.deposit),
@@ -670,11 +710,11 @@ export function summary(s: EnterpriseState, project = "all") {
   );
   const opening = ps.reduce(
     // Temsili ay başı kasa bakiyesi yalnızca yerleşik projelerde vardır; yeni projeler sıfırdan başlar.
-    (a, p) => a + (OPENING_CASH[p.id] ?? 0),
+    (a, p) => a + openingCash(p.id),
     0,
   );
   // Kasaya bu ay giren peşinat: ay başından önce imzada alınan peşinat açılış kasasına dahildir.
-  const deposits = s.contracts
+  const deposits = contractsInView(s)
     .filter((c) => inScope(c.project))
     .reduce((a, c) => {
       const later = s.depositPayments
@@ -762,7 +802,19 @@ export function applyAction(
     : null;
   if (targetUnit && isLandownerUnit(s, targetUnit))
     throw Error("Bu bağımsız bölüm arsa sahibi payında; yüklenici satışı, rezervasyonu veya barteri yapılamaz.");
-  if (action.type.startsWith("vehicle-")) {
+  if (action.type === "handover-step" || action.type === "ticket-create" || action.type === "ticket-update") {
+    const r = applyAftersales(s.aftersales ?? seedAftersales, action as AftersalesAction, (id) => allCustomersRaw(s).some((c) => c.id === id));
+    next.aftersales = r.next;
+    entity = r.entity;
+    project = r.entity.startsWith("TLP-") ? (r.next.tickets.find((t) => t.id === r.entity)?.project ?? "all") : r.entity.split("-")[0];
+    message = r.message;
+  } else if (action.type === "fx-set") {
+    for (const v of [action.EUR, action.USD]) if (!Number.isFinite(v) || v <= 0 || v > 1000) throw Error("Kur değeri geçersiz.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(action.date)) throw Error("Kur tarihi geçersiz.");
+    next.fx = { EUR: action.EUR, USD: action.USD, date: action.date };
+    entity = "KUR";
+    message = `Bilgi amaçlı kur tablosu güncellendi: 1 EUR = ${action.EUR} TRY · 1 USD = ${action.USD} TRY`;
+  } else if (action.type.startsWith("vehicle-")) {
     const r = applyFleetAction(s.fleet ?? seedFleet, action as FleetAction);
     next.fleet = r.fleet;
     entity = r.entity;
@@ -1288,6 +1340,8 @@ export function applyAction(
       throw Error("Konut satılmış veya geçersiz.");
     if (p.status !== "Aktif")
       throw Error("Yalnızca aktif projede yeni satış yapılabilir.");
+    if (c.currency !== undefined && !CURRENCIES.includes(c.currency))
+      throw Error("Sözleşme para birimi geçersiz (TRY, EUR veya USD).");
     const expected = c.depositExpected ?? c.deposit;
     if (
       ![c.price, c.deposit, c.installment, expected].every(Number.isFinite) ||
@@ -1587,7 +1641,7 @@ export function applyAction(
 const seedFirstDue = new Map<string, string>();
 for (const i of installments)
   if (!seedFirstDue.has(i.customerId)) seedFirstDue.set(i.customerId, i.due);
-const PROJECT_CODE: Record<string, string> = { agva: "AG", cengilli: "CV", nergis: "NP" };
+const PROJECT_CODE: Record<string, string> = { agva: "CP", cengilli: "GN", nergis: "GLP" };
 
 export const contractNumber = (id: string) => {
   const [p, n] = id.split("-");
@@ -1732,7 +1786,7 @@ export function contractList(s: EnterpriseState): ContractView[] {
     const acc = accountOf(s, c, all);
     return view(c, acc.balance <= 0 ? "Tamamlandı" : "Aktif", acc);
   });
-  const drafts = (s.drafts ?? []).map((d) =>
+  const drafts = draftsInView(s).map((d) =>
     view(d, s.contractMeta[d.id]?.status ?? "Taslak"),
   );
   const cancelled = (s.cancelled ?? [])
@@ -1937,7 +1991,7 @@ export function paymentRows(s: EnterpriseState): PaymentRow[] {
       days: dayDiff(i.due),
     };
   });
-  for (const c of s.contracts) {
+  for (const c of contractsInView(s)) {
     const parts = depositSchedule(c, contractSignedAt(s, c));
     parts.forEach((p, n) =>
       rows.push({
@@ -2012,7 +2066,7 @@ export function agenda(
       },
     });
   }
-  for (const d of s.drafts ?? []) {
+  for (const d of draftsInView(s)) {
     if (!inScope(d.project)) continue;
     const due = d.plan?.deposits[0]?.due ?? d.depositDue ?? SNAPSHOT;
     items.push({
@@ -2293,7 +2347,7 @@ export function workContracts(
   project = "all",
 ): WorkContract[] {
   const groups = new Map<string, WorkContract>();
-  // Numara: proje içinde iş paketlerinin sırasına göre IS-CV-01, IS-CV-02 … (proje filtresinden bağımsız, kalıcı)
+  // Numara: proje içinde iş paketlerinin sırasına göre IS-GN-01, IS-GN-02 … (proje filtresinden bağımsız, kalıcı)
   const order = new Map<string, number>();
   for (const w of workList(s)) {
     const key = w.project + "|" + firmKey(w.company);

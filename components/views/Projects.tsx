@@ -1,5 +1,5 @@
 "use client";
-// Proje portföyü ve proje yönetimi: BŞ Falcon Group'ın bütün projeleri. Yeni proje oluşturma, bilgileri
+// Proje portföyü ve proje yönetimi: By Güzel'in bütün projeleri. Yeni proje oluşturma, bilgileri
 // düzenleme, durum (aktif / tamamlandı / arşiv) ve kaydı olmayan projeyi silme. Yeni proje boş başlar.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -36,7 +36,7 @@ export default function Projects() {
         <div>
           <h1>Proje portföyü</h1>
           <p>
-            BŞ Falcon Group’ın projeleri. Yeni proje eklemek için kod değişikliği
+            By Güzel’ın projeleri. Yeni proje eklemek için kod değişikliği
             gerekmez; eklenen proje kapsam seçicide, şirket genel bakışında ve
             raporlarda otomatik yer alır.
           </p>
@@ -62,7 +62,7 @@ export default function Projects() {
               {p.image && (
                 <div className="project-cover">
                   <img src={p.image} alt={`${p.name} resmî proje görseli`} loading="lazy" />
-                  <span>Görsel: bsfalcongroup.com</span>
+                  <span>Görsel: byguzel.com</span>
                 </div>
               )}
               <header className="pf-head">

@@ -6,7 +6,8 @@ import { useApp } from "./context";
 import { SNAPSHOT, projects } from "@/lib/enterprise";
 import { buildSchedule, addMonths, type PlanSpec } from "@/lib/plan";
 import { unitById } from "@/lib/units";
-import { money, date } from "@/lib/data";
+import { moneyIn, date } from "@/lib/data";
+import { CURRENCIES, CURRENCY_LABEL, DEFAULT_FX, type Currency } from "@/lib/currency";
 
 type Row = { amount: string; due: string };
 type Interim = Row & { label: string };
@@ -20,17 +21,25 @@ export default function NewSaleForm({
   unitId: string;
   onDone: (name: string, draft: boolean) => void;
 }) {
-  const { act } = useApp();
+  const { act, state, currency: viewCur, setCurrency } = useApp();
   const u = unitById(unitId)!;
   const p = projects.find((p) => p.id === u.project)!;
+  const fx = state.fx ?? DEFAULT_FX;
+  // Sözleşme para birimi: varsayılan, ekranda seçili görünüm. Liste fiyatları EUR'dur; başka para biriminde
+  // öneri fiyatı yalnızca kullanıcının tanımladığı kurla hesaplanır (otomatik kur yok) ve değiştirilebilir.
+  const [cur, setCur] = useState<Currency>(viewCur);
+  const listIn = (c: Currency) => Math.round(c === "EUR" ? u.listPrice : c === "TRY" ? u.listPrice * fx.EUR : (u.listPrice * fx.EUR) / fx.USD);
+  const step = (c: Currency) => (c === "TRY" ? 50000 : 5000);
+  const suggestFor = (c: Currency) => String(Math.max(0, Math.round((listIn(c) * 0.3) / step(c)) * step(c)));
+  const money = (n: number) => moneyIn(n, cur);
   const [name, setName] = useState("");
-  const [price, setPrice] = useState(String(u.listPrice));
-  // Önerilen peşinat: liste fiyatının yaklaşık %25'i (50.000 TL'ye yuvarlı); kullanıcı değiştirebilir.
-  const suggested = String(Math.max(0, Math.round((u.listPrice * 0.25) / 50000) * 50000));
+  const [price, setPrice] = useState(String(listIn(viewCur)));
+  // Önerilen peşinat: liste fiyatının yaklaşık %30'u (yuvarlanmış); kullanıcı değiştirebilir.
+  const suggested = suggestFor(viewCur);
   const [deposits, setDeposits] = useState<Row[]>([
     { amount: suggested, due: SNAPSHOT },
   ]);
-  const [count, setCount] = useState("36");
+  const [count, setCount] = useState("24");
   const [firstDue, setFirstDue] = useState("2026-12-15");
   const [interim, setInterim] = useState<Interim[]>([]);
   const [mode, setMode] = useState<"Aktif" | "Taslak">("Aktif");
@@ -58,7 +67,16 @@ export default function NewSaleForm({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [price, JSON.stringify(spec)]);
-  const discount = u.listPrice - num(price);
+  const listPrice = listIn(cur);
+  const discount = listPrice - num(price);
+  const changeCur = (c: Currency) => {
+    setCur(c);
+    setPrice(String(listIn(c)));
+    const d = suggestFor(c);
+    setDeposits([{ amount: d, due: SNAPSHOT }]);
+    setPaidNow(d);
+    setInterim([]);
+  };
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,9 +98,11 @@ export default function NewSaleForm({
         installment: preview.installment,
         paidMonths: 0,
         plan: spec,
-        listPrice: u.listPrice,
+        listPrice,
+        currency: cur,
       },
     });
+    if (ok) setCurrency(cur);
     if (ok) onDone(name.trim(), mode === "Taslak");
   }
 
@@ -101,9 +121,9 @@ export default function NewSaleForm({
           </small>
         </div>
         <div className="sale-unit-price">
-          <small>Liste fiyatı (temsili)</small>
-          <b className="num">{money(u.listPrice)}</b>
-          <small>{money(Math.round(u.listPrice / u.gross))} / m²</small>
+          <small>Liste fiyatı (temsili){cur !== "EUR" ? " · tanımlı kurla" : ""}</small>
+          <b className="num">{money(listPrice)}</b>
+          <small>{cur !== "EUR" ? `${moneyIn(u.listPrice, "EUR")} · 1 EUR = ${cur === "TRY" ? fx.EUR : (fx.EUR / fx.USD).toFixed(4)} ${cur}` : `${money(Math.round(listPrice / u.gross))} / m²`}</small>
         </div>
       </div>
 
@@ -121,7 +141,16 @@ export default function NewSaleForm({
             />
           </label>
           <label>
-            Sözleşme bedeli (TL)
+            Sözleşme para birimi
+            <select value={cur} onChange={(e) => changeCur(e.target.value as Currency)} aria-describedby="cur-help">
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>{CURRENCY_LABEL[c]}</option>
+              ))}
+            </select>
+            <small id="cur-help" className="muted">Plan, tahsilat ve ekstre bu para biriminde tutulur; diğer para birimleriyle toplanmaz.</small>
+          </label>
+          <label>
+            Sözleşme bedeli ({cur})
             <input
               type="number"
               min="1"
@@ -161,7 +190,7 @@ export default function NewSaleForm({
         {deposits.map((d, n) => (
           <div className="sale-row" key={n}>
             <label>
-              {deposits.length > 1 ? `${n + 1}. peşinat (TL)` : "Peşinat (TL)"}
+              {deposits.length > 1 ? `${n + 1}. peşinat (${cur})` : `Peşinat (${cur})`}
               <input
                 type="number"
                 min="0"
@@ -221,7 +250,7 @@ export default function NewSaleForm({
         </button>
         {mode === "Aktif" && (
           <label className="form-label">
-            İmzada tahsil edilen peşinat (TL)
+            İmzada tahsil edilen peşinat ({cur})
             <input
               type="number"
               min="0"
@@ -283,7 +312,7 @@ export default function NewSaleForm({
               />
             </label>
             <label>
-              Tutar (TL)
+              Tutar ({cur})
               <input
                 type="number"
                 min="1"

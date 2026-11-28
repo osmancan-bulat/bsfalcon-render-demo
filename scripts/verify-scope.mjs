@@ -71,7 +71,7 @@ test("Renaming a project updates the catalog used by the scope picker immediatel
 
 test("Stored or linked scopes that do not exist resolve safely (reload and old links)", () => {
   syncCatalog(seed());
-  for (const bad of [null, undefined, "", "p99", "cengilli-villa-sitesi", "ALL", "silinmis"]) {
+  for (const bad of [null, undefined, "", "p99", "guzel-nature", "ALL", "silinmis"]) {
     assert.equal(resolveScope(bad), "all", String(bad));
   }
   assert.equal(scopeProblem("p99"), "missing");

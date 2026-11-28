@@ -5,13 +5,13 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   emptyStore, attemptLogin, hashPassword, verifyPassword, verifyTotp, passwordProblem, sessionExpired, reauthValid,
-  randomId, effectivePermissions, can as canFn, canSection as canSectionFn, checkAction as checkActionFn,
+  randomId, generatePassword, roleLabel, effectivePermissions, can as canFn, canSection as canSectionFn, checkAction as checkActionFn,
   type SecurityStore, type User, type RoleId, type ModuleId, type Level, type DocEvent, type Permissions, type Flags, type SecuritySettings,
 } from "@/lib/security";
 
-const STORE = "bsfalcon-guvenlik-v1";
-const SESSION = "bsfalcon-oturum-v1";
-const NOTICE = "bsfalcon-oturum-mesaj";
+const STORE = "byguzel-guvenlik-v1";
+const SESSION = "byguzel-oturum-v1";
+const NOTICE = "byguzel-oturum-mesaj";
 type Session = { sid: string; userId: string; startedAt: number; lastActive: number; reauthAt?: number };
 
 type Ctx = {
@@ -21,6 +21,9 @@ type Ctx = {
   session: Session | null;
   perms: Permissions | null;
   notice: string;
+  /** Tanıtım modu: kurulum yapılmamışsa şifresiz örnek rol girişi (DEMO; güvenlik sağlamaz). */
+  tourAllowed: boolean;
+  startTour: (role: RoleId) => Promise<string | null>;
   setupAdmin: (r: { name: string; username: string; email: string; password: string }, samples?: { name: string; username: string; role: RoleId; password: string }[]) => Promise<string | null>;
   login: (identifier: string, password: string) => Promise<{ ok: boolean; needsTotp?: boolean; message?: string; locked?: boolean }>;
   verifySecondFactor: (code: string) => Promise<string | null>;
@@ -68,6 +71,9 @@ const sanitizeStore = (s: SecurityStore | null): SecurityStore => {
   if (!s || s.version !== 1 || !Array.isArray(s.users)) return base;
   return { ...base, ...s, settings: { ...base.settings, ...(s.settings ?? {}) } };
 };
+
+/** Tanıtım modunda oluşturulan örnek kullanıcı (gerçek hesap değildir). */
+const isTourUser = (u: { email: string }) => u.email.endsWith("@tanitim.test");
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -207,8 +213,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     perms,
     notice,
     pendingTotp: !!pending,
+    tourAllowed: store.users.every(isTourUser),
+    async startTour(role) {
+      if (!storeRef.current.users.every(isTourUser)) return "Kurulum yapılmış; tanıtım modu kapalı. Kullanıcı adı ve şifre ile giriş yapın.";
+      const s0 = storeRef.current;
+      let u = s0.users.find((x) => x.role === role);
+      let s = s0;
+      if (!u) {
+        // Şifre rastgele üretilir ve hiçbir yerde gösterilmez: bu kullanıcı yalnızca tanıtım düğmesiyle açılır.
+        const h = await hashPassword(generatePassword());
+        u = { id: randomId("USR"), username: `tanitim.${role}`, email: `${role}@tanitim.test`, name: `Tanıtım · ${roleLabel(role)}`, role, active: true, failed: 0, createdAt: Date.now(), ...h };
+        s = { ...s0, users: [...s0.users, u] };
+      }
+      startSession(u, s);
+      return null;
+    },
     async setupAdmin(r, samples = []) {
-      if (storeRef.current.users.length) return "Kurulum zaten yapılmış.";
+      if (!storeRef.current.users.every(isTourUser)) return "Kurulum zaten yapılmış.";
       const name = r.name.trim(), username = r.username.trim(), email = r.email.trim();
       if (!name || !/^[a-zA-Z0-9._-]{3,32}$/.test(username)) return "Ad ve geçerli bir kullanıcı adı girin (3–32 karakter; harf, rakam, . _ -).";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Geçerli bir e-posta adresi girin.";
@@ -268,7 +289,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout: (reason) => endWith(reason ?? "Oturum kapatıldı.", "Kullanıcı çıkışı"),
     can: (m, l = "view") => canFn(user, m, l),
     canSection: (sec) => canSectionFn(user, sec),
-    checkAction: (t) => checkActionFn(user, t),
+    // Tanıtım modunda (kurulum yapılmamış tarayıcı) demo sıfırlama her tanıtım rolüne açıktır; diğer kurallar aynen geçerlidir.
+    checkAction: (t) => (t === "reset" && user && isTourUser(user) ? null : checkActionFn(user, t)),
     reauthFresh: () => reauthValid(sessionRef.current?.reauthAt, storeRef.current.settings),
     requireReauth(label, kind) {
       if (reauthValid(sessionRef.current?.reauthAt, storeRef.current.settings)) return Promise.resolve(true);
@@ -392,6 +414,25 @@ function ReauthDialog({ user, label, onDone }: { user: User; label: string; onDo
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [tries, setTries] = useState(0);
+  // Tanıtım modu kullanıcısının şifresi yoktur: adım gösterilir, onay "şifresiz tanıtım onayı" olarak kaydedilir.
+  if (isTourUser(user))
+    return (
+      <div className="sec-modal" role="dialog" aria-modal="true" aria-labelledby="reauth-title">
+        <div className="sec-modal-card">
+          <span className="sec-eyebrow">Hassas içerik · yeniden doğrulama</span>
+          <h2 id="reauth-title">Bu adımda şifre istenir</h2>
+          <p>
+            <b>{label}</b> hassas içerik olarak işaretli. Gerçek kullanımda burada şifre (ve açıksa 2 adımlı doğrulama kodu)
+            yeniden istenir. <b>Tanıtım modunda şifre yoktur</b>; devam ederseniz erişim kaydına “şifresiz tanıtım onayı” yazılır.
+          </p>
+          <div className="sec-actions">
+            <button type="button" className="btn" onClick={() => onDone(false, "Vazgeçildi")}>Vazgeç</button>
+            <button type="button" className="btn primary" onClick={() => onDone(true, "Tanıtım modu · şifresiz onay")}>Tanıtım: devam et</button>
+          </div>
+          <small className="sec-demo-note">DEMO: bu onay güvenlik sağlamaz. Üretimde sunucu tarafında yeniden kimlik doğrulama gerekir.</small>
+        </div>
+      </div>
+    );
   return (
     <div className="sec-modal" role="dialog" aria-modal="true" aria-labelledby="reauth-title">
       <form

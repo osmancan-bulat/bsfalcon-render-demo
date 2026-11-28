@@ -1,6 +1,7 @@
 "use client";
 // İmza sürecindeki sözleşme: daire ve müşteri bilgisi, planlanan ödeme takvimi, durum geçmişi ve imza/iptal işlemleri.
 // İmza onayı bir doğrulama adımıyla yapılır; imzadan sonra müşteri dosyası oluşturulmuş ödeme planıyla açılır.
+import { viewCode } from "@/lib/currency";
 import Link from "next/link";
 import { useState } from "react";
 import { Printer, Send, PenLine, X, ShieldCheck } from "lucide-react";
@@ -159,7 +160,7 @@ export default function DraftPanel({
             <ShieldCheck size={16} /> İmzayı onayla
           </h3>
           <label className="form-label">
-            İmzada tahsil edilen peşinat (TL)
+            İmzada tahsil edilen peşinat ({viewCode()})
             <input
               type="number"
               min="0"

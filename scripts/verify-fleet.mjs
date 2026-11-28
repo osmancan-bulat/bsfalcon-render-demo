@@ -40,11 +40,11 @@ test("Reminder buckets: 7 / 15 / 30 days, overdue and completed follow the due d
 
 test("Add and edit a vehicle: plate format, duplicates, km cannot go backwards, history kept", () => {
   let s = seed();
-  s = applyAction(s, { type: "vehicle-create", record: { plate: "34 bfg 777", brand: "Dacia", model: "Duster", year: 2025, type: "Binek", fuel: "Dizel", project: "cengilli", assignee: "Saha mühendisi (örnek)", km: 1200, status: "Aktif" } });
+  s = applyAction(s, { type: "vehicle-create", record: { plate: "07 bgz 777", brand: "Dacia", model: "Duster", year: 2025, type: "Binek", fuel: "Dizel", project: "cengilli", assignee: "Saha mühendisi (örnek)", km: 1200, status: "Aktif" } });
   const v = s.fleet.vehicles.at(-1);
-  assert.equal(v.plate, "34 BFG 777");
+  assert.equal(v.plate, "07 BGZ 777");
   assert.equal(v.id, "ARC-07");
-  assert.throws(() => applyAction(s, { type: "vehicle-create", record: { ...v, plate: "34 BFG 777" } }), /zaten kayıtlı/);
+  assert.throws(() => applyAction(s, { type: "vehicle-create", record: { ...v, plate: "07 BGZ 777" } }), /zaten kayıtlı/);
   assert.throws(() => applyAction(s, { type: "vehicle-create", record: { ...v, plate: "ABC" } }), /Plaka/);
   s = applyAction(s, { type: "vehicle-update", id: v.id, patch: { assignee: "Proje müdürü (örnek)", project: "nergis" } });
   assert.equal(s.fleet.vehicles.at(-1).assignee, "Proje müdürü (örnek)");

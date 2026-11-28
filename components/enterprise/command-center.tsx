@@ -304,8 +304,8 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
           <Link className="btn" href="/daireler">
             <Plus size={15} /> Yeni satış
           </Link>
-          <Link className="btn" href="/barter">
-            <Handshake size={15} /> Barter
+          <Link className="btn" href="/satis-sonrasi">
+            <Handshake size={15} /> Teslim ve tapu
           </Link>
           <Link
             className="btn ghost"
@@ -480,7 +480,7 @@ export default function CommandCenter({ projectId }: { projectId: string }) {
               {s.sold} / {s.total}
             </dd>
             <small>
-              {s.barterCount} barter · {s.reserved} rezerve
+              {s.reserved} rezerve
             </small>
           </div>
         </dl>

@@ -187,7 +187,7 @@ export default function Documents() {
           <div className="e-note">
             <Badge tone="neutral">Örnek gündem</Badge>
             <p>
-              Haftalık toplantıda Çengilli Villa Sitesi tahsilat planı, Nergis Park
+              Haftalık toplantıda Guzel Nature tahsilat planı, Guzel Life Premium
               sevkiyat tarihi ve hakediş onayları birlikte değerlendirilecek.
             </p>
             <small>15 Kasım 2026 · Proje yönetimi</small>
@@ -212,7 +212,7 @@ export default function Documents() {
                   </button>
                 </div>
                 <p>{n.text}</p>
-                <small>BŞ Falcon Yönetici · Bu oturumda eklendi</small>
+                <small>By Güzel Yönetici · Bu oturumda eklendi</small>
               </div>
             ))}
         </div>
@@ -226,7 +226,7 @@ export default function Documents() {
         {d && (
           <>
             <div className="document-sheet">
-              <span>BŞ Falcon / EVRAK KONTROL FÖYÜ</span>
+              <span>By Güzel / EVRAK KONTROL FÖYÜ</span>
               <h3>{d.name}</h3>
               <p>Proje: {pname(d.project)}</p>
               <div>

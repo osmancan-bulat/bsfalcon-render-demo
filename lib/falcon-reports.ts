@@ -1,4 +1,4 @@
-// BŞ Falcon raporları: kat karşılığı paylaşım özeti ve proje bütçe / gelir-gider raporu.
+// By Güzel raporları: kat karşılığı paylaşım özeti ve proje bütçe / gelir-gider raporu.
 // Bütün ekranlar (yönetim merkezi, proje merkezleri, kat karşılığı ve raporlar) bu fonksiyonları kullanır;
 // böylece aynı veri kaynağından tutarlı sayılar üretilir.
 import {
@@ -39,7 +39,7 @@ export function shareSummary(s: EnterpriseState, project: string) {
   const ag = agreementOf(s, project);
   const list = units.filter((u) => u.project === project);
   const owners = [
-    { id: CONTRACTOR, name: "Yüklenici · BŞ Falcon Group", stake: 100 },
+    { id: CONTRACTOR, name: "Yüklenici · By Güzel", stake: 100 },
     ...(ag?.owners ?? []).map((o) => ({ id: o.id, name: o.name, stake: o.stake })),
   ];
   const by = owners.map((o) => {

@@ -16,6 +16,7 @@ import {
   projects,
 } from "@/lib/enterprise";
 import { syncCatalog, resolveScope, scopeProblem } from "@/lib/catalog";
+import { setCurrencyView, type Currency } from "@/lib/currency";
 import { useAuthOptional } from "../security/auth";
 import { roleLabel } from "@/lib/security";
 type AppContext = {
@@ -26,6 +27,8 @@ type AppContext = {
   act: (a: Action) => boolean;
   toast: string;
   notify: (s: string) => void;
+  currency: Currency;
+  setCurrency: (c: Currency) => void;
 };
 const Context = createContext<AppContext | null>(null);
 export function Provider({ children }: { children: ReactNode }) {
@@ -34,17 +37,33 @@ export function Provider({ children }: { children: ReactNode }) {
     [project, setP] = useState("all"),
     [toast, notify] = useState("");
   const current = useRef(state);
+  // Para birimi görünümü: tutarlar yalnızca seçili para birimindeki sözleşme ve kayıtlardan hesaplanır
+  const [currency, setCur] = useState<Currency>("EUR");
+  setCurrencyView(currency);
+  useEffect(() => {
+    try {
+      const c = localStorage.getItem("byguzel-para-birimi");
+      if (c === "USD" || c === "TRY" || c === "EUR") setCur(c);
+    } catch {}
+  }, []);
+  const setCurrency = (c: Currency) => {
+    setCurrencyView(c);
+    setCur(c);
+    try {
+      localStorage.setItem("byguzel-para-birimi", c);
+    } catch {}
+  };
   const auth = useAuthOptional();
   // Katalog (projeler ve daireler) her çizimde bu durumla eşitlenir; alt bileşenler güncel listeyi görür.
   syncCatalog(state);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("bsfalcon-enterprise-v1");
+      const raw = localStorage.getItem("byguzel-enterprise-v1");
       const loaded = raw ? migrateSaved(raw) : null;
       if (raw && !loaded) {
         // Okunamayan kayıt silinmez: yedeklenir, uygulama örnek veriyle açılır.
         try {
-          localStorage.setItem("bsfalcon-enterprise-v1-yedek-okunamayan", raw);
+          localStorage.setItem("byguzel-enterprise-v1-yedek-okunamayan", raw);
         } catch {}
         notify(
           "Tarayıcıdaki kayıtlar okunamadı; yedeklendi ve örnek veriyle başlatıldı.",
@@ -52,9 +71,9 @@ export function Provider({ children }: { children: ReactNode }) {
       }
       if (loaded && loaded.repaired > 0) {
         try {
-          localStorage.setItem("bsfalcon-enterprise-v1-yedek-onarim", raw!);
+          localStorage.setItem("byguzel-enterprise-v1-yedek-onarim", raw!);
           localStorage.setItem(
-            "bsfalcon-onarim-raporu",
+            "byguzel-onarim-raporu",
             JSON.stringify({
               at: new Date().toISOString(),
               repaired: loaded.repaired,
@@ -62,7 +81,7 @@ export function Provider({ children }: { children: ReactNode }) {
             }),
           );
           localStorage.setItem(
-            "bsfalcon-enterprise-v1",
+            "byguzel-enterprise-v1",
             JSON.stringify(loaded.state),
           );
         } catch {}
@@ -74,9 +93,9 @@ export function Provider({ children }: { children: ReactNode }) {
         if (loaded.migrated) {
           // Önceki kayıt silinmez: yedeği saklanır, ardından kurgusal adlarla yeniden yazılır.
           try {
-            localStorage.setItem("bsfalcon-enterprise-v1-yedek-v1", raw!);
+            localStorage.setItem("byguzel-enterprise-v1-yedek-v1", raw!);
             localStorage.setItem(
-              "bsfalcon-enterprise-v1",
+              "byguzel-enterprise-v1",
               JSON.stringify(loaded.state),
             );
           } catch {}
@@ -84,13 +103,13 @@ export function Provider({ children }: { children: ReactNode }) {
         current.current = loaded.state;
         setState(loaded.state);
       }
-      const saved = localStorage.getItem("bsfalcon-project");
+      const saved = localStorage.getItem("byguzel-project");
       syncCatalog(current.current);
       // Yenilemede mevcut olmayan veya arşivdeki proje seçimi korunmaz; kayıt da düzeltilir.
       const valid = resolveScope(saved);
       setP(valid);
       if (saved !== null && saved !== valid)
-        localStorage.setItem("bsfalcon-project", valid);
+        localStorage.setItem("byguzel-project", valid);
     } catch {
       notify("Kayıtlar okunamadı; örnek veriyle başlatıldı.");
     }
@@ -127,7 +146,7 @@ export function Provider({ children }: { children: ReactNode }) {
       current.current = next;
       setState(next);
       try {
-        localStorage.setItem("bsfalcon-enterprise-v1", JSON.stringify(next));
+        localStorage.setItem("byguzel-enterprise-v1", JSON.stringify(next));
       } catch {
         notify(
           "İşlem bu oturumda kaydedildi; tarayıcı depolaması kullanılamıyor.",
@@ -149,7 +168,7 @@ export function Provider({ children }: { children: ReactNode }) {
     const v = resolveScope(id);
     setP(v);
     try {
-      localStorage.setItem("bsfalcon-project", v);
+      localStorage.setItem("byguzel-project", v);
     } catch {}
   };
   // Kapsam her çizimde katalogla doğrulanır: seçili proje silinir veya arşivlenirse alt bileşenler
@@ -160,7 +179,7 @@ export function Provider({ children }: { children: ReactNode }) {
     const why = scopeProblem(project);
     setP(effective);
     try {
-      localStorage.setItem("bsfalcon-project", effective);
+      localStorage.setItem("byguzel-project", effective);
     } catch {}
     notify(
       why === "archived"
@@ -178,6 +197,8 @@ export function Provider({ children }: { children: ReactNode }) {
         act,
         toast,
         notify,
+        currency,
+        setCurrency,
       }}
     >
       {children}

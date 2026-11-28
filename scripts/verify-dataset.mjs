@@ -16,7 +16,7 @@ import {
 } from "../lib/enterprise.ts";
 import { personName, FIRM, renameLegacy } from "../lib/names.ts";
 import { units, unitById, unitPlace, unitShort } from "../lib/units.ts";
-import { customers, workItems, SNAPSHOT } from "../lib/data.ts";
+import { customers, workItems, SNAPSHOT, SEED_RATE } from "../lib/data.ts";
 
 let checks = 0;
 const test = (name, fn) => {
@@ -45,17 +45,17 @@ test("Every person is unique and keeps one identity across files, contracts, pay
   for (const c of contractList(s)) assert.equal(c.name, byId.get(c.id));
   for (const r of paymentRows(s)) assert(byId.has(r.customerId), r.id);
   // Sistem belgeleri (sözleşme, plan, ekstre, makbuz) aynı kayda bağlanır
-  for (const id of ["agva-1", "nergis-12", "cengilli-3"]) {
+  for (const id of ["agva-8", "nergis-50", "nergis-12", "cengilli-3"]) {
     const docs = systemDocuments(s, id);
     assert(docs.length >= 3);
     for (const d of docs) assert(d.href.includes(`id=${id}`) || d.href.includes("THS-"), d.href);
   }
   // Ad, aynı kayıt numarasından her yerde aynı üretilir
-  assert.equal(s.contracts.find((c) => c.id === "agva-1").name, personName(81));
+  assert.equal(s.contracts.find((c) => c.id === "nergis-50").name, personName(81));
   assert.equal(customers.find((c) => c.id === "nergis-1").name, personName(1));
   // Hatırlatma, ilgili taslağın müşteri adını taşır
   const noter = s.reminders.find((r) => r.id === "HTR-D01");
-  assert(noter.title.includes(s.drafts.find((d) => d.id === "cengilli-4").name));
+  assert(noter.title.includes(s.drafts.find((d) => d.id === "cengilli-21").name));
 });
 
 test("Firms are consistent across work packages, barters, progress payments and work contracts", () => {
@@ -67,7 +67,7 @@ test("Firms are consistent across work packages, barters, progress payments and 
   const corner = workContracts(s, "cengilli");
   assert.deepEqual(
     corner.map((w) => w.id),
-    corner.map((_, i) => `IS-CV-${String(i + 1).padStart(2, "0")}`),
+    corner.map((_, i) => `IS-GN-${String(i + 1).padStart(2, "0")}`),
   );
   // Her barter firması aynı projede bir iş sözleşmesine bağlıdır
   for (const b of s.barters)
@@ -80,13 +80,16 @@ test("Base sale prices follow the unit catalogue and keep deposit + 36 installme
     assert(u, c.id);
     assert.equal(c.unit, u.label);
     assert.equal(c.deposit + 36 * c.installment, c.price);
-    const disc = 1 - c.price / u.listPrice;
+    // Liste fiyatı EUR; USD / TRY örnek satışlar sabit örnek çarpanla üretilmiştir (canlı kur değildir)
+    assert(["EUR", "USD", "TRY"].includes(c.currency), c.id);
+    const disc = 1 - c.price / (u.listPrice * SEED_RATE[c.currency]);
     assert(disc > 0.01 && disc < 0.05, `${c.id} discount ${disc}`);
   }
-  // Büyük ve üst kat daire, küçük alt kat daireden pahalıdır
-  const big = customers.find((c) => c.id === "nergis-1"); // 3+1 köşe
-  const small = customers.find((c) => c.id === "nergis-2"); // 2+1
-  assert(big.price > small.price);
+  // Aynı para biriminde büyük daire (4+1 bahçe dubleks) küçük daireden (2+1) pahalıdır
+  const eur = customers.filter((c) => c.currency === "EUR" && c.project === "nergis");
+  const big = eur.filter((c) => unitById(c.id).type === "4+1 bahçe dubleks").map((c) => c.price);
+  const small = eur.filter((c) => unitById(c.id).type === "2+1").map((c) => c.price);
+  assert(big.length && small.length && Math.min(...big) > Math.max(...small));
 });
 
 test("Sold, barter and draft units never overlap; a taken unit cannot be sold again", () => {
@@ -108,12 +111,12 @@ test("Sold, barter and draft units never overlap; a taken unit cannot be sold ag
 });
 
 test("Readable unit place keeps technical code mapping", () => {
-  assert.equal(unitPlace("agva-1"), "Villa V-01 · triplex");
-  assert.equal(unitShort("nergis-12"), "A Blok · Daire 12");
-  assert.equal(unitPlace("nergis-1"), "A Blok · 1. Kat · Daire 1");
-  assert.equal(unitPlace("nergis-36"), "Zemin Kat · Dükkân D-1");
-  assert.equal(unitShort("cengilli-3"), "Villa V-03");
-  assert.equal(unitById("agva-1").label, "V-01");
+  assert.equal(unitPlace("agva-1"), "City Prime · 1. kat · Daire CP-101");
+  assert.equal(unitShort("nergis-12"), "A Blok · Daire A-12");
+  assert.equal(unitPlace("nergis-1"), "A Blok · Bahçe katı · Daire A-01");
+  assert.equal(unitPlace("nergis-61"), "D Blok · 2. kat · Daire D-07");
+  assert.equal(unitShort("cengilli-3"), "Daire 203");
+  assert.equal(unitById("nergis-90").label, "E-18");
 });
 
 test("Scenario dates are fixed to 15 Nov 2026 and statuses follow them", () => {
@@ -146,12 +149,11 @@ test("Legacy browser data migrates names safely without losing user actions", ()
   assert.equal(out.state.dataset, DATASET);
   assert.deepEqual(out.state.receipts, s.receipts);
   assert.deepEqual(out.state.contracts.map((c) => c.id), s.contracts.map((c) => c.id));
-  assert.equal(out.state.contracts.find((c) => c.id === "agva-1").name, personName(81));
+  assert.equal(out.state.contracts.find((c) => c.id === "nergis-50").name, personName(81));
   assert.deepEqual(summary(out.state), summary(s));
   assert(!JSON.stringify(out.state).includes("Örnek Yapı"));
-  // Taşınan firma adıyla barter mahsubu hâlâ eşleşir
-  const b = out.state.barters.find((x) => x.company === FIRM.yapi);
-  assert(b);
+  // Taşınan firma adıyla hakediş kaydı hâlâ eşleşir
+  assert(requestList(out.state).some((x) => x.company === FIRM.yapi));
   // İkinci yükleme veriyi tekrar değiştirmez
   const again = migrateSaved(JSON.stringify(out.state));
   assert.equal(again.migrated, false);

@@ -71,9 +71,9 @@ test("A new project starts empty and is included everywhere automatically", () =
   assert(managerReport(s, { project: "all" }).rows.some((r) => r.project === id && r.fin.contracted === 0));
   assert(!JSON.stringify(reportCsv(s, "yonetici", { project: "all" })).includes("NaN"));
   // Yerleşik projelerin kimlikleri ve numaraları değişmez
-  assert.equal(contractNumber("agva-1"), "SZL-AG-001");
-  assert.equal(contractNumber("nergis-12"), "SZL-NP-012");
-  assert.deepEqual(workContracts(s, "cengilli").map((w) => w.id), ["IS-CV-01", "IS-CV-02", "IS-CV-03"]);
+  assert.equal(contractNumber("agva-1"), "SZL-CP-001");
+  assert.equal(contractNumber("nergis-12"), "SZL-GLP-012");
+  assert.deepEqual(workContracts(s, "cengilli").map((w) => w.id), ["IS-GN-01", "IS-GN-02", "IS-GN-03", "IS-GN-04"]);
 });
 
 test("Project validation: unique name and code, code format, edits and built-in protection", () => {
@@ -81,7 +81,7 @@ test("Project validation: unique name and code, code format, edits and built-in 
   assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "Başka", code: "KV" }) }), /kodu/);
   assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "kuzey vadi konutları", code: "ZZ" }) }), /adla/);
   assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "X Proje", code: "K1" }) }), /kodu/);
-  assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "Y Proje", code: "CV" }) }), /kodu/);
+  assert.throws(() => applyAction(s, { type: "project-create", record: project({ name: "Y Proje", code: "GN" }) }), /kodu/);
   const id = newProjectId(s);
   s = applyAction(s, { type: "project-update", id, patch: { name: "Kuzey Vadi Evleri", location: "Mudanya", delivery: "2029", description: "" } });
   syncCatalog(s);
@@ -107,11 +107,13 @@ test("Blocks generate correctly numbered units; numbering continues; duplicates 
   assert.throws(() => applyAction(s, block(id, { block: "C", floors: 0 })), /Kat/);
   assert.throws(() => applyAction(s, block(id, { block: "C", listPrice: 0 })), /fiyat/);
   // Yerleşik projeye blok eklenince numaralar kaldığı yerden devam eder, mevcut daireler değişmez
-  const c = applyAction(seed(), block("nergis", { block: "C" }));
+  const c = applyAction(seed(), block("nergis", { block: "F" }));
   syncCatalog(c);
-  assert.equal(unitById("nergis-39").label, "C-39");
-  assert.equal(unitById("nergis-12").label, "3-12");
-  assert.equal(summary(c, "nergis").total, 44);
+  assert.equal(unitById("nergis-91").label, "F-91");
+  assert.equal(unitById("nergis-12").label, "A-12");
+  assert.equal(summary(c, "nergis").total, 96);
+  // Mevcut beş blokla aynı adlı blok eklenemez
+  assert.throws(() => applyAction(seed(), block("nergis", { block: "C" })), /zaten var/);
 });
 
 test("Full flow in a new project: sale → contract → plan → receipts → reports, isolated from other projects", () => {
@@ -141,7 +143,7 @@ test("Full flow in a new project: sale → contract → plan → receipts → re
   assert.equal(f.inflow, 630000);
   assert.equal(salesReport(s, { project: id }).total.sold, 1);
   assert.equal(salesReport(s, { project: id }).total.available, 5);
-  // Şirket toplamı = önceki toplam + yeni proje; Çengilli ve Nergis Park hiç değişmez
+  // Şirket toplamı = önceki toplam + yeni proje; Çengilli ve Guzel Life Premium hiç değişmez
   assert.equal(financialReport(s, { project: "all" }).contracted, r2(financialReport(s0, { project: "all" }).contracted + 2900000));
   assert.deepEqual(financialReport(s, { project: "cengilli" }), financialReport(s0, { project: "cengilli" }));
   assert.deepEqual(installmentReport(s, { project: "nergis" }), installmentReport(s0, { project: "nergis" }));
@@ -203,8 +205,8 @@ test("Archiving keeps financial records, blocks new sales and barter; reactivati
 test("Receipts: duplicate reference and double submit are rejected; amounts are rounded to the kuruş", () => {
   let s = seed();
   const row = paymentRows(s).find((r) => r.status === "Gecikti" && r.kind === "Taksit" && r.paid === 0);
-  s = applyAction(s, { type: "receipt", installmentId: row.installmentId, amount: 10000, method: "Banka havalesi", reference: "HVL-123" });
-  assert.throws(() => applyAction(s, { type: "receipt", installmentId: row.installmentId, amount: 10000, method: "Banka havalesi", reference: "hvl-123 " }), /zaten kaydedildi/);
+  s = applyAction(s, { type: "receipt", installmentId: row.installmentId, amount: 500, method: "Banka havalesi", reference: "HVL-123" });
+  assert.throws(() => applyAction(s, { type: "receipt", installmentId: row.installmentId, amount: 500, method: "Banka havalesi", reference: "hvl-123 " }), /zaten kaydedildi/);
   s = applyAction(s, { type: "receipt", installmentId: row.installmentId, amount: 10.005, method: "Banka havalesi", reference: "HVL-124" });
   assert.equal(s.receipts.at(-1).amount, 10.01);
   assert.throws(() => applyAction(s, { type: "receipt", installmentId: row.installmentId, amount: 0.001, method: "Banka havalesi", reference: "HVL-125" }));
@@ -236,7 +238,7 @@ test("Receipt reversal is traceable: balance and overdue restored, ledger keeps 
   assert.equal(financialReport(s, { project: row.project }).inflow, financialReport(s, { project: row.project }).collected);
   assert.throws(() => applyAction(s, { type: "receipt-reverse", id: rid, reason: "Tekrar" }), /zaten/);
   // Aynı dekont iptalden sonra doğru taksite yeniden girilebilir; makbuz numarası çakışmaz
-  s = applyAction(s, { type: "receipt", installmentId: row.installmentId, amount: 5000, method: "Banka havalesi", reference: "HVL-YANLIS" });
+  s = applyAction(s, { type: "receipt", installmentId: row.installmentId, amount: 500, method: "Banka havalesi", reference: "HVL-YANLIS" });
   assert.equal(new Set(s.receipts.map((r) => r.id)).size, s.receipts.length);
   assert.equal(nextReceiptId({ receipts: [{ id: "THS-0010" }, { id: "THS-D01" }] }), "THS-0011");
 });

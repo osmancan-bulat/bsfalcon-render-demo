@@ -1,9 +1,12 @@
-// Tamamen kurgusal demo envanteri: müşteri, firma, finans ve operasyon kayıtları gerçek şirket verisi değildir.
+// By Güzel demo envanteri. Müşteri, firma, sözleşme, tahsilat ve gider kayıtları TEMSİLİDİR (gerçek veri değildir).
+// Proje adları, konumları, tipleri, metrekare aralıkları, yapım yılları ve yayımlanan başlangıç fiyatları
+// byguzel.com / guzelinvest.com kaynaklıdır (bkz. lib/portfolio.ts).
 import { personName, FIRM } from "./names.ts";
 import { unitById } from "./units.ts";
+import { SYMBOL, currencyView, inView, type Currency } from "./currency.ts";
 export const SNAPSHOT = "2026-11-15";
 export type ProjectStatus = "Aktif" | "Tamamlandı" | "Arşiv";
-/** Şirkete bağlı proje. Yerleşik projeler (Çengilli, Nergis Park) ve kullanıcının eklediği projeler aynı yapıyı kullanır. */
+/** Şirkete bağlı proje. Yerleşik projeler ve kullanıcının eklediği projeler aynı yapıyı kullanır. */
 export type Project = {
   id: string;
   name: string;
@@ -13,7 +16,7 @@ export type Project = {
   total: number;
   /** Başlangıç senaryosundaki rezerve daire sayısı (yalnızca yerleşik projeler). */
   reserved: number;
-  /** Temsili bütçe ve maliyet varsayımı (yeni projelerde 0). */
+  /** Temsili bütçe ve maliyet varsayımı (TRY). */
   budget: number;
   cost: number;
   delivery: string;
@@ -22,7 +25,7 @@ export type Project = {
   terms: string;
   mix: string;
   commercial: string;
-  /** Sözleşme numaralarında kullanılan kısa kod (SZL-CV-001). */
+  /** Sözleşme numaralarında kullanılan kısa kod (SZL-GLP-001). */
   code: string;
   status: ProjectStatus;
   builtIn?: boolean;
@@ -31,62 +34,58 @@ export type Project = {
 export const projects: Project[] = [
   {
     id: "agva",
-    name: "Ağva 1111 Triplex Villa",
-    location: "Ağva, Şile / İstanbul",
-    image: "/images/agva-triplex.webp",
-    total: 1,
-    reserved: 0,
-    // Bütçe, maliyet ve ilerleme TEMSİLİ demo varsayımıdır.
-    budget: 24000000,
-    cost: 9600000,
-    delivery: "Aralık 2027",
-    progress: 48,
-    description:
-      "Ağva'da üç katlı yaşam kurgusuyla tasarlanan, akıllı ev altyapılı triplex villa; cam korkuluklu teras ve bahçe havuzu.",
-    terms: "Villa · Akıllı ev · Şile / Ağva",
-    mix: "1 triplex villa · akıllı ev konsepti",
+    name: "City Prime",
+    location: "Alanya, Antalya",
+    image: "/images/byguzel/cp-0-9.jpg",
+    total: 12,
+    reserved: 1,
+    budget: 96000000,
+    cost: 61000000,
+    delivery: "2025",
+    progress: 92,
+    description: "Ayrı mutfaklı 2+1 daireler, havuz, sauna ve çocuk oyun alanı olan site içi konut projesi; 65–122 m².",
+    terms: "Yayımlanan: 2+1 için 185.000 € · 65–122 m² · yapım yılı 2025. Bağımsız bölüm adedi yayımlanmadı (demoda 12 örnek bölüm).",
+    mix: "Örnek kurgu: 3 kat × 4 bölüm, tümü 2+1 (65–122 m²)",
     commercial: "Ticari birim yok.",
-    code: "AG",
+    code: "CP",
     status: "Aktif",
     builtIn: true,
   },
   {
     id: "cengilli",
-    name: "Çengilli Villa Sitesi",
-    location: "Çengilli Köyü, Şile / İstanbul",
-    image: "/images/cengilli-villa.webp",
-    total: 8,
-    reserved: 0,
-    budget: 150000000,
-    cost: 52000000,
-    delivery: "Kasım 2027",
-    progress: 31,
-    description:
-      "Şile Çengilli'de yeşil arazide sıralanan, bahçeli ve havuzlu müstakil triplex villalar; akıllı ev konsepti.",
-    terms: "Villa sitesi · Akıllı ev · Şile / Çengilli",
-    mix: "Müstakil triplex villalar · villa adedi temsili (8)",
-    commercial: "Ticari birim yok.",
-    code: "CV",
+    name: "Guzel Nature",
+    location: "Alanya, Antalya",
+    image: "/images/byguzel/gn-4-6.jpg",
+    total: 40,
+    reserved: 2,
+    budget: 210000000,
+    cost: 128000000,
+    delivery: "2025",
+    progress: 71,
+    description: "Tek blok, altı katlı konut projesi. İlk kat sosyal alanlara ayrılmış: TV odası, masa tenisli dinlenme odası, kafeterya, çocuk oyun odası, fitness, sauna, buhar odası ve tuz odası.",
+    terms: "Yayımlanan: 1+1 için 105.000 € · 50–180 m² · yapım yılı 2025. Daire adedi resmî kaynakta yayımlanmadı (demoda 40 örnek bölüm).",
+    mix: "Örnek kurgu: 2–6. katlarda katta 8 bölüm (1+1, 2+1, çatı dubleks)",
+    commercial: "İlk kat sosyal alan (resmî).",
+    code: "GN",
     status: "Aktif",
     builtIn: true,
   },
   {
     id: "nergis",
-    name: "Nergis Park Evleri",
-    location: "İstanbul · metroya 200 m",
-    image: "/images/nergis-park.webp",
-    total: 38,
-    reserved: 2,
-    budget: 210000000,
-    cost: 128000000,
-    delivery: "",
-    progress: 52,
-    description:
-      "Zemin + 7 kat, 1.360 m² alan üzerinde 35 daire ve 3 dükkândan oluşan konut + ticaret projesi; 2+1 ve 3+1 planlar.",
-    terms: "Kat karşılığı demo senaryosu: proje durumu resmî kaynakta belirtilmemiştir; paylaşım ve satış verileri temsilidir.",
-    mix: "Zemin + 7 kat · 35 daire + 3 dükkân",
-    commercial: "3 dükkân (resmî)",
-    code: "NP",
+    name: "Guzel Life Premium",
+    location: "Oba, Alanya / Antalya",
+    image: "/images/byguzel/glp-0-4.jpg",
+    total: 90,
+    reserved: 3,
+    budget: 540000000,
+    cost: 498000000,
+    delivery: "Tamamlandı (2024)",
+    progress: 100,
+    description: "Beş konut bloğu ve toplam 90 daireden oluşan, kendi altyapısıyla geniş hizmet sunan premium konut kompleksi: ayrı mutfaklı 2+1 ve 3+1 daireler, 4+1 bahçe dubleks ve 5+1 dubleks penthouse.",
+    terms: "Yayımlanan: 5 blok · 90 daire · 125–230 m² · 3+1 için 215.000 € · yapım yılı 2024 · vatandaşlık başvurusuna uygun ($400.000 sınırı, guzelinvest.com).",
+    mix: "5 blok × 18 daire (blok içi kat ve tip dağılımı temsili)",
+    commercial: "Sosyal tesis: açık ve kapalı havuz, fitness, sauna, buhar ve tuz odası, spor sahaları.",
+    code: "GLP",
     status: "Aktif",
     builtIn: true,
   },
@@ -107,36 +106,42 @@ export type Customer = {
   plan?: import("./plan.ts").PlanSpec;
   /** Satış anındaki liste fiyatı; indirim hesabı için. */
   listPrice?: number;
+  /** Sözleşme para birimi. Bütün plan ve tahsilatlar bu para biriminde tutulur. */
+  currency?: Currency;
+  /** Alıcı uyruğu (temsili; yabancı alıcı süreçleri için). */
+  nationality?: string;
 };
 /**
  * Örnek (sisteme geçiş öncesi) satışların fiyatlandırma şeması.
- * - "katalog": yeni ve temiz demo başlangıcı; fiyat dairenin liste fiyatından %2–4 pazarlık payıyla türetilir.
- * - "v3.1": önceki sürümün sabit bedelleri (Çengilli ₺14.200.000, diğer projeler ₺5.300.000).
- * Tarayıcıda daha önce işlem yapılmış kayıtlar hangi şemayla oluştuysa o şemayla açılır;
- * imzalı sözleşme bedelleri hiçbir geçişte yeniden fiyatlandırılmaz.
+ * - "katalog": temiz demo başlangıcı; fiyat liste fiyatından pazarlık payıyla türetilir.
+ * - "v3.1": önceki sürümün sabit bedelleri (kayıtlı tarayıcı verisi uyumluluğu).
  */
 export type BasePricing = "katalog" | "v3.1";
-/**
- * Sisteme geçiş öncesi örnek satışlar (TEMSİLİ): hangi bağımsız bölümlerin satıldığı, ödenmiş taksit
- * sayısı ve kişi numarası başlangıcı. Satışlar yalnızca yüklenici payındaki bölümlerden yapılır.
- */
+/** Sisteme geçiş öncesi örnek satışlar (TEMSİLİ). */
 const BASE_SALES: Record<string, { units: number[]; paid: number; person: number }> = {
-  nergis: { units: [1, 2, 3, 4, 5, 6, 7, 8, 9], paid: 6, person: 0 },
-  cengilli: { units: [1, 2], paid: 8, person: 20 },
+  nergis: { units: Array.from({ length: 44 }, (_, i) => i + 1), paid: 14, person: 0 },
+  cengilli: { units: Array.from({ length: 14 }, (_, i) => i + 1), paid: 6, person: 50 },
+  agva: { units: [1, 2, 3, 4, 5], paid: 4, person: 70 },
 };
+const NATIONS = ["Almanya", "Türkiye", "Ukrayna", "İsveç", "Kazakistan", "Hollanda", "Rusya", "İran", "Norveç", "Polonya", "İngiltere"];
+/** Temsili sözleşme para birimi: çoğu EUR; bazı alıcılar USD veya TRY ile sözleşme yapar. */
+const baseCurrency = (project: string, no: number): Currency =>
+  project === "nergis" && no % 6 === 0 ? "USD" : project === "cengilli" && no >= 13 ? "TRY" : "EUR";
+/** Yalnızca örnek satış bedeli üretmek için sabit çarpanlar (canlı kur değildir). */
+export const SEED_RATE: Record<Currency, number> = { EUR: 1, USD: 1.08, TRY: 37 };
+const ROUND: Record<Currency, number> = { EUR: 500, USD: 500, TRY: 10000 };
 const catalogPlan = (project: string, no: number) => {
-  const list = unitById(`${project}-${no}`)?.listPrice ?? 0;
-  // Temsili peşinat: liste fiyatının yaklaşık %25'i (50.000 TL'ye yuvarlı)
-  const deposit = Math.round((list * 0.25) / 50000) * 50000;
-  const installment =
-    Math.round((list * (0.96 + ((no * 3) % 5) * 0.005) - deposit) / 36 / 250) *
-    250;
-  return { deposit, installment, price: deposit + 36 * installment };
+  const cur = baseCurrency(project, no);
+  const list = (unitById(`${project}-${no}`)?.listPrice ?? 0) * SEED_RATE[cur];
+  const deposit = Math.round((list * 0.35) / ROUND[cur]) * ROUND[cur];
+  const step = cur === "TRY" ? 100 : 5;
+  const installment = Math.round((list * (0.96 + ((no * 3) % 5) * 0.005) - deposit) / 36 / step) * step;
+  return { deposit, installment, price: deposit + 36 * installment, currency: cur };
 };
 const legacyPlan = (project: string) =>
-  project === "cengilli"
-    ? { price: 14200000, deposit: 3400000, installment: 300000 }
-    : { price: 5300000, deposit: 1340000, installment: 110000 };
+  project === "nergis"
+    ? { price: 210000, deposit: 73200, installment: 3800, currency: "EUR" as Currency }
+    : { price: 120000, deposit: 42240, installment: 2160, currency: "EUR" as Currency };
 function buildCustomers(pricing: BasePricing): Customer[] {
   return projects.flatMap((p) => {
     const b = BASE_SALES[p.id];
@@ -148,6 +153,7 @@ function buildCustomers(pricing: BasePricing): Customer[] {
       unit: unitById(`${p.id}-${no}`)?.label ?? String(no),
       ...(pricing === "katalog" ? catalogPlan(p.id, no) : legacyPlan(p.id)),
       paidMonths: b.paid,
+      nationality: NATIONS[(i + b.person) % NATIONS.length],
     }));
   });
 }
@@ -178,10 +184,8 @@ const BASE_INSTALLMENTS = {
   katalog: buildInstallments(BASE.katalog),
   "v3.1": buildInstallments(BASE["v3.1"]),
 };
-export const baseCustomers = (pricing: BasePricing = "katalog") =>
-  BASE[pricing];
-export const baseInstallments = (pricing: BasePricing = "katalog") =>
-  BASE_INSTALLMENTS[pricing];
+export const baseCustomers = (pricing: BasePricing = "katalog") => BASE[pricing];
+export const baseInstallments = (pricing: BasePricing = "katalog") => BASE_INSTALLMENTS[pricing];
 /** Temiz demo başlangıcı (katalog fiyatları). */
 export const customers: Customer[] = BASE.katalog;
 export const installments: Installment[] = BASE_INSTALLMENTS.katalog;
@@ -198,46 +202,42 @@ const wp = (
   material: string,
 ) => ({ id, project, name, company, progress, weight, value, status, material });
 export const workItems = [
-  wp("w1", "agva", "Temel ve bodrum betonarme", FIRM.yapi, 100, 25, 2200000, "Tamamlandı", "Teslim alındı"),
-  wp("w2", "agva", "Kaba inşaat · 3 kat", FIRM.yapi, 60, 35, 5600000, "Devam ediyor", "Çatı betonu planlandı"),
-  wp("w3", "agva", "Akıllı ev ve elektrik altyapısı", FIRM.teknik, 10, 20, 3100000, "Devam ediyor", "Otomasyon paneli · sipariş onayında"),
-  wp("w4", "agva", "Cephe, havuz ve peyzaj", FIRM.cephe, 0, 20, 4400000, "Planlandı", "Taş kaplama numuneleri bekleniyor"),
-  wp("w5", "cengilli", "Altyapı ve parsel hazırlığı", FIRM.yapi, 100, 15, 4800000, "Tamamlandı", "Teslim alındı"),
-  wp("w6", "cengilli", "Villa kaba inşaatları", FIRM.yapi, 40, 40, 22000000, "3 gün gecikme", "Demir · 18 Kasım"),
-  wp("w7", "cengilli", "Akıllı ev altyapısı", FIRM.teknik, 0, 20, 8600000, "Planlandı", "Teknik şartname onayında"),
-  wp("w8", "cengilli", "Çatı, cephe ve peyzaj", FIRM.cephe, 0, 25, 12400000, "Planlandı", "Planlama aşamasında"),
-  wp("w9", "nergis", "Temel ve bodrum", FIRM.yapi, 100, 15, 9500000, "Tamamlandı", "Teslim alındı"),
-  wp("w10", "nergis", "Betonarme · zemin + 7 kat", FIRM.yapi, 80, 35, 38000000, "Devam ediyor", "7. kat kalıbı sahada"),
-  wp("w11", "nergis", "Mekanik ve elektrik tesisat", FIRM.teknik, 30, 20, 18500000, "Devam ediyor", "Kablo tavaları · sahada"),
-  wp("w12", "nergis", "Cephe ve ince işler", FIRM.cephe, 10, 30, 26000000, "Devam ediyor", "Çerçeveli balkon profilleri siparişte"),
+  wp("w1", "agva", "Kaba yapı ve çatı", FIRM.yapi, 100, 40, 21000000, "Tamamlandı", "Teslim alındı"),
+  wp("w2", "agva", "Mekanik ve elektrik tesisat", FIRM.teknik, 90, 35, 14500000, "Devam ediyor", "Asansör montajı"),
+  wp("w3", "agva", "İnce işler ve peyzaj", FIRM.cephe, 82, 25, 16000000, "Devam ediyor", "Havuz kaplaması"),
+  wp("w4", "cengilli", "Kaba yapı · 6 kat", FIRM.yapi, 100, 35, 42000000, "Tamamlandı", "Teslim alındı"),
+  wp("w5", "cengilli", "Sosyal alan katı (fitness, sauna, tuz odası)", FIRM.teknik, 60, 20, 18000000, "Devam ediyor", "Sauna ekipmanı siparişte"),
+  wp("w6", "cengilli", "Cephe, doğrama ve ince işler", FIRM.cephe, 60, 30, 36000000, "Devam ediyor", "PVC doğrama · 4. kat"),
+  wp("w7", "cengilli", "Havuz ve çevre düzenlemesi", FIRM.aluminyum, 40, 15, 12000000, "Devam ediyor", "Havuz izolasyonu"),
+  wp("w8", "nergis", "Kaba yapı · 5 blok", FIRM.yapi, 100, 40, 186000000, "Tamamlandı", "Teslim alındı"),
+  wp("w9", "nergis", "Tesisat ve asansörler", FIRM.teknik, 100, 25, 98000000, "Tamamlandı", "Teslim alındı"),
+  wp("w10", "nergis", "İnce işler, sosyal tesis ve peyzaj", FIRM.cephe, 100, 35, 154000000, "Tamamlandı", "Teslim alındı"),
 ];
 export const approvals = [
-  { id: "HAK-024", project: "nergis", company: FIRM.yapi, name: "Betonarme 7. kat hakedişi", type: "Hakediş", amount: 1250000, due: "2026-11-18", status: "Onay bekliyor" },
-  { id: "SAT-018", project: "cengilli", company: FIRM.demir, name: "28 ton inşaat demiri", type: "Satın alma", amount: 820000, due: "2026-11-18", status: "Onay bekliyor" },
-  { id: "SAT-019", project: "agva", company: FIRM.teknik, name: "Akıllı ev altyapı malzemesi", type: "Satın alma", amount: 340000, due: "2026-11-22", status: "Onay bekliyor" },
-  { id: "HAK-021", project: "nergis", company: FIRM.yapi, name: "Betonarme 6. kat hakedişi", type: "Hakediş", amount: 1380000, due: "2026-11-20", status: "Onaylandı" },
+  { id: "HAK-024", project: "cengilli", company: FIRM.cephe, name: "Cephe ve doğrama 4. kat hakedişi", type: "Hakediş", amount: 1850000, due: "2026-11-18", status: "Onay bekliyor" },
+  { id: "SAT-018", project: "cengilli", company: FIRM.teknik, name: "Sauna ve buhar odası ekipmanı", type: "Satın alma", amount: 940000, due: "2026-11-18", status: "Onay bekliyor" },
+  { id: "SAT-019", project: "agva", company: FIRM.aluminyum, name: "Havuz kenarı şezlong ve gölgelik", type: "Satın alma", amount: 320000, due: "2026-11-22", status: "Onay bekliyor" },
+  { id: "HAK-021", project: "cengilli", company: FIRM.yapi, name: "Kaba yapı son hakediş", type: "Hakediş", amount: 1380000, due: "2026-11-20", status: "Onaylandı" },
 ];
 export const documents = [
-  { id: "EVR-001", project: "cengilli", name: "Parsel bazlı yapı ruhsatı kontrol dosyası", type: "Ruhsat", date: "2026-11-20", owner: "Proje yönetimi", status: "Kontrol bekliyor" },
-  { id: "EVR-002", project: "nergis", name: "Kat karşılığı sözleşmesi ek protokol kontrolü", type: "Sözleşme", date: "2026-11-18", owner: "Hukuk ve sözleşme", status: "İncelemede" },
-  { id: "EVR-003", project: "agva", name: "Akıllı ev sistemleri teknik şartnamesi", type: "Teknik", date: "2026-11-30", owner: "Teknik ofis", status: "Taslak" },
-  { id: "EVR-004", project: "nergis", name: "Kasım saha toplantısı tutanağı", type: "Tutanak", date: "2026-11-16", owner: "Şantiye şefi", status: "Hazır" },
-  { id: "EVR-005", project: "cengilli", name: "Bitirme ve inşaat tamamlama sigortası belge takibi (temsili)", type: "Güvence", date: "2026-11-25", owner: "Proje yönetimi", status: "Kontrol bekliyor" },
+  { id: "EVR-001", project: "nergis", name: "İskân belgesi ve kat irtifakı → kat mülkiyeti dosyası", type: "Ruhsat", date: "2026-11-20", owner: "Tapu ve hukuk", status: "Kontrol bekliyor" },
+  { id: "EVR-002", project: "cengilli", name: "Yapı ruhsatı ve proje revizyon dosyası", type: "Ruhsat", date: "2026-11-18", owner: "Proje yönetimi", status: "İncelemede" },
+  { id: "EVR-003", project: "agva", name: "Teslim tutanağı şablonu (TR/EN/RU)", type: "Teknik", date: "2026-11-30", owner: "Satış sonrası", status: "Taslak" },
+  { id: "EVR-004", project: "nergis", name: "Site yönetim planı ve aidat tablosu 2027", type: "Tutanak", date: "2026-11-16", owner: "Site yönetimi", status: "Hazır" },
 ];
-/** Tam TL tutarlar kuruşsuz, kuruşlu tutarlar iki haneli gösterilir. */
-export const money = (n: number) => {
-  const cents = Math.round(n * 100) % 100 !== 0;
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-    minimumFractionDigits: cents ? 2 : 0,
-    maximumFractionDigits: cents ? 2 : 0,
-  }).format(n);
+const FMT: Record<Currency, Intl.NumberFormat[]> = {
+  TRY: [0, 2].map((d) => new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", minimumFractionDigits: d, maximumFractionDigits: d })),
+  EUR: [0, 2].map((d) => new Intl.NumberFormat("tr-TR", { style: "currency", currency: "EUR", minimumFractionDigits: d, maximumFractionDigits: d })),
+  USD: [0, 2].map((d) => new Intl.NumberFormat("tr-TR", { style: "currency", currency: "USD", minimumFractionDigits: d, maximumFractionDigits: d })),
 };
-export const compact = (n: number) =>
-  Math.abs(n) < 1000000
-    ? money(n)
-    : `₺${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(n / 1000000)} mn`;
+/** Belirli para biriminde tutar: tam tutarlar kuruşsuz, kuruşlu tutarlar iki haneli. */
+export const moneyIn = (n: number, c: Currency) => FMT[c][Math.round(n * 100) % 100 !== 0 ? 1 : 0].format(n);
+/** Etkin para birimi görünümünde tutar (görünüm yoksa TRY). */
+export const money = (n: number) => moneyIn(n, currencyView() ?? "TRY");
+export const compact = (n: number) => {
+  const c = currencyView() ?? "TRY";
+  return Math.abs(n) < 1000000 ? moneyIn(n, c) : `${SYMBOL[c]}${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(n / 1000000)} mn`;
+};
 export const date = (d: string) =>
   new Date(d + "T12:00:00").toLocaleDateString("tr-TR", {
     day: "numeric",
@@ -246,13 +246,10 @@ export const date = (d: string) =>
   });
 /** v1 özet hesabı; başlangıç verisi doğrulama testi (verify-data) tarafından kullanılır. */
 export function stats(project = "all", paid: string[] = []) {
-  const cs = customers.filter(
-    (c) => project === "all" || c.project === project,
-  );
+  const cs = customers.filter((c) => (project === "all" || c.project === project) && inView(c.currency ?? "EUR"));
+  const ids = new Set(cs.map((c) => c.id));
   const ps = projects.filter((p) => project === "all" || p.id === project);
-  const ins = installments.filter(
-    (i) => project === "all" || i.project === project,
-  );
+  const ins = installments.filter((i) => ids.has(i.customerId));
   const revenue = cs.reduce((a, c) => a + c.price, 0);
   const collected =
     cs.reduce((a, c) => a + c.deposit + c.installment * c.paidMonths, 0) +
@@ -266,11 +263,7 @@ export function stats(project = "all", paid: string[] = []) {
     balance: revenue - collected,
     budget: ps.reduce((a, p) => a + p.budget, 0),
     cost: ps.reduce((a, p) => a + p.cost, 0),
-    overdue: ins
-      .filter((i) => i.due < SNAPSHOT && !paid.includes(i.id))
-      .reduce((a, i) => a + i.amount, 0),
-    month: ins
-      .filter((i) => i.due.startsWith("2026-11") && !paid.includes(i.id))
-      .reduce((a, i) => a + i.amount, 0),
+    overdue: ins.filter((i) => i.due < SNAPSHOT && !paid.includes(i.id)).reduce((a, i) => a + i.amount, 0),
+    month: ins.filter((i) => i.due.startsWith("2026-11") && !paid.includes(i.id)).reduce((a, i) => a + i.amount, 0),
   };
 }

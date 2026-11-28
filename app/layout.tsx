@@ -12,10 +12,11 @@ import "./platform.css";
 import "./polish.css";
 import "./falcon.css";
 import "./security.css";
+import "./byguzel.css";
 export const metadata: Metadata = {
-  title: "BŞ Falcon Group | Yönetim Merkezi",
+  title: "By Güzel | Yönetim Merkezi (Demo)",
   description:
-    "BŞ Falcon Group için hazırlanmış interaktif proje, satış ve operasyon yönetimi demosu.",
+    "By Güzel Construction & Real Estate için hazırlanmış proje, satış, tahsilat ve satış sonrası yönetim demosu (temsilî veri).",
   robots: { index: false, follow: false },
 };
 export default function Layout({ children }: { children: React.ReactNode }) {

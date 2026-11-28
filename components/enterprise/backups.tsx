@@ -9,14 +9,14 @@ import { Panel, Badge } from "./shared";
 import { migrateSaved, customerList } from "@/lib/enterprise";
 import { syncCatalog } from "@/lib/catalog";
 
-const MAIN = "bsfalcon-enterprise-v1";
-const PREFIX = "bsfalcon-enterprise-v1-yedek";
-const MANUAL = "bsfalcon-yedek-manuel-";
+const MAIN = "byguzel-enterprise-v1";
+const PREFIX = "byguzel-enterprise-v1-yedek";
+const MANUAL = "byguzel-yedek-manuel-";
 const LABELS: Record<string, string> = {
-  "bsfalcon-enterprise-v1-yedek-v1": "Sürüm geçişi öncesi (v3.1)",
-  "bsfalcon-enterprise-v1-yedek-onarim": "Onarım öncesi kayıt",
-  "bsfalcon-enterprise-v1-yedek-okunamayan": "Okunamayan kayıt",
-  "bsfalcon-enterprise-v1-yedek-geri-yukleme-oncesi": "Son geri yükleme öncesi durum",
+  "byguzel-enterprise-v1-yedek-v1": "Sürüm geçişi öncesi (v3.1)",
+  "byguzel-enterprise-v1-yedek-onarim": "Onarım öncesi kayıt",
+  "byguzel-enterprise-v1-yedek-okunamayan": "Okunamayan kayıt",
+  "byguzel-enterprise-v1-yedek-geri-yukleme-oncesi": "Son geri yükleme öncesi durum",
 };
 
 type Item = {
@@ -60,7 +60,7 @@ export default function Backups() {
         if (k.startsWith(PREFIX) || k.startsWith(MANUAL)) list.push(inspect(k, localStorage.getItem(k) ?? ""));
       }
       setItems(list.sort((a, b) => b.key.localeCompare(a.key)));
-      const r = localStorage.getItem("bsfalcon-onarim-raporu");
+      const r = localStorage.getItem("byguzel-onarim-raporu");
       setReport(r ? JSON.parse(r) : null);
     } catch {
       setItems([]);
@@ -106,7 +106,7 @@ export default function Backups() {
     const ok = !!migrateSaved(raw);
     syncCatalog(state);
     if (!ok) {
-      notify("Dosya geçerli bir BŞ Falcon demo yedeği değil; geri yüklenmedi.");
+      notify("Dosya geçerli bir By Güzel demo yedeği değil; geri yüklenmedi.");
       return;
     }
     setConfirm({ label: f.name, raw });

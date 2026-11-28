@@ -1,5 +1,5 @@
 "use client";
-// Şirket genel bakışı: BŞ Falcon Group'ın bütün projeleri. Rakamlar raporlama motorundan hesaplanır.
+// Şirket genel bakışı: By Güzel'in bütün projeleri. Rakamlar raporlama motorundan hesaplanır.
 import Link from "next/link";
 import {
   ArrowRight,
@@ -46,7 +46,7 @@ export default function CompanyOverview() {
       <header className="home-head">
         <div>
           <span className="eyebrow">{date(SNAPSHOT)} · Şirket genel bakışı</span>
-          <h1>BŞ Falcon Group</h1>
+          <h1>By Güzel</h1>
           <p>
             {projects.filter((p) => p.status === "Aktif").length} aktif proje · {sales.total.total} bağımsız
             bölüm · {sales.total.sold} satış · tutarlar temsilidir
@@ -122,7 +122,7 @@ export default function CompanyOverview() {
               {p.image && (
                 <div className="project-cover">
                   <img src={p.image} alt={`${p.name} resmî proje görseli`} loading="lazy" />
-                  <span>Görsel: bsfalcongroup.com</span>
+                  <span>Görsel: byguzel.com</span>
                 </div>
               )}
               <header>

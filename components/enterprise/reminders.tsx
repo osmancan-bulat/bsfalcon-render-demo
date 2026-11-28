@@ -1,4 +1,5 @@
 "use client";
+import { viewCode } from "@/lib/currency";
 import { ADVISORS } from "@/lib/names";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -439,7 +440,7 @@ export default function RemindersView() {
               {deposit.title} · Kalan {money(deposit.amount ?? 0)}
             </p>
             <label className="form-label">
-              Tahsil edilen peşinat (TL)
+              Tahsil edilen peşinat ({viewCode()})
               <input
                 name="amount"
                 type="number"

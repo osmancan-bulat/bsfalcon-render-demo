@@ -1,4 +1,4 @@
-// Proje ve daire kataloğu: yerleşik projeler (Çengilli Villa Sitesi, Nergis Park Evleri, Ağva 1111 Triplex Villa) + kullanıcının
+// Proje ve daire kataloğu: yerleşik projeler (Guzel Nature, Guzel Life Premium, City Prime) + kullanıcının
 // eklediği projeler, bloklar ve daireler. `projects` ve `units` dizileri tüm uygulamada paylaşılır;
 // syncCatalog(durum) bunları o durumun kataloğuyla yerinde günceller (kod değişikliği gerekmeden
 // yeni projeler her ekrana, seçiciye ve rapora otomatik dahil olur).
@@ -59,11 +59,11 @@ export const PROJECT_STATUSES: ProjectStatus[] = ["Aktif", "Tamamlandı", "Arşi
 /** Proje merkezi adresi: yerleşik projelerin eski adresleri korunur, yeniler genel adresi kullanır. */
 export const hubHref = (id: string) =>
   id === "cengilli"
-    ? "/cengilli-villa-sitesi"
+    ? "/guzel-nature"
     : id === "nergis"
-      ? "/nergis-park-evleri"
+      ? "/guzel-life-premium"
       : id === "agva"
-        ? "/agva-triplex-villa"
+        ? "/city-prime"
         : id === "all"
         ? "/genel-bakis"
         : `/proje/?id=${encodeURIComponent(id)}`;

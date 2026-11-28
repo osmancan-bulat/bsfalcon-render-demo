@@ -175,7 +175,7 @@ export default function PaymentsTab({
                   ];
                 }),
               ],
-              "bsfalcon-odeme-takibi.csv",
+              "byguzel-odeme-takibi.csv",
             )
           }
         >

@@ -301,7 +301,7 @@ function UnitShareDrawer({ unit, project, onClose }: { unit: Unit; project: stri
           <label className="full">
             Paydaş
             <select value={owner} onChange={(e) => setOwner(e.target.value)}>
-              <option value={CONTRACTOR}>Yüklenici · BŞ Falcon Group</option>
+              <option value={CONTRACTOR}>Yüklenici · By Güzel</option>
               {ag?.owners.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
           </label>

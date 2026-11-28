@@ -1,4 +1,4 @@
-// Araç ve filo yönetimi (BŞ Falcon). Araçlar, zimmetler, kilometre, yasal yükümlülükler (MTV, trafik
+// Araç ve filo yönetimi (By Güzel). Araçlar, zimmetler, kilometre, yasal yükümlülükler (MTV, trafik
 // sigortası, kasko, muayene), bakım/lastik, yakıt, arıza/servis ve evrak kayıtları.
 // TÜM KAYITLAR TEMSİLİDİR: plakalar, personel adları, poliçe numaraları ve tutarlar örnektir.
 // Hatırlatmalar uygulama içinde hesaplanır; e-posta, SMS veya WhatsApp gönderimi YOKTUR.
@@ -58,12 +58,12 @@ const o = (id: string, vehicleId: string, kind: ObligationKind, due: string, amo
 
 export const seedFleet: FleetState = {
   vehicles: [
-    v("ARC-01", "34 BFG 101", "Toyota", "Corolla 1.5 Vision", 2023, "Binek", "Benzin", "genel", "Proje müdürü (örnek)", 48250),
-    v("ARC-02", "34 BFG 214", "Ford", "Transit Custom 320L", 2021, "Hafif ticari", "Dizel", "nergis", "Şantiye şefi · Nergis (örnek)", 126480),
-    v("ARC-03", "34 BFG 377", "Fiat", "Doblo Cargo 1.6", 2020, "Hafif ticari", "Dizel", "cengilli", "Saha teknikeri · Çengilli (örnek)", 154920),
-    v("ARC-04", "34 BFG 452", "Isuzu", "D-Max 4x4", 2022, "Kamyonet", "Dizel", "agva", "Şantiye şefi · Ağva (örnek)", 88310),
-    v("ARC-05", "34 BFG 590", "Mitsubishi", "Canter Fuso 7C15", 2019, "Kamyon", "Dizel", "nergis", "Malzeme sorumlusu (örnek)", 211700, "Serviste"),
-    v("ARC-06", "34 BFG 618", "Renault", "Clio 1.0 TCe", 2024, "Binek", "Benzin", "genel", "Satış danışmanı (örnek)", 21340),
+    v("ARC-01", "07 BGZ 101", "Toyota", "Corolla 1.5 Vision", 2023, "Binek", "Benzin", "genel", "Proje müdürü (örnek)", 48250),
+    v("ARC-02", "07 BGZ 214", "Ford", "Transit Custom 320L", 2021, "Hafif ticari", "Dizel", "nergis", "Şantiye şefi · GLP (örnek)", 126480),
+    v("ARC-03", "07 BGZ 377", "Fiat", "Doblo Cargo 1.6", 2020, "Hafif ticari", "Dizel", "cengilli", "Saha teknikeri · Guzel Nature (örnek)", 154920),
+    v("ARC-04", "07 BGZ 452", "Isuzu", "D-Max 4x4", 2022, "Kamyonet", "Dizel", "agva", "Şantiye şefi · City Prime (örnek)", 88310),
+    v("ARC-05", "07 BGZ 590", "Mitsubishi", "Canter Fuso 7C15", 2019, "Kamyon", "Dizel", "nergis", "Malzeme sorumlusu (örnek)", 211700, "Serviste"),
+    v("ARC-06", "07 BGZ 618", "Renault", "Clio 1.0 TCe", 2024, "Binek", "Benzin", "genel", "Satış danışmanı (örnek)", 21340),
   ],
   obligations: [
     // Gecikmiş

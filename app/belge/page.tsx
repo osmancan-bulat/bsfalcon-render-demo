@@ -4,7 +4,7 @@ import { AuthProvider } from "@/components/security/auth";
 import DocumentGate from "@/components/security/document-gate";
 
 export const metadata: Metadata = {
-  title: "BŞ Falcon Group | Belge önizleme",
+  title: "By Güzel | Belge önizleme",
   robots: { index: false, follow: false },
 };
 

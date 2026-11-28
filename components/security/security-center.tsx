@@ -44,7 +44,7 @@ export default function SecurityCenter() {
     <div className="sec-center">
       <header className="sec-head">
         <div>
-          <span className="sec-eyebrow">BŞ Falcon · Güvenlik ve denetim</span>
+          <span className="sec-eyebrow">By Güzel · Güvenlik ve denetim</span>
           <h1>Güvenlik Merkezi</h1>
           <p>
             Kullanıcılar, roller, oturumlar ve hassas işlem kayıtları. <b>DEMO:</b> bu sürümde kontroller yalnızca bu

@@ -11,18 +11,19 @@ import { Panel } from "./shared";
 import { projects, customerList, SNAPSHOT } from "@/lib/enterprise";
 import { salesReport } from "@/lib/reports";
 import { date } from "@/lib/data";
+import FxPanel from "../byguzel/fx-panel";
 
 
 
 export default function AdminView({ onReset }: { onReset: () => void }) {
-  const { state, setProject } = useApp();
+  const { state, setProject, currency } = useApp();
   const router = useRouter();
   const [storage, setStorage] = useState<{ size: number; backup: boolean } | null>(null);
   useEffect(() => {
     try {
       setStorage({
-        size: (localStorage.getItem("bsfalcon-enterprise-v1") ?? "").length,
-        backup: !!localStorage.getItem("bsfalcon-enterprise-v1-yedek-v1"),
+        size: (localStorage.getItem("byguzel-enterprise-v1") ?? "").length,
+        backup: !!localStorage.getItem("byguzel-enterprise-v1-yedek-v1"),
       });
     } catch {
       setStorage(null);
@@ -33,17 +34,16 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `bsfalcon-demo-kayitlari-${SNAPSHOT}.json`;
+    a.download = `byguzel-demo-kayitlari-${SNAPSHOT}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   const counts: [string, number][] = [
-    ["Satış sözleşmesi", customerList(state).length],
+    [`Satış sözleşmesi (${currency})`, customerList(state).length],
     ["İmza sürecindeki sözleşme", state.drafts.length],
     ["Tahsilat makbuzu", state.receipts.length],
     ["Sonradan alınan peşinat", state.depositPayments.length],
-    ["Barter anlaşması", state.barters.length],
-    ["Hakediş mahsubu", state.offsets.length],
+    ["Satış sonrası talep", state.aftersales?.tickets.length ?? 0],
     ["Hatırlatma", state.reminders.length],
     ["İşlem geçmişi kaydı", state.audit.length],
   ];
@@ -56,7 +56,9 @@ export default function AdminView({ onReset }: { onReset: () => void }) {
         </div>
       </header>
 
-      <Panel title="Şirket ve projeler" subtitle="BŞ Falcon Group ana şirkettir; projeler şirkete bağlıdır. Proje adı ve konumu resmîdir; satış ve finans verileri temsilidir.">
+      <FxPanel />
+
+      <Panel title="Şirket ve projeler" subtitle="By Güzel ana şirkettir; projeler şirkete bağlıdır. Proje adı ve konumu resmîdir; satış ve finans verileri temsilidir.">
         <div className="e-table-wrap">
           <table>
             <thead>

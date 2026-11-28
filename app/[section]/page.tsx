@@ -2,9 +2,9 @@ import Workspace from "@/components/workspace";
 import { notFound } from "next/navigation";
 const sections = [
   "genel-bakis",
-  "cengilli-villa-sitesi",
-  "nergis-park-evleri",
-  "agva-triplex-villa",
+  "guzel-nature",
+  "guzel-life-premium",
+  "city-prime",
   "finans",
   "satinalma",
   "taseronlar",
@@ -13,7 +13,6 @@ const sections = [
   "santiye",
   "operasyon",
   "evrak",
-  "barter",
   "arsiv",
   "hatirlatmalar",
   "daireler",
@@ -23,10 +22,9 @@ const sections = [
   "raporlar",
   "yonetim",
   "proje",
-  "kat-karsiligi",
-  "surec",
   "butce",
   "araclar",
+  "satis-sonrasi",
   "guvenlik",
 ];
 export function generateStaticParams() {
